@@ -106,6 +106,10 @@ jobs:
         working-directory: ./frontend
         run: npm install
       
+      - name: Build frontend (required for embed)
+        working-directory: ./frontend
+        run: npm run build
+      
       - name: Build application
         run: wails build -clean -ldflags "-s -w"
       
