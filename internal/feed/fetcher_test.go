@@ -37,7 +37,7 @@ func TestAddSubscription(t *testing.T) {
 	fetcher := NewFetcher(db, translation.NewMockTranslator())
 	fetcher.fp = &MockParser{Feed: mockFeed}
 
-	err = fetcher.AddSubscription("http://test.com/rss", "Test Category")
+	err = fetcher.AddSubscription("http://test.com/rss", "Test Category", "")
 	if err != nil {
 		t.Fatalf("AddSubscription failed: %v", err)
 	}
@@ -79,7 +79,7 @@ func TestFetchFeed(t *testing.T) {
 	}
 	fetcher.fp = &MockParser{Feed: mockFeed}
 
-	err = fetcher.AddSubscription("http://test.com/rss", "Test Category")
+	err = fetcher.AddSubscription("http://test.com/rss", "Test Category", "")
 	if err != nil {
 		t.Fatalf("AddSubscription failed: %v", err)
 	}

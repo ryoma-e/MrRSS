@@ -30,12 +30,12 @@ func TestDatabaseInitialization(t *testing.T) {
 
 	// Verify tables were created
 	var tableCount int
-	err = db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('feeds', 'articles', 'settings', 'schema_version')").Scan(&tableCount)
+	err = db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('feeds', 'articles', 'settings')").Scan(&tableCount)
 	if err != nil {
 		t.Fatalf("Failed to query tables: %v", err)
 	}
-	if tableCount != 4 {
-		t.Errorf("Expected 4 tables, got %d", tableCount)
+	if tableCount != 3 {
+		t.Errorf("Expected 3 tables, got %d", tableCount)
 	}
 
 	// Verify indexes were created
@@ -48,15 +48,7 @@ func TestDatabaseInitialization(t *testing.T) {
 		t.Errorf("Expected at least 8 indexes, got %d", indexCount)
 	}
 
-	// Verify schema version
-	var version int
-	err = db.QueryRow("SELECT MAX(version) FROM schema_version").Scan(&version)
-	if err != nil {
-		t.Fatalf("Failed to query schema version: %v", err)
-	}
-	if version < 5 {
-		t.Errorf("Expected schema version >= 5, got %d", version)
-	}
+	// Schema version table removed in development - skip version check
 }
 
 func TestDatabasePerformanceWithIndexes(t *testing.T) {
@@ -162,7 +154,7 @@ func TestMigrationIdempotency(t *testing.T) {
 	}
 	defer db.Close()
 
-	// Initialize database multiple times
+	// Initialize database multiple times to verify idempotency
 	for i := 0; i < 3; i++ {
 		err = db.Init()
 		if err != nil {
@@ -170,24 +162,15 @@ func TestMigrationIdempotency(t *testing.T) {
 		}
 	}
 
-	// Verify schema version is still correct
-	var version int
-	err = db.QueryRow("SELECT MAX(version) FROM schema_version").Scan(&version)
+	// Schema version table removed in development - migrations not used
+	// Just verify tables still exist after multiple inits
+	var tableCount int
+	err = db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('feeds', 'articles', 'settings')").Scan(&tableCount)
 	if err != nil {
-		t.Fatalf("Failed to query schema version: %v", err)
+		t.Fatalf("Failed to query tables: %v", err)
 	}
-	if version < 5 {
-		t.Errorf("Expected schema version >= 5, got %d", version)
-	}
-
-	// Verify only one version 5 entry exists
-	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM schema_version WHERE version = 5").Scan(&count)
-	if err != nil {
-		t.Fatalf("Failed to count schema versions: %v", err)
-	}
-	if count != 1 {
-		t.Errorf("Expected 1 version 5 entry, got %d", count)
+	if tableCount != 3 {
+		t.Errorf("Expected 3 tables after multiple inits, got %d", tableCount)
 	}
 }
 
