@@ -276,10 +276,16 @@ async function downloadAndInstallUpdate() {
         });
 
         if (!downloadRes.ok) {
-            throw new Error('Download failed');
+            const errorText = await downloadRes.text();
+            console.error('Download error:', errorText);
+            throw new Error('DOWNLOAD_ERROR');
         }
 
         const downloadData = await downloadRes.json();
+        if (!downloadData.success || !downloadData.file_path) {
+            throw new Error('DOWNLOAD_ERROR');
+        }
+        
         downloadingUpdate.value = false;
         downloadProgress.value = 100;
 
@@ -299,17 +305,32 @@ async function downloadAndInstallUpdate() {
         });
 
         if (!installRes.ok) {
-            throw new Error('Installation failed');
+            const errorText = await installRes.text();
+            console.error('Install error:', errorText);
+            throw new Error('INSTALL_ERROR');
+        }
+
+        const installData = await installRes.json();
+        if (!installData.success) {
+            throw new Error('INSTALL_ERROR');
         }
 
         // Show final message
         window.showToast(store.i18n.t('updateWillRestart'), 'info');
 
     } catch (e) {
-        console.error(e);
+        console.error('Update error:', e);
         downloadingUpdate.value = false;
         installingUpdate.value = false;
-        window.showToast(store.i18n.t(e.message.includes('Download') ? 'downloadFailed' : 'installFailed'), 'error');
+        
+        // Use error codes for more reliable error classification
+        if (e.message === 'DOWNLOAD_ERROR') {
+            window.showToast(store.i18n.t('downloadFailed'), 'error');
+        } else if (e.message === 'INSTALL_ERROR') {
+            window.showToast(store.i18n.t('installFailed'), 'error');
+        } else {
+            window.showToast(store.i18n.t('errorCheckingUpdates'), 'error');
+        }
     }
 }
 

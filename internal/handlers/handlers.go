@@ -561,9 +561,18 @@ func (h *Handler) HandleDownloadUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate download URL is from GitHub
-	if !strings.HasPrefix(req.DownloadURL, "https://github.com/") {
+	// Validate download URL is from the official GitHub repository releases
+	const allowedURLPrefix = "https://github.com/WCY-dt/MrRSS/releases/download/"
+	if !strings.HasPrefix(req.DownloadURL, allowedURLPrefix) {
+		log.Printf("Invalid download URL attempted: %s", req.DownloadURL)
 		http.Error(w, "Invalid download URL", http.StatusBadRequest)
+		return
+	}
+
+	// Validate asset name to prevent path traversal
+	if strings.Contains(req.AssetName, "..") || strings.Contains(req.AssetName, "/") || strings.Contains(req.AssetName, "\\") {
+		log.Printf("Invalid asset name attempted: %s", req.AssetName)
+		http.Error(w, "Invalid asset name", http.StatusBadRequest)
 		return
 	}
 
@@ -628,28 +637,64 @@ func (h *Handler) HandleInstallUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate file exists
-	if _, err := os.Stat(req.FilePath); os.IsNotExist(err) {
+	// Validate file path is within temp directory to prevent path traversal
+	tempDir := os.TempDir()
+	cleanPath := filepath.Clean(req.FilePath)
+	if !strings.HasPrefix(cleanPath, filepath.Clean(tempDir)) {
+		log.Printf("Invalid file path attempted: %s", req.FilePath)
+		http.Error(w, "Invalid file path", http.StatusBadRequest)
+		return
+	}
+
+	// Validate file exists and is a regular file
+	fileInfo, err := os.Stat(cleanPath)
+	if os.IsNotExist(err) {
 		http.Error(w, "Update file not found", http.StatusBadRequest)
+		return
+	}
+	if err != nil {
+		log.Printf("Error stating file: %v", err)
+		http.Error(w, "Error accessing update file", http.StatusInternalServerError)
+		return
+	}
+	if !fileInfo.Mode().IsRegular() {
+		log.Printf("File is not a regular file: %s", cleanPath)
+		http.Error(w, "Invalid file type", http.StatusBadRequest)
 		return
 	}
 
 	platform := runtime.GOOS
-	log.Printf("Installing update from: %s on platform: %s", req.FilePath, platform)
+	log.Printf("Installing update from: %s on platform: %s", cleanPath, platform)
 
 	// Launch installer based on platform
 	var cmd *exec.Cmd
 	switch platform {
 	case "windows":
-		// Launch the installer
-		cmd = exec.Command(req.FilePath, "/S") // Silent install for NSIS
+		// Launch the installer - validate file extension
+		if !strings.HasSuffix(strings.ToLower(cleanPath), ".exe") {
+			http.Error(w, "Invalid file type for Windows", http.StatusBadRequest)
+			return
+		}
+		cmd = exec.Command(cleanPath, "/S") // Silent install for NSIS
 	case "linux":
-		// Make AppImage executable and run it
-		os.Chmod(req.FilePath, 0755)
-		cmd = exec.Command(req.FilePath)
+		// Make AppImage executable and run it - validate file extension
+		if !strings.HasSuffix(strings.ToLower(cleanPath), ".appimage") {
+			http.Error(w, "Invalid file type for Linux", http.StatusBadRequest)
+			return
+		}
+		if err := os.Chmod(cleanPath, 0755); err != nil {
+			log.Printf("Error making file executable: %v", err)
+			http.Error(w, "Failed to prepare installer", http.StatusInternalServerError)
+			return
+		}
+		cmd = exec.Command(cleanPath)
 	case "darwin":
-		// Open the DMG file
-		cmd = exec.Command("open", req.FilePath)
+		// Open the DMG file - validate file extension
+		if !strings.HasSuffix(strings.ToLower(cleanPath), ".dmg") {
+			http.Error(w, "Invalid file type for macOS", http.StatusBadRequest)
+			return
+		}
+		cmd = exec.Command("open", cleanPath)
 	default:
 		http.Error(w, "Unsupported platform", http.StatusBadRequest)
 		return
@@ -669,10 +714,13 @@ func (h *Handler) HandleInstallUpdate(w http.ResponseWriter, r *http.Request) {
 		"message": "Installation started. Application will exit shortly.",
 	})
 
-	// Exit the application after a short delay to allow the response to be sent
+	// Schedule graceful shutdown to allow the response to be sent
+	// and give time for proper cleanup
 	go func() {
 		time.Sleep(2 * time.Second)
-		log.Println("Exiting application for update installation...")
+		log.Println("Initiating graceful shutdown for update installation...")
+		// Note: In a production app, this should trigger the Wails shutdown handler
+		// which will properly clean up resources. For now, we use os.Exit.
 		os.Exit(0)
 	}()
 }
