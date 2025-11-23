@@ -92,7 +92,7 @@ onBeforeUnmount(() => {
                     <div v-if="article.content" class="prose prose-lg max-w-none text-text-primary" v-html="article.content"></div>
                     <div v-else class="text-center text-text-secondary py-8">
                         <i class="ph ph-article text-5xl mb-3 opacity-50"></i>
-                        <p>{{ store.i18n.locale.value === 'zh' ? '此文章没有内容' : 'No content available for this article' }}</p>
+                        <p>{{ store.i18n.t('noContent') }}</p>
                     </div>
                 </div>
             </div>

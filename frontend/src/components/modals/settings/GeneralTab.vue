@@ -97,10 +97,10 @@ function formatLastUpdate(timestamp) {
         const diffHours = Math.floor(diffMs / 3600000);
         const diffDays = Math.floor(diffMs / 86400000);
         
-        if (diffMins < 1) return store.i18n.locale.value === 'zh' ? '刚刚' : 'Just now';
-        if (diffMins < 60) return store.i18n.locale.value === 'zh' ? `${diffMins}分钟前` : `${diffMins} min ago`;
-        if (diffHours < 24) return store.i18n.locale.value === 'zh' ? `${diffHours}小时前` : `${diffHours} hours ago`;
-        if (diffDays < 7) return store.i18n.locale.value === 'zh' ? `${diffDays}天前` : `${diffDays} days ago`;
+        if (diffMins < 1) return store.i18n.t('justNow');
+        if (diffMins < 60) return store.i18n.t('minutesAgo', { count: diffMins });
+        if (diffHours < 24) return store.i18n.t('hoursAgo', { count: diffHours });
+        if (diffDays < 7) return store.i18n.t('daysAgo', { count: diffDays });
         
         return date.toLocaleDateString(store.i18n.locale.value === 'zh' ? 'zh-CN' : 'en-US');
     } catch {

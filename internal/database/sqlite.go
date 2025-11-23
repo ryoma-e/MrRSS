@@ -129,8 +129,9 @@ func initSchema(db *sql.DB) error {
 	_, err := db.Exec(query)
 	
 	// Add new columns if they don't exist (for existing databases)
-	db.Exec(`ALTER TABLE articles ADD COLUMN content TEXT DEFAULT ''`)
-	db.Exec(`ALTER TABLE articles ADD COLUMN is_hidden BOOLEAN DEFAULT 0`)
+	// SQLite doesn't support IF NOT EXISTS for ALTER TABLE, so we ignore errors if columns already exist
+	_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN content TEXT DEFAULT ''`)
+	_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN is_hidden BOOLEAN DEFAULT 0`)
 	
 	return err
 }
