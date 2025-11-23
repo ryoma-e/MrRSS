@@ -23,6 +23,9 @@ export const translations = {
         markAsRead: 'Mark as Read',
         toggleFavorite: 'Toggle Favorite',
         openInBrowser: 'Open in Browser',
+        viewOriginal: 'View Original',
+        viewContent: 'View Content',
+        renderContent: 'Render Content',
         
         // Context Menu
         unsubscribe: 'Unsubscribe',
@@ -30,6 +33,8 @@ export const translations = {
         renameCategory: 'Rename Category',
         addToFavorites: 'Add to Favorites',
         removeFromFavorites: 'Remove from Favorites',
+        hideArticle: 'Hide Article',
+        unhideArticle: 'Unhide Article',
         selectArticle: 'Select an article to start reading',
         
         // Settings Modal
@@ -50,6 +55,11 @@ export const translations = {
         updates: 'Updates',
         autoUpdateInterval: 'Auto-update Interval',
         autoUpdateIntervalDesc: 'How often to check for new articles (in minutes)',
+        lastArticleUpdate: 'Last Article Update',
+        lastArticleUpdateDesc: 'Last time articles were refreshed',
+        never: 'Never',
+        showHiddenArticles: 'Show Hidden Articles',
+        showHiddenArticlesDesc: 'Display articles that have been hidden',
         database: 'Database',
         autoCleanup: 'Auto Cleanup',
         autoCleanupDesc: 'Automatically remove old articles to save space',
@@ -181,6 +191,9 @@ export const translations = {
         markAsRead: '标记为已读',
         toggleFavorite: '切换收藏',
         openInBrowser: '在浏览器中打开',
+        viewOriginal: '查看原网页',
+        viewContent: '查看内容',
+        renderContent: '渲染内容',
         
         // Context Menu
         unsubscribe: '取消订阅',
@@ -188,6 +201,8 @@ export const translations = {
         renameCategory: '重命名分类',
         addToFavorites: '添加到收藏',
         removeFromFavorites: '从收藏中移除',
+        hideArticle: '隐藏文章',
+        unhideArticle: '取消隐藏',
         selectArticle: '选择一篇文章开始阅读',
         
         // Settings Modal
@@ -208,6 +223,11 @@ export const translations = {
         updates: '更新',
         autoUpdateInterval: '自动更新间隔',
         autoUpdateIntervalDesc: '检查新文章的频率（分钟）',
+        lastArticleUpdate: '最后更新时间',
+        lastArticleUpdateDesc: '上次刷新文章的时间',
+        never: '从未',
+        showHiddenArticles: '显示隐藏文章',
+        showHiddenArticlesDesc: '显示已被隐藏的文章',
         database: '数据库',
         autoCleanup: '自动清理',
         autoCleanupDesc: '自动删除旧文章以节省空间',

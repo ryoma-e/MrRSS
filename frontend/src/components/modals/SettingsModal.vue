@@ -18,7 +18,9 @@ const settings = ref({
     max_cache_size_mb: 20,
     max_article_age_days: 30,
     language: store.i18n.locale.value,
-    theme: 'auto'
+    theme: 'auto',
+    last_article_update: '',
+    show_hidden_articles: false
 });
 
 const updateInfo = ref(null);
@@ -42,7 +44,9 @@ onMounted(async () => {
             max_cache_size_mb: parseInt(data.max_cache_size_mb) || 20,
             max_article_age_days: parseInt(data.max_article_age_days) || 30,
             language: data.language || store.i18n.locale.value,
-            theme: data.theme || 'auto'
+            theme: data.theme || 'auto',
+            last_article_update: data.last_article_update || '',
+            show_hidden_articles: data.show_hidden_articles === 'true'
         };
         // Apply the saved language
         if (data.language) {

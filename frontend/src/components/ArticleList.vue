@@ -136,6 +136,9 @@ function onArticleContextMenu(e, article) {
                 { label: article.is_read ? store.i18n.t('markAsUnread') : store.i18n.t('markAsRead'), action: 'toggleRead', icon: article.is_read ? 'ph-envelope' : 'ph-envelope-open' },
                 { label: article.is_favorite ? store.i18n.t('removeFromFavorites') : store.i18n.t('addToFavorites'), action: 'toggleFavorite', icon: article.is_favorite ? 'ph-star-fill' : 'ph-star' },
                 { separator: true },
+                { label: store.i18n.t('renderContent'), action: 'renderContent', icon: 'ph-article' },
+                { label: article.is_hidden ? store.i18n.t('unhideArticle') : store.i18n.t('hideArticle'), action: 'toggleHide', icon: article.is_hidden ? 'ph-eye' : 'ph-eye-slash' },
+                { separator: true },
                 { label: store.i18n.t('openInBrowser'), action: 'openBrowser', icon: 'ph-arrow-square-out' }
             ],
             data: article,
@@ -144,7 +147,7 @@ function onArticleContextMenu(e, article) {
     }));
 }
 
-function handleArticleAction(action, article) {
+async function handleArticleAction(action, article) {
     if (action === 'toggleRead') {
         const newState = !article.is_read;
         article.is_read = newState;
@@ -153,6 +156,18 @@ function handleArticleAction(action, article) {
         const newState = !article.is_favorite;
         article.is_favorite = newState;
         fetch(`/api/articles/favorite?id=${article.id}`, { method: 'POST' });
+    } else if (action === 'toggleHide') {
+        try {
+            await fetch(`/api/articles/toggle-hide?id=${article.id}`, { method: 'POST' });
+            // Refresh article list to remove/show the hidden article
+            store.fetchArticles();
+        } catch (e) {
+            console.error('Error toggling hide:', e);
+        }
+    } else if (action === 'renderContent') {
+        // Select the article and trigger content rendering
+        store.currentArticleId = article.id;
+        window.dispatchEvent(new CustomEvent('render-article-content'));
     } else if (action === 'openBrowser') {
         BrowserOpenURL(article.url);
     }
@@ -202,15 +217,18 @@ async function refreshArticles() {
                  :ref="el => observeArticle(el)"
                  @click="selectArticle(article)"
                  @contextmenu="onArticleContextMenu($event, article)"
-                 :class="['article-card', article.is_read ? 'read' : '', article.is_favorite ? 'favorite' : '', store.currentArticleId === article.id ? 'active' : '']">
+                 :class="['article-card', article.is_read ? 'read' : '', article.is_favorite ? 'favorite' : '', article.is_hidden ? 'hidden' : '', store.currentArticleId === article.id ? 'active' : '']">
                 
                 <img v-if="article.image_url" :src="article.image_url" class="w-20 h-[60px] object-cover rounded bg-bg-tertiary shrink-0 border border-border" @error="$event.target.style.display='none'">
                 
                 <div class="flex-1 min-w-0">
-                    <h4 v-if="!article.translated_title || article.translated_title === article.title" class="m-0 mb-1.5 text-base font-semibold leading-snug text-text-primary">{{ article.title }}</h4>
-                    <div v-else>
-                        <h4 class="m-0 mb-1 text-base font-semibold leading-snug text-text-primary">{{ article.translated_title }}</h4>
-                        <div class="text-xs text-text-secondary italic mb-1">{{ article.title }}</div>
+                    <div class="flex items-start gap-2">
+                        <h4 v-if="!article.translated_title || article.translated_title === article.title" class="flex-1 m-0 mb-1.5 text-base font-semibold leading-snug text-text-primary">{{ article.title }}</h4>
+                        <div v-else class="flex-1">
+                            <h4 class="m-0 mb-1 text-base font-semibold leading-snug text-text-primary">{{ article.translated_title }}</h4>
+                            <div class="text-xs text-text-secondary italic mb-1">{{ article.title }}</div>
+                        </div>
+                        <i v-if="article.is_hidden" class="ph ph-eye-slash text-text-secondary flex-shrink-0" :title="store.i18n.t('hideArticle')"></i>
                     </div>
 
                     <div class="flex justify-between items-center text-xs text-text-secondary mt-2">
@@ -248,5 +266,11 @@ async function refreshArticles() {
 }
 .article-card.favorite {
     background-color: rgba(255, 215, 0, 0.05);
+}
+.article-card.hidden {
+    @apply opacity-60 bg-gray-100 dark:bg-gray-800;
+}
+.article-card.hidden:hover {
+    @apply opacity-80;
 }
 </style>

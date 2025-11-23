@@ -1,6 +1,6 @@
 <script setup>
 import { store } from '../../../store.js';
-import { watch, onUnmounted } from 'vue';
+import { watch, onUnmounted, ref } from 'vue';
 
 const props = defineProps({
     settings: { type: Object, required: true }
@@ -9,9 +9,20 @@ const props = defineProps({
 // Debounce timer to prevent excessive API calls
 let saveTimeout = null;
 
+// Track previous translation settings
+const prevTranslationSettings = ref({
+    enabled: props.settings.translation_enabled,
+    targetLang: props.settings.target_language
+});
+
 // Auto-save function that saves settings immediately
 async function autoSave() {
     try {
+        // Check if translation settings changed
+        const translationChanged = 
+            prevTranslationSettings.value.enabled !== props.settings.translation_enabled ||
+            (props.settings.translation_enabled && prevTranslationSettings.value.targetLang !== props.settings.target_language);
+        
         await fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -25,7 +36,8 @@ async function autoSave() {
                 max_cache_size_mb: props.settings.max_cache_size_mb.toString(),
                 max_article_age_days: props.settings.max_article_age_days.toString(),
                 language: props.settings.language,
-                theme: props.settings.theme
+                theme: props.settings.theme,
+                show_hidden_articles: props.settings.show_hidden_articles.toString()
             })
         });
         
@@ -33,6 +45,23 @@ async function autoSave() {
         store.i18n.setLocale(props.settings.language);
         store.setTheme(props.settings.theme);
         store.startAutoRefresh(props.settings.update_interval);
+        
+        // Clear and re-translate if translation settings changed
+        if (translationChanged) {
+            await fetch('/api/articles/clear-translations', { method: 'POST' });
+            // Update tracking
+            prevTranslationSettings.value = {
+                enabled: props.settings.translation_enabled,
+                targetLang: props.settings.target_language
+            };
+            // Refresh articles to show without translations, then re-translate if enabled
+            store.fetchArticles();
+        }
+        
+        // Refresh articles if show_hidden_articles changed
+        if (props.settings.show_hidden_articles !== undefined) {
+            store.fetchArticles();
+        }
     } catch (e) {
         console.error('Error auto-saving settings:', e);
     }
@@ -56,6 +85,28 @@ onUnmounted(() => {
         saveTimeout = null;
     }
 });
+
+// Format last update time
+function formatLastUpdate(timestamp) {
+    if (!timestamp) return store.i18n.t('never');
+    try {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+        
+        if (diffMins < 1) return store.i18n.locale.value === 'zh' ? '刚刚' : 'Just now';
+        if (diffMins < 60) return store.i18n.locale.value === 'zh' ? `${diffMins}分钟前` : `${diffMins} min ago`;
+        if (diffHours < 24) return store.i18n.locale.value === 'zh' ? `${diffHours}小时前` : `${diffHours} hours ago`;
+        if (diffDays < 7) return store.i18n.locale.value === 'zh' ? `${diffDays}天前` : `${diffDays} days ago`;
+        
+        return date.toLocaleDateString(store.i18n.locale.value === 'zh' ? 'zh-CN' : 'en-US');
+    } catch {
+        return store.i18n.t('never');
+    }
+}
 </script>
 
 <template>
@@ -109,6 +160,16 @@ onUnmounted(() => {
                 </div>
                 <input type="number" v-model="settings.update_interval" min="1" class="input-field w-20 text-center">
             </div>
+            <div class="setting-item mt-3">
+                <div class="flex-1 flex items-start gap-3">
+                    <i class="ph ph-calendar-check text-xl text-text-secondary mt-0.5"></i>
+                    <div class="flex-1">
+                        <div class="font-medium mb-1">{{ store.i18n.t('lastArticleUpdate') }}</div>
+                        <div class="text-xs text-text-secondary">{{ store.i18n.t('lastArticleUpdateDesc') }}</div>
+                    </div>
+                </div>
+                <div class="text-sm text-text-secondary">{{ formatLastUpdate(settings.last_article_update) }}</div>
+            </div>
         </div>
 
         <div class="setting-group">
@@ -155,6 +216,17 @@ onUnmounted(() => {
                         <span class="text-sm text-text-secondary">{{ store.i18n.t('days') }}</span>
                     </div>
                 </div>
+            </div>
+            
+            <div class="setting-item mt-3">
+                <div class="flex-1 flex items-start gap-3">
+                    <i class="ph ph-eye-slash text-xl text-text-secondary mt-0.5"></i>
+                    <div class="flex-1">
+                        <div class="font-medium mb-1">{{ store.i18n.t('showHiddenArticles') }}</div>
+                        <div class="text-xs text-text-secondary">{{ store.i18n.t('showHiddenArticlesDesc') }}</div>
+                    </div>
+                </div>
+                <input type="checkbox" v-model="settings.show_hidden_articles" class="toggle">
             </div>
         </div>
 
