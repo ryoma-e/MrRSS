@@ -240,12 +240,12 @@ async function handleDownloadInstallUpdate() {
         if (!downloadRes.ok) {
             const errorText = await downloadRes.text();
             console.error('Download error:', errorText);
-            throw new Error('DOWNLOAD_ERROR');
+            throw new Error('DOWNLOAD_ERROR: ' + errorText);
         }
 
         const downloadData = await downloadRes.json();
         if (!downloadData.success || !downloadData.file_path) {
-            throw new Error('DOWNLOAD_ERROR');
+            throw new Error('DOWNLOAD_ERROR: Invalid response from server');
         }
         
         downloadingUpdate.value = false;
@@ -253,6 +253,9 @@ async function handleDownloadInstallUpdate() {
 
         // Show notification
         window.showToast(store.i18n.t('downloadComplete'), 'success');
+
+        // Wait a moment to ensure file is fully written
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Install the update
         installingUpdate.value = true;
@@ -269,12 +272,12 @@ async function handleDownloadInstallUpdate() {
         if (!installRes.ok) {
             const errorText = await installRes.text();
             console.error('Install error:', errorText);
-            throw new Error('INSTALL_ERROR');
+            throw new Error('INSTALL_ERROR: ' + errorText);
         }
 
         const installData = await installRes.json();
         if (!installData.success) {
-            throw new Error('INSTALL_ERROR');
+            throw new Error('INSTALL_ERROR: Installation failed');
         }
 
         // Show final message - app will close automatically from backend
@@ -287,9 +290,10 @@ async function handleDownloadInstallUpdate() {
         installingUpdate.value = false;
         
         // Use error codes for more reliable error classification
-        if (e.message === 'DOWNLOAD_ERROR') {
+        const errorMessage = e.message || '';
+        if (errorMessage.includes('DOWNLOAD_ERROR')) {
             window.showToast(store.i18n.t('downloadFailed'), 'error');
-        } else if (e.message === 'INSTALL_ERROR') {
+        } else if (errorMessage.includes('INSTALL_ERROR')) {
             window.showToast(store.i18n.t('installFailed'), 'error');
         } else {
             window.showToast(store.i18n.t('errorCheckingUpdates'), 'error');

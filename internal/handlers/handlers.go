@@ -51,7 +51,7 @@ func (h *Handler) StartBackgroundScheduler(ctx context.Context) {
 			}
 		}
 	}()
-	
+
 	for {
 		intervalStr, err := h.DB.GetSetting("update_interval")
 		interval := 10
@@ -286,16 +286,16 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 		language, _ := h.DB.GetSetting("language")
 		theme, _ := h.DB.GetSetting("theme")
 		json.NewEncoder(w).Encode(map[string]string{
-			"update_interval":       interval,
-			"translation_enabled":   translationEnabled,
-			"target_language":       targetLang,
-			"translation_provider":  provider,
-			"deepl_api_key":         apiKey,
-			"auto_cleanup_enabled":  autoCleanup,
-			"max_cache_size_mb":     maxCacheSize,
-			"max_article_age_days":  maxArticleAge,
-			"language":              language,
-			"theme":                 theme,
+			"update_interval":      interval,
+			"translation_enabled":  translationEnabled,
+			"target_language":      targetLang,
+			"translation_provider": provider,
+			"deepl_api_key":        apiKey,
+			"auto_cleanup_enabled": autoCleanup,
+			"max_cache_size_mb":    maxCacheSize,
+			"max_article_age_days": maxArticleAge,
+			"language":             language,
+			"theme":                theme,
 		})
 	} else if r.Method == http.MethodPost {
 		var req struct {
@@ -328,23 +328,23 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 		}
 		// Always update API key as it might be cleared
 		h.DB.SetSetting("deepl_api_key", req.DeepLAPIKey)
-		
+
 		if req.AutoCleanupEnabled != "" {
 			h.DB.SetSetting("auto_cleanup_enabled", req.AutoCleanupEnabled)
 		}
-		
+
 		if req.MaxCacheSizeMB != "" {
 			h.DB.SetSetting("max_cache_size_mb", req.MaxCacheSizeMB)
 		}
-		
+
 		if req.MaxArticleAgeDays != "" {
 			h.DB.SetSetting("max_article_age_days", req.MaxArticleAgeDays)
 		}
-		
+
 		if req.Language != "" {
 			h.DB.SetSetting("language", req.Language)
 		}
-		
+
 		if req.Theme != "" {
 			h.DB.SetSetting("theme", req.Theme)
 		}
@@ -358,14 +358,14 @@ func (h *Handler) HandleCleanupArticles(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	count, err := h.DB.CleanupUnimportantArticles()
 	if err != nil {
 		log.Printf("Error cleaning up articles: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	log.Printf("Cleaned up %d articles", count)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"deleted": count,
@@ -377,23 +377,23 @@ func (h *Handler) HandleTranslateArticle(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+
 	var req struct {
-		ArticleID    int64  `json:"article_id"`
-		Title        string `json:"title"`
-		TargetLang   string `json:"target_language"`
+		ArticleID  int64  `json:"article_id"`
+		Title      string `json:"title"`
+		TargetLang string `json:"target_language"`
 	}
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	
+
 	if req.Title == "" || req.TargetLang == "" {
 		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
-	
+
 	// Translate the title
 	translatedTitle, err := h.Translator.Translate(req.Title, req.TargetLang)
 	if err != nil {
@@ -401,14 +401,14 @@ func (h *Handler) HandleTranslateArticle(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	// Update the article with the translated title
 	if err := h.DB.UpdateArticleTranslation(req.ArticleID, translatedTitle); err != nil {
 		log.Printf("Error updating article translation: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	json.NewEncoder(w).Encode(map[string]string{
 		"translated_title": translatedTitle,
 	})
@@ -479,11 +479,11 @@ func (h *Handler) HandleCheckUpdates(w http.ResponseWriter, r *http.Request) {
 
 	for _, asset := range release.Assets {
 		name := strings.ToLower(asset.Name)
-		
+
 		// Match platform-specific installer/package with architecture
 		// Asset naming convention: MrRSS-{version}-{platform}-{arch}-installer.{ext}
 		platformArch := platform + "-" + arch
-		
+
 		if platform == "windows" {
 			// For Windows, prefer installer.exe, fallback to .zip
 			if strings.Contains(name, platformArch) && strings.HasSuffix(name, "-installer.exe") {
@@ -634,10 +634,10 @@ func (h *Handler) HandleDownloadUpdate(w http.ResponseWriter, r *http.Request) {
 	// Write the body to file with progress tracking
 	totalSize := resp.ContentLength
 	var bytesWritten int64
-	
+
 	// Create a buffer for efficient copying
 	buffer := make([]byte, 32*1024) // 32KB buffer
-	
+
 	for {
 		nr, er := resp.Body.Read(buffer)
 		if nr > 0 {
@@ -664,16 +664,33 @@ func (h *Handler) HandleDownloadUpdate(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Printf("Error writing file: %v", err)
+		os.Remove(filePath) // Clean up partial file
 		http.Error(w, "Failed to write download file", http.StatusInternalServerError)
+		return
+	}
+
+	// Ensure all data is flushed to disk
+	if err := out.Sync(); err != nil {
+		log.Printf("Error syncing file: %v", err)
+		os.Remove(filePath) // Clean up
+		http.Error(w, "Failed to save download file", http.StatusInternalServerError)
+		return
+	}
+
+	// Verify the file size matches expected size
+	if totalSize > 0 && bytesWritten != totalSize {
+		log.Printf("Download incomplete: expected %d bytes, got %d bytes", totalSize, bytesWritten)
+		os.Remove(filePath) // Clean up incomplete file
+		http.Error(w, "Download incomplete", http.StatusInternalServerError)
 		return
 	}
 
 	log.Printf("Update downloaded successfully to: %s (%.2f MB)", filePath, float64(bytesWritten)/(1024*1024))
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"success":     true,
-		"file_path":   filePath,
-		"total_bytes": totalSize,
+		"success":       true,
+		"file_path":     filePath,
+		"total_bytes":   totalSize,
 		"bytes_written": bytesWritten,
 	})
 }
@@ -744,8 +761,10 @@ func (h *Handler) HandleInstallUpdate(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid file type for Windows", http.StatusBadRequest)
 			return
 		}
-		cmd = exec.Command(cleanPath, "/S")
-		scheduleCleanup(cleanPath, 3*time.Second)
+		// Use cmd.exe to launch installer, which properly handles UAC prompts
+		// Don't use /S (silent) flag to allow user interaction if needed
+		cmd = exec.Command("cmd.exe", "/C", "start", "", cleanPath)
+		scheduleCleanup(cleanPath, 10*time.Second)
 	case "linux":
 		// Make AppImage executable and run it - validate file extension
 		if !strings.HasSuffix(strings.ToLower(cleanPath), ".appimage") {
@@ -758,7 +777,7 @@ func (h *Handler) HandleInstallUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		cmd = exec.Command(cleanPath)
-		scheduleCleanup(cleanPath, 3*time.Second)
+		scheduleCleanup(cleanPath, 10*time.Second)
 	case "darwin":
 		// Open the DMG file - validate file extension
 		if !strings.HasSuffix(strings.ToLower(cleanPath), ".dmg") {
@@ -766,7 +785,7 @@ func (h *Handler) HandleInstallUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		cmd = exec.Command("open", cleanPath)
-		scheduleCleanup(cleanPath, 5*time.Second)
+		scheduleCleanup(cleanPath, 15*time.Second)
 	default:
 		http.Error(w, "Unsupported platform", http.StatusBadRequest)
 		return
@@ -779,7 +798,7 @@ func (h *Handler) HandleInstallUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Installer started successfully")
+	log.Printf("Installer started successfully, PID: %d", cmd.Process.Pid)
 
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
