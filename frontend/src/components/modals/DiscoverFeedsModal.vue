@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { store } from '../../store.js';
 import { PhX, PhCheck, PhGlobe, PhRss, PhCircleNotch } from "@phosphor-icons/vue";
 
@@ -16,24 +16,29 @@ const selectedFeeds = ref(new Set());
 const errorMessage = ref('');
 
 async function startDiscovery() {
+    console.log('startDiscovery: Beginning discovery process');
     isDiscovering.value = true;
     errorMessage.value = '';
     discoveredFeeds.value = [];
     selectedFeeds.value.clear();
 
     try {
+        console.log('startDiscovery: Sending request to /api/feeds/discover with feed_id:', props.feed.id);
         const response = await fetch('/api/feeds/discover', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ feed_id: props.feed.id })
         });
 
+        console.log('startDiscovery: Response status:', response.status);
         if (!response.ok) {
             const errorText = await response.text();
+            console.error('startDiscovery: Error response:', errorText);
             throw new Error(errorText || 'Failed to discover feeds');
         }
 
         const feeds = await response.json();
+        console.log('startDiscovery: Received feeds:', feeds);
         discoveredFeeds.value = feeds || [];
 
         if (discoveredFeeds.value.length === 0) {
@@ -43,6 +48,7 @@ async function startDiscovery() {
         console.error('Discovery error:', error);
         errorMessage.value = store.i18n.t('discoveryFailed') + ': ' + error.message;
     } finally {
+        console.log('startDiscovery: Discovery completed, isDiscovering set to false');
         isDiscovering.value = false;
     }
 }
@@ -108,9 +114,20 @@ function close() {
     emit('close');
 }
 
-// Watch for modal opening and trigger discovery
-watch(() => props.show, (newShow) => {
-    if (newShow) {
+// Auto-start discovery when component is mounted
+onMounted(() => {
+    console.log('DiscoverFeedsModal: Component mounted, show =', props.show);
+    if (props.show) {
+        console.log('DiscoverFeedsModal: Auto-starting discovery on mount');
+        startDiscovery();
+    }
+});
+
+// Watch for modal opening and trigger discovery (for when modal is reused)
+watch(() => props.show, (newShow, oldShow) => {
+    console.log('DiscoverFeedsModal: show changed from', oldShow, 'to', newShow);
+    if (newShow && !oldShow) {
+        console.log('DiscoverFeedsModal: Starting discovery from watch');
         startDiscovery();
     }
 });
