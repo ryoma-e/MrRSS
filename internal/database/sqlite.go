@@ -508,13 +508,13 @@ func (db *DB) GetUnreadCountsForAllFeeds() (map[int64]int, error) {
 // MarkAllAsReadForFeed marks all articles in a feed as read
 func (db *DB) MarkAllAsReadForFeed(feedID int64) error {
 	db.WaitForReady()
-	_, err := db.Exec("UPDATE articles SET is_read = 1 WHERE feed_id = ?", feedID)
+	_, err := db.Exec("UPDATE articles SET is_read = 1 WHERE feed_id = ? AND is_hidden = 0", feedID)
 	return err
 }
 
 // MarkAllAsRead marks all articles as read
 func (db *DB) MarkAllAsRead() error {
 	db.WaitForReady()
-	_, err := db.Exec("UPDATE articles SET is_read = 1")
+	_, err := db.Exec("UPDATE articles SET is_read = 1 WHERE is_hidden = 0")
 	return err
 }

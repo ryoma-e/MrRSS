@@ -154,9 +154,15 @@ function selectArticle(article) {
     store.currentArticleId = article.id;
     if (!article.is_read) {
         article.is_read = true;
-        fetch(`/api/articles/read?id=${article.id}&read=true`, { method: 'POST' });
-        // Update unread counts after marking as read
-        store.fetchUnreadCounts();
+        fetch(`/api/articles/read?id=${article.id}&read=true`, { method: 'POST' })
+            .then(() => {
+                // Update unread counts after marking as read
+                store.fetchUnreadCounts();
+            })
+            .catch(e => {
+                console.error('Error marking as read:', e);
+                // Continue anyway, the visual change is made
+            });
     }
 }
 
@@ -210,13 +216,27 @@ async function handleArticleAction(action, article) {
     if (action === 'toggleRead') {
         const newState = !article.is_read;
         article.is_read = newState;
-        await fetch(`/api/articles/read?id=${article.id}&read=${newState}`, { method: 'POST' });
-        // Update unread counts after toggling read status
-        store.fetchUnreadCounts();
+        try {
+            await fetch(`/api/articles/read?id=${article.id}&read=${newState}`, { method: 'POST' });
+            // Update unread counts after toggling read status
+            store.fetchUnreadCounts();
+        } catch (e) {
+            console.error('Error toggling read status:', e);
+            // Revert the state change on error
+            article.is_read = !newState;
+            window.showToast(store.i18n.t('errorSavingSettings'), 'error');
+        }
     } else if (action === 'toggleFavorite') {
         const newState = !article.is_favorite;
         article.is_favorite = newState;
-        fetch(`/api/articles/favorite?id=${article.id}`, { method: 'POST' });
+        try {
+            await fetch(`/api/articles/favorite?id=${article.id}`, { method: 'POST' });
+        } catch (e) {
+            console.error('Error toggling favorite:', e);
+            // Revert the state change on error
+            article.is_favorite = !newState;
+            window.showToast(store.i18n.t('errorSavingSettings'), 'error');
+        }
     } else if (action === 'toggleHide') {
         try {
             await fetch(`/api/articles/toggle-hide?id=${article.id}`, { method: 'POST' });
@@ -224,6 +244,7 @@ async function handleArticleAction(action, article) {
             store.fetchArticles();
         } catch (e) {
             console.error('Error toggling hide:', e);
+            window.showToast(store.i18n.t('errorSavingSettings'), 'error');
         }
     } else if (action === 'renderContent') {
         // Determine the action based on default view mode
@@ -240,9 +261,14 @@ async function handleArticleAction(action, article) {
         // Mark as read
         if (!article.is_read) {
             article.is_read = true;
-            await fetch(`/api/articles/read?id=${article.id}&read=true`, { method: 'POST' });
-            // Update unread counts after marking as read
-            store.fetchUnreadCounts();
+            try {
+                await fetch(`/api/articles/read?id=${article.id}&read=true`, { method: 'POST' });
+                // Update unread counts after marking as read
+                store.fetchUnreadCounts();
+            } catch (e) {
+                console.error('Error marking as read:', e);
+                // Continue anyway, the visual change is made
+            }
         }
         
         // Trigger the render action

@@ -239,7 +239,11 @@ func (h *Handler) HandleMarkAllAsRead(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if feedIDStr != "" {
 		// Mark all as read for a specific feed
-		feedID, _ := strconv.ParseInt(feedIDStr, 10, 64)
+		feedID, parseErr := strconv.ParseInt(feedIDStr, 10, 64)
+		if parseErr != nil {
+			http.Error(w, "Invalid feed_id parameter", http.StatusBadRequest)
+			return
+		}
 		err = h.DB.MarkAllAsReadForFeed(feedID)
 	} else {
 		// Mark all as read globally

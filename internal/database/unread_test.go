@@ -168,6 +168,60 @@ func TestMarkAllAsRead(t *testing.T) {
 	}
 }
 
+func TestMarkAllAsReadExcludesHidden(t *testing.T) {
+	// Create temporary database
+	dbFile := "test_mark_all_hidden.db"
+	defer os.Remove(dbFile)
+
+	db, err := NewDB(dbFile)
+	if err != nil {
+		t.Fatalf("Failed to create database: %v", err)
+	}
+	defer db.Close()
+
+	if err := db.Init(); err != nil {
+		t.Fatalf("Failed to initialize database: %v", err)
+	}
+
+	// Create test feed
+	feed := &models.Feed{Title: "Test Feed", URL: "https://example.com/feed", Category: "Test"}
+	db.AddFeed(feed)
+	
+	feeds, _ := db.GetFeeds()
+	feedID := feeds[0].ID
+
+	// Add articles including hidden ones
+	articles := []models.Article{
+		{FeedID: feedID, Title: "Unread Visible", URL: "https://example.com/1", PublishedAt: time.Now(), IsRead: false, IsHidden: false},
+		{FeedID: feedID, Title: "Unread Hidden", URL: "https://example.com/2", PublishedAt: time.Now(), IsRead: false, IsHidden: true},
+	}
+
+	for _, article := range articles {
+		db.SaveArticle(&article)
+	}
+
+	// Mark all as read
+	if err := db.MarkAllAsRead(); err != nil {
+		t.Fatalf("Failed to mark all as read: %v", err)
+	}
+
+	// Verify visible article is now read
+	visibleArticles, _ := db.GetArticles("", feedID, "", false, 100, 0)
+	for _, a := range visibleArticles {
+		if a.Title == "Unread Visible" && !a.IsRead {
+			t.Errorf("Visible article should be marked as read")
+		}
+	}
+
+	// Verify hidden article is still unread
+	hiddenArticles, _ := db.GetArticles("", feedID, "", true, 100, 0)
+	for _, a := range hiddenArticles {
+		if a.Title == "Unread Hidden" && a.IsRead {
+			t.Errorf("Hidden article should remain unread")
+		}
+	}
+}
+
 func TestUnreadCountsWithHiddenArticles(t *testing.T) {
 	// Create temporary database
 	dbFile := "test_hidden.db"
