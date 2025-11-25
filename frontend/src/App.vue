@@ -12,7 +12,7 @@ import ConfirmDialog from './components/modals/ConfirmDialog.vue';
 import InputDialog from './components/modals/InputDialog.vue';
 import Toast from './components/Toast.vue';
 import { BrowserOpenURL } from './wailsjs/wailsjs/runtime/runtime.js';
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 
 const showAddFeed = ref(false);
 const showEditFeed = ref(false);
@@ -26,6 +26,12 @@ const isSidebarOpen = ref(false);
 const confirmDialog = ref(null);
 const inputDialog = ref(null);
 const toasts = ref([]);
+
+// Computed property to check if any modal is open (for keyboard shortcut handling)
+const isAnyModalOpen = computed(() => {
+    return showSettings.value || showAddFeed.value || showEditFeed.value || 
+           showDiscoverBlogs.value || confirmDialog.value || inputDialog.value;
+});
 
 // Keyboard shortcuts
 const shortcuts = ref({
@@ -221,7 +227,7 @@ function handleKeyboardShortcut(e) {
     }
     
     // Skip if a modal is open (except escape which is handled above)
-    if (showSettings.value || showAddFeed.value || showEditFeed.value || showDiscoverBlogs.value || confirmDialog.value || inputDialog.value) {
+    if (isAnyModalOpen.value) {
         return;
     }
     
@@ -369,7 +375,7 @@ async function markAllAsRead() {
 }
 
 function focusSearchInput() {
-    const searchInput = document.querySelector('input[type="text"][placeholder]');
+    const searchInput = document.querySelector('[data-search-input]');
     if (searchInput) {
         searchInput.focus();
     }
