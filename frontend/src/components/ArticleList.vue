@@ -4,8 +4,9 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { BrowserOpenURL } from '../wailsjs/wailsjs/runtime/runtime.js';
 import { 
     PhCheckCircle, PhArrowClockwise, PhList, PhMagnifyingGlass, 
-    PhEyeSlash, PhStar, PhSpinner 
+    PhEyeSlash, PhStar, PhSpinner, PhFunnel 
 } from "@phosphor-icons/vue";
+import ArticleFilterModal from './modals/ArticleFilterModal.vue';
 
 const listRef = ref(null);
 const translationSettings = ref({
@@ -14,6 +15,10 @@ const translationSettings = ref({
 });
 const translatingArticles = ref(new Set());
 const defaultViewMode = ref('original'); // Track default view mode for context menu
+
+// Filter state
+const showFilterModal = ref(false);
+const activeFilters = ref([]);
 
 const props = defineProps(['isSidebarOpen']);
 const emit = defineEmits(['toggleSidebar']);
@@ -177,13 +182,100 @@ function formatDate(dateStr) {
 // Search filtering
 const searchQuery = ref('');
 const filteredArticles = computed(() => {
-    if (!searchQuery.value) return store.articles;
-    const lower = searchQuery.value.toLowerCase();
-    return store.articles.filter(a => 
-        (a.title && a.title.toLowerCase().includes(lower)) || 
-        (a.feed_title && a.feed_title.toLowerCase().includes(lower))
-    );
+    let articles = store.articles;
+    
+    // Apply search query filter
+    if (searchQuery.value) {
+        const lower = searchQuery.value.toLowerCase();
+        articles = articles.filter(a => 
+            (a.title && a.title.toLowerCase().includes(lower)) || 
+            (a.feed_title && a.feed_title.toLowerCase().includes(lower))
+        );
+    }
+    
+    // Apply advanced filters
+    if (activeFilters.value.length > 0) {
+        articles = applyAdvancedFilters(articles, activeFilters.value);
+    }
+    
+    return articles;
 });
+
+// Apply advanced filter conditions
+function applyAdvancedFilters(articles, filters) {
+    if (filters.length === 0) return articles;
+    
+    return articles.filter(article => {
+        let result = evaluateCondition(article, filters[0]);
+        
+        for (let i = 1; i < filters.length; i++) {
+            const condition = filters[i];
+            const conditionResult = evaluateCondition(article, condition);
+            
+            if (condition.logic === 'and') {
+                result = result && conditionResult;
+            } else if (condition.logic === 'or') {
+                result = result || conditionResult;
+            } else if (condition.logic === 'not') {
+                result = result && !conditionResult;
+            }
+        }
+        
+        return result;
+    });
+}
+
+function evaluateCondition(article, condition) {
+    const { field, operator, value } = condition;
+    
+    if (!value) return true;
+    
+    let fieldValue = '';
+    
+    switch (field) {
+        case 'feed_name':
+            fieldValue = article.feed_title || '';
+            break;
+        case 'feed_category':
+            // Get category from feed
+            const feed = store.feeds.find(f => f.id === article.feed_id);
+            fieldValue = feed?.category || '';
+            break;
+        case 'article_title':
+            fieldValue = article.title || '';
+            break;
+        case 'published_after':
+            const afterDate = new Date(value);
+            const articleDateAfter = new Date(article.published_at);
+            return articleDateAfter >= afterDate;
+        case 'published_before':
+            const beforeDate = new Date(value);
+            const articleDateBefore = new Date(article.published_at);
+            return articleDateBefore <= beforeDate;
+        default:
+            return true;
+    }
+    
+    // Text comparison
+    const lowerValue = value.toLowerCase();
+    const lowerFieldValue = fieldValue.toLowerCase();
+    
+    if (operator === 'exact') {
+        return lowerFieldValue === lowerValue;
+    } else {
+        // contains
+        return lowerFieldValue.includes(lowerValue);
+    }
+}
+
+// Filter handlers
+function handleApplyFilters(filters) {
+    activeFilters.value = filters;
+}
+
+function clearAllFilters() {
+    activeFilters.value = [];
+}
 
 function onArticleContextMenu(e, article) {
     e.preventDefault();
@@ -320,9 +412,19 @@ async function markAllAsRead() {
                     </button>
                 </div>
             </div>
-            <div class="flex items-center bg-bg-secondary border border-border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 focus-within:border-accent transition-colors">
-                <PhMagnifyingGlass :size="18" class="text-text-secondary sm:w-5 sm:h-5" />
-                <input type="text" v-model="searchQuery" :placeholder="store.i18n.t('search')" class="bg-transparent border-none outline-none w-full ml-1.5 sm:ml-2 text-text-primary text-xs sm:text-sm">
+            <div class="flex items-center gap-2">
+                <div class="flex-1 flex items-center bg-bg-secondary border border-border rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 focus-within:border-accent transition-colors">
+                    <PhMagnifyingGlass :size="18" class="text-text-secondary sm:w-5 sm:h-5" />
+                    <input type="text" v-model="searchQuery" :placeholder="store.i18n.t('search')" class="bg-transparent border-none outline-none w-full ml-1.5 sm:ml-2 text-text-primary text-xs sm:text-sm">
+                </div>
+                <div class="relative">
+                    <button @click="showFilterModal = true" class="filter-btn p-1.5 sm:p-2 rounded-lg transition-colors" :class="activeFilters.length > 0 ? 'filter-active' : ''" :title="store.i18n.t('filter')">
+                        <PhFunnel :size="18" class="sm:w-5 sm:h-5" />
+                    </button>
+                    <div v-if="activeFilters.length > 0" class="absolute -top-1 -right-1 bg-accent text-white text-[9px] sm:text-[10px] font-bold rounded-full min-w-[14px] sm:min-w-[16px] h-3.5 sm:h-4 px-0.5 sm:px-1 flex items-center justify-center">
+                        {{ activeFilters.length }}
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -364,6 +466,14 @@ async function markAllAsRead() {
                 <PhSpinner :size="20" class="animate-spin sm:w-6 sm:h-6" />
             </div>
         </div>
+        
+        <!-- Filter Modal -->
+        <ArticleFilterModal 
+            :show="showFilterModal" 
+            :currentFilters="activeFilters"
+            @close="showFilterModal = false"
+            @apply="handleApplyFilters"
+        />
     </section>
 </template>
 
@@ -393,6 +503,13 @@ async function markAllAsRead() {
 }
 .article-card.hidden:hover {
     @apply opacity-80;
+}
+.filter-btn {
+    @apply text-text-secondary hover:text-text-primary hover:bg-bg-tertiary border border-border bg-bg-secondary;
+}
+.filter-btn.filter-active {
+    @apply text-accent border-accent;
+    background-color: rgba(59, 130, 246, 0.1);
 }
 .animate-spin {
     animation: spin 1s linear infinite;
