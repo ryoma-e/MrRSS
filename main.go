@@ -117,6 +117,7 @@ func main() {
 	apiMux.HandleFunc("/api/download-update", h.HandleDownloadUpdate)
 	apiMux.HandleFunc("/api/install-update", h.HandleInstallUpdate)
 	apiMux.HandleFunc("/api/version", h.HandleVersion)
+	apiMux.HandleFunc("/api/rules/apply", h.HandleApplyRule)
 
 	// Static Files
 	log.Println("Setting up static files...")

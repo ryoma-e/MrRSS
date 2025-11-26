@@ -138,6 +138,13 @@ func (db *DB) ToggleFavorite(id int64) error {
 	return err
 }
 
+// SetArticleFavorite sets the favorite status of an article.
+func (db *DB) SetArticleFavorite(id int64, favorite bool) error {
+	db.WaitForReady()
+	_, err := db.Exec("UPDATE articles SET is_favorite = ? WHERE id = ?", favorite, id)
+	return err
+}
+
 // UpdateArticleTranslation updates the translated_title field for an article.
 func (db *DB) UpdateArticleTranslation(id int64, translatedTitle string) error {
 	db.WaitForReady()
@@ -162,6 +169,13 @@ func (db *DB) ToggleArticleHidden(id int64) error {
 		return err
 	}
 	_, err = db.Exec("UPDATE articles SET is_hidden = ? WHERE id = ?", !isHidden, id)
+	return err
+}
+
+// SetArticleHidden sets the hidden status of an article.
+func (db *DB) SetArticleHidden(id int64, hidden bool) error {
+	db.WaitForReady()
+	_, err := db.Exec("UPDATE articles SET is_hidden = ? WHERE id = ?", hidden, id)
 	return err
 }
 

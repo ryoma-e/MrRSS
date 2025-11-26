@@ -25,6 +25,7 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 		showHidden, _ := h.DB.GetSetting("show_hidden_articles")
 		startupOnBoot, _ := h.DB.GetSetting("startup_on_boot")
 		shortcuts, _ := h.DB.GetSetting("shortcuts")
+		rules, _ := h.DB.GetSetting("rules")
 		json.NewEncoder(w).Encode(map[string]string{
 			"update_interval":      interval,
 			"translation_enabled":  translationEnabled,
@@ -40,6 +41,7 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 			"show_hidden_articles": showHidden,
 			"startup_on_boot":      startupOnBoot,
 			"shortcuts":            shortcuts,
+			"rules":                rules,
 		})
 	} else if r.Method == http.MethodPost {
 		var req struct {
@@ -56,6 +58,7 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 			ShowHiddenArticles  string `json:"show_hidden_articles"`
 			StartupOnBoot       string `json:"startup_on_boot"`
 			Shortcuts           string `json:"shortcuts"`
+			Rules               string `json:"rules"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -102,6 +105,9 @@ func (h *Handler) HandleSettings(w http.ResponseWriter, r *http.Request) {
 
 		// Always update shortcuts as it might be cleared or modified
 		h.DB.SetSetting("shortcuts", req.Shortcuts)
+
+		// Always update rules as it might be cleared or modified
+		h.DB.SetSetting("rules", req.Rules)
 
 		if req.StartupOnBoot != "" {
 			// Get current value to check if it changed

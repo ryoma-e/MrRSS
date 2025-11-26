@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue';
 import GeneralTab from './settings/GeneralTab.vue';
 import FeedsTab from './settings/FeedsTab.vue';
 import ShortcutsTab from './settings/ShortcutsTab.vue';
+import RulesTab from './settings/RulesTab.vue';
 import AboutTab from './settings/AboutTab.vue';
 import DiscoverAllFeedsModal from './DiscoverAllFeedsModal.vue';
 import { PhGear } from "@phosphor-icons/vue";
@@ -27,7 +28,8 @@ const settings = ref({
     show_hidden_articles: false,
     default_view_mode: 'original',
     startup_on_boot: false,
-    shortcuts: ''
+    shortcuts: '',
+    rules: ''
 });
 
 const updateInfo = ref(null);
@@ -56,7 +58,8 @@ onMounted(async () => {
             show_hidden_articles: data.show_hidden_articles === 'true',
             default_view_mode: data.default_view_mode || 'original',
             startup_on_boot: data.startup_on_boot === 'true',
-            shortcuts: data.shortcuts || ''
+            shortcuts: data.shortcuts || '',
+            rules: data.rules || ''
         };
         // Apply the saved language
         if (data.language) {
@@ -351,6 +354,7 @@ async function handleDownloadInstallUpdate() {
             <div class="flex border-b border-border bg-bg-secondary shrink-0 overflow-x-auto scrollbar-hide">
                 <button @click="activeTab = 'general'" :class="['tab-btn', activeTab === 'general' ? 'active' : '']">{{ store.i18n.t('general') }}</button>
                 <button @click="activeTab = 'feeds'" :class="['tab-btn', activeTab === 'feeds' ? 'active' : '']">{{ store.i18n.t('feeds') }}</button>
+                <button @click="activeTab = 'rules'" :class="['tab-btn', activeTab === 'rules' ? 'active' : '']">{{ store.i18n.t('rules') }}</button>
                 <button @click="activeTab = 'shortcuts'" :class="['tab-btn', activeTab === 'shortcuts' ? 'active' : '']">{{ store.i18n.t('shortcuts') }}</button>
                 <button @click="activeTab = 'about'" :class="['tab-btn', activeTab === 'about' ? 'active' : '']">{{ store.i18n.t('about') }}</button>
             </div>
@@ -370,6 +374,8 @@ async function handleDownloadInstallUpdate() {
                     @batch-move="handleBatchMove"
                     @discover-all="handleDiscoverAll"
                 />
+                
+                <RulesTab v-if="activeTab === 'rules'" :settings="settings" />
                 
                 <ShortcutsTab v-if="activeTab === 'shortcuts'" :settings="settings" />
                 
