@@ -31,6 +31,14 @@ const MinContentLength = 200
 // MinSentenceCount is the minimum number of sentences required for summarization
 const MinSentenceCount = 3
 
+// Target word counts for different summary lengths
+// For Chinese text, each Chinese character is roughly equivalent to one English word
+const (
+	ShortTargetWords  = 50  // ~50 words or Chinese characters
+	MediumTargetWords = 100 // ~100 words or Chinese characters
+	LongTargetWords   = 150 // ~150 words or Chinese characters
+)
+
 // Global segmenter instance with lazy initialization
 var (
 	segmenter     gse.Segmenter
@@ -56,10 +64,9 @@ func NewSummarizer() *Summarizer {
 
 // SummaryResult contains the generated summary and metadata
 type SummaryResult struct {
-	Summary       string   `json:"summary"`
-	KeyPoints     []string `json:"key_points"`
-	SentenceCount int      `json:"sentence_count"`
-	IsTooShort    bool     `json:"is_too_short"`
+	Summary       string `json:"summary"`
+	SentenceCount int    `json:"sentence_count"`
+	IsTooShort    bool   `json:"is_too_short"`
 }
 
 // Summarize generates a summary of the given text using combined TF-IDF and TextRank scoring
@@ -71,7 +78,6 @@ func (s *Summarizer) Summarize(text string, length SummaryLength) SummaryResult 
 	if len(cleanedText) < MinContentLength {
 		return SummaryResult{
 			Summary:    cleanedText,
-			KeyPoints:  []string{},
 			IsTooShort: true,
 		}
 	}
@@ -83,14 +89,16 @@ func (s *Summarizer) Summarize(text string, length SummaryLength) SummaryResult 
 	if len(sentences) < MinSentenceCount {
 		return SummaryResult{
 			Summary:       cleanedText,
-			KeyPoints:     sentences,
 			SentenceCount: len(sentences),
 			IsTooShort:    true,
 		}
 	}
 
-	// Calculate number of sentences to extract based on length
-	numSentences := calculateNumSentences(len(sentences), length)
+	// Check if text is primarily Chinese
+	isChinese := isChineseText(cleanedText)
+
+	// Get target word/character count based on length setting
+	targetCount := getTargetWordCount(length)
 
 	// Score sentences using combined TF-IDF and TextRank
 	scoredSentences := s.scoreSentences(sentences)
@@ -100,28 +108,98 @@ func (s *Summarizer) Summarize(text string, length SummaryLength) SummaryResult 
 		return scoredSentences[i].score > scoredSentences[j].score
 	})
 
-	// Get top sentences
-	topSentences := scoredSentences[:numSentences]
+	// Select sentences until we reach the target word/character count
+	var selectedSentences []scoredSentence
+	currentCount := 0
+
+	for _, sent := range scoredSentences {
+		sentCount := countWordsOrChars(sent.text, isChinese)
+		if currentCount+sentCount <= targetCount || len(selectedSentences) == 0 {
+			selectedSentences = append(selectedSentences, sent)
+			currentCount += sentCount
+		}
+		// Stop if we've reached the target
+		if currentCount >= targetCount {
+			break
+		}
+	}
 
 	// Sort by original position to maintain narrative flow
-	sort.Slice(topSentences, func(i, j int) bool {
-		return topSentences[i].position < topSentences[j].position
+	sort.Slice(selectedSentences, func(i, j int) bool {
+		return selectedSentences[i].position < selectedSentences[j].position
 	})
 
 	// Build summary
 	var summaryParts []string
-	var keyPoints []string
-	for _, sent := range topSentences {
+	for _, sent := range selectedSentences {
 		summaryParts = append(summaryParts, sent.text)
-		keyPoints = append(keyPoints, sent.text)
 	}
 
 	return SummaryResult{
 		Summary:       strings.Join(summaryParts, " "),
-		KeyPoints:     keyPoints,
-		SentenceCount: numSentences,
+		SentenceCount: len(selectedSentences),
 		IsTooShort:    false,
 	}
+}
+
+// isChineseText checks if the text is primarily Chinese
+func isChineseText(text string) bool {
+	chineseCount := 0
+	totalCount := 0
+	for _, r := range text {
+		if unicode.IsLetter(r) {
+			totalCount++
+			if unicode.Is(unicode.Han, r) {
+				chineseCount++
+			}
+		}
+	}
+	if totalCount == 0 {
+		return false
+	}
+	return float64(chineseCount)/float64(totalCount) > 0.3
+}
+
+// getTargetWordCount returns the target word count based on length setting
+func getTargetWordCount(length SummaryLength) int {
+	switch length {
+	case Short:
+		return ShortTargetWords
+	case Long:
+		return LongTargetWords
+	default:
+		return MediumTargetWords
+	}
+}
+
+// countWordsOrChars counts words for English or characters for Chinese
+func countWordsOrChars(text string, isChinese bool) int {
+	if isChinese {
+		// Count Chinese characters
+		count := 0
+		for _, r := range text {
+			if unicode.Is(unicode.Han, r) {
+				count++
+			}
+		}
+		// Also count English words in mixed text
+		englishWords := 0
+		inWord := false
+		for _, r := range text {
+			if unicode.IsLetter(r) && !unicode.Is(unicode.Han, r) {
+				if !inWord {
+					englishWords++
+					inWord = true
+				}
+			} else {
+				inWord = false
+			}
+		}
+		return count + englishWords
+	}
+	// Count English words
+	words := strings.Fields(text)
+	return len(words)
 }
 
 // scoredSentence holds a sentence with its calculated score and position
@@ -139,17 +217,36 @@ func (s *Summarizer) scoreSentences(sentences []string) []scoredSentence {
 	// Calculate TextRank scores
 	textRankScores := calculateTextRank(sentences)
 
+	// Calculate average sentence length for penalty calculation
+	totalLen := 0
+	for _, sent := range sentences {
+		totalLen += len(sent)
+	}
+	avgLen := float64(totalLen) / float64(len(sentences))
+
 	// Combine scores
 	result := make([]scoredSentence, len(sentences))
 	for i, sentence := range sentences {
-		// Weight TF-IDF at 0.6 and TextRank at 0.4
-		combinedScore := 0.6*tfidfScores[i] + 0.4*textRankScores[i]
+		// Weight TF-IDF at 0.5 and TextRank at 0.5
+		combinedScore := 0.5*tfidfScores[i] + 0.5*textRankScores[i]
 
-		// Boost first and second sentences slightly (they often contain key info)
+		// Boost first sentence slightly (often contains key info)
 		if i == 0 {
-			combinedScore *= 1.2
-		} else if i == 1 {
-			combinedScore *= 1.1
+			combinedScore *= 1.15
+		}
+
+		// Penalize very long sentences (more than 2x average length)
+		// This prevents selecting overly verbose sentences
+		sentLen := float64(len(sentence))
+		if sentLen > avgLen*2 {
+			penalty := avgLen * 2 / sentLen
+			combinedScore *= penalty
+		}
+
+		// Slight penalty for very short sentences (less than 0.3x average)
+		// They often lack sufficient information
+		if sentLen < avgLen*0.3 {
+			combinedScore *= 0.8
 		}
 
 		result[i] = scoredSentence{
@@ -502,33 +599,4 @@ func isStopWord(word string) bool {
 		"更": true, "最": true, "太": true, "又": true, "再": true, "还": true,
 	}
 	return stopWords[word]
-}
-
-// calculateNumSentences determines how many sentences to include based on length setting
-func calculateNumSentences(totalSentences int, length SummaryLength) int {
-	var ratio float64
-	switch length {
-	case Short:
-		ratio = 0.2
-	case Medium:
-		ratio = 0.35
-	case Long:
-		ratio = 0.5
-	default:
-		ratio = 0.35
-	}
-
-	numSentences := int(math.Ceil(float64(totalSentences) * ratio))
-
-	// Ensure minimum of 1 sentence
-	if numSentences < 1 {
-		numSentences = 1
-	}
-
-	// Cap at total sentences
-	if numSentences > totalSentences {
-		numSentences = totalSentences
-	}
-
-	return numSentences
 }

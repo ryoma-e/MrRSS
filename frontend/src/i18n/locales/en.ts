@@ -157,7 +157,6 @@ const en: TranslationMessages = {
   summaryLengthLong: 'Long',
   generatingSummary: 'Generating summary...',
   articleSummary: 'Article Summary',
-  keyPoints: 'Key Points',
   summaryTooShort: 'Article is too short to generate a meaningful summary',
   noSummaryAvailable: 'Summary not available',
   generateSummary: 'Generate Summary',

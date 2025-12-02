@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
 import { ref, watch, onMounted } from 'vue';
-import { PhArticle, PhTextAlignLeft, PhListBullets, PhSpinnerGap } from '@phosphor-icons/vue';
+import { PhArticle, PhTextAlignLeft, PhSpinnerGap } from '@phosphor-icons/vue';
 import type { Article } from '@/types/models';
 import { formatDate } from '@/utils/date';
 
@@ -9,7 +9,6 @@ const { t, locale } = useI18n();
 
 interface SummaryResult {
   summary: string;
-  key_points: string[];
   sentence_count: number;
   is_too_short: boolean;
   error?: string;
@@ -147,31 +146,9 @@ onMounted(async () => {
           </div>
 
           <!-- Summary Display -->
-          <div v-else-if="summaryResult?.summary">
-            <p class="text-sm text-text-primary leading-relaxed mb-3">
-              {{ summaryResult.summary }}
-            </p>
-
-            <!-- Key Points -->
-            <div
-              v-if="summaryResult.key_points && summaryResult.key_points.length > 1"
-              class="mt-3"
-            >
-              <div class="flex items-center gap-2 text-text-secondary text-xs font-medium mb-2">
-                <PhListBullets :size="14" />
-                <span>{{ t('keyPoints') }}</span>
-              </div>
-              <ul class="space-y-1">
-                <li
-                  v-for="(point, index) in summaryResult.key_points.slice(0, 3)"
-                  :key="index"
-                  class="text-xs text-text-secondary pl-3 border-l-2 border-accent/30"
-                >
-                  {{ point }}
-                </li>
-              </ul>
-            </div>
-          </div>
+          <p v-else-if="summaryResult?.summary" class="text-sm text-text-primary leading-relaxed">
+            {{ summaryResult.summary }}
+          </p>
 
           <!-- No Summary Available -->
           <div v-else class="text-sm text-text-secondary italic">

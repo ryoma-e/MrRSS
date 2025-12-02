@@ -156,7 +156,6 @@ const zh: TranslationMessages = {
   summaryLengthLong: '长',
   generatingSummary: '正在生成摘要...',
   articleSummary: '文章摘要',
-  keyPoints: '关键要点',
   summaryTooShort: '文章太短，无法生成有效摘要',
   noSummaryAvailable: '摘要不可用',
   generateSummary: '生成摘要',

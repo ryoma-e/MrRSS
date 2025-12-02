@@ -155,7 +155,6 @@ export interface TranslationMessages {
   summaryLengthLong: string;
   generatingSummary: string;
   articleSummary: string;
-  keyPoints: string;
   summaryTooShort: string;
   noSummaryAvailable: string;
   generateSummary: string;
