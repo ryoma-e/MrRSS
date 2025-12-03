@@ -88,7 +88,14 @@ export interface RuleCondition {
 }
 
 export interface FilterCondition {
-  field: 'feed_name' | 'feed_category' | 'article_title' | 'is_read' | 'is_favorite' | 'is_hidden' | 'is_read_later';
+  field:
+    | 'feed_name'
+    | 'feed_category'
+    | 'article_title'
+    | 'is_read'
+    | 'is_favorite'
+    | 'is_hidden'
+    | 'is_read_later';
   operator: 'contains' | 'equals' | 'not_equals';
   value: string;
   logic?: 'and' | 'or' | 'not';

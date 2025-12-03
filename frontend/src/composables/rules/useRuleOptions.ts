@@ -99,7 +99,12 @@ export function isMultiSelectField(field: string): boolean {
 }
 
 export function isBooleanField(field: string): boolean {
-  return field === 'is_read' || field === 'is_favorite' || field === 'is_hidden' || field === 'is_read_later';
+  return (
+    field === 'is_read' ||
+    field === 'is_favorite' ||
+    field === 'is_hidden' ||
+    field === 'is_read_later'
+  );
 }
 
 export function needsOperator(field: string): boolean {
