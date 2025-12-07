@@ -187,7 +187,10 @@
   list-style-type: decimal;
 }
 
-.prose :deep(ul ul, .prose ul ol, .prose ol ul, .prose ol ol) {
+.prose :deep(ul ul),
+.prose :deep(ul ol),
+.prose :deep(ol ul),
+.prose :deep(ol ol) {
   margin-top: 0.75em;
   margin-bottom: 0.75em;
 }
@@ -421,7 +424,7 @@
 }
 
 .prose :deep(tbody tr:nth-child(odd)) {
-  background-color: rgba(0, 0, 0, 0.02);
+  background-color: var(--table-stripe-color);
 }
 
 /* Enhanced horizontal rule styling */
@@ -477,7 +480,7 @@
 
 /* Mark (highlighted text) styling */
 .prose :deep(mark) {
-  background-color: rgba(255, 220, 100, 0.4);
+  background-color: var(--mark-bg-color);
   color: var(--text-primary);
   padding: 0.125em 0.25em;
   border-radius: 0.125rem;
@@ -540,17 +543,6 @@
 
   .prose :deep(img) {
     margin: 1.5em 0;
-  }
-}
-
-/* Dark mode adjustments for mark element */
-@media (prefers-color-scheme: dark) {
-  .prose :deep(mark) {
-    background-color: rgba(255, 220, 100, 0.25);
-  }
-
-  .prose :deep(tbody tr:nth-child(odd)) {
-    background-color: rgba(255, 255, 255, 0.02);
   }
 }
 
