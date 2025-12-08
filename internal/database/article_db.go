@@ -127,6 +127,30 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 	return articles, nil
 }
 
+// GetArticleByID retrieves a single article by its ID.
+// This is more efficient than GetArticles when you only need one article.
+func (db *DB) GetArticleByID(id int64) (*models.Article, error) {
+	db.WaitForReady()
+	query := `
+		SELECT a.id, a.feed_id, a.title, a.url, a.image_url, a.audio_url, a.video_url, a.published_at, a.is_read, a.is_favorite, a.is_hidden, a.is_read_later, a.translated_title, f.title
+		FROM articles a
+		JOIN feeds f ON a.feed_id = f.id
+		WHERE a.id = ?
+	`
+	row := db.QueryRow(query, id)
+
+	var a models.Article
+	var imageURL, audioURL, videoURL, translatedTitle sql.NullString
+	if err := row.Scan(&a.ID, &a.FeedID, &a.Title, &a.URL, &imageURL, &audioURL, &videoURL, &a.PublishedAt, &a.IsRead, &a.IsFavorite, &a.IsHidden, &a.IsReadLater, &translatedTitle, &a.FeedTitle); err != nil {
+		return nil, err
+	}
+	a.ImageURL = imageURL.String
+	a.AudioURL = audioURL.String
+	a.VideoURL = videoURL.String
+	a.TranslatedTitle = translatedTitle.String
+	return &a, nil
+}
+
 // MarkArticleRead marks an article as read or unread.
 // When marking as read, also removes from read later list.
 func (db *DB) MarkArticleRead(id int64, read bool) error {

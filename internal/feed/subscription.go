@@ -92,6 +92,21 @@ func (f *Fetcher) ParseFeed(ctx context.Context, url string) (*gofeed.Feed, erro
 	return f.fp.ParseURLWithContext(url, ctx)
 }
 
+// ParseFeedWithScript parses an RSS feed, using a custom script if specified.
+// If scriptPath is non-empty, it executes the script to get the feed content.
+// Otherwise, it fetches from the URL as normal.
+func (f *Fetcher) ParseFeedWithScript(ctx context.Context, url string, scriptPath string) (*gofeed.Feed, error) {
+	if scriptPath != "" {
+		// Execute the custom script to fetch feed
+		if f.scriptExecutor == nil {
+			return nil, &ScriptError{Message: "Script executor not initialized"}
+		}
+		return f.scriptExecutor.ExecuteScript(ctx, scriptPath)
+	}
+	// Use traditional URL-based fetching
+	return f.fp.ParseURLWithContext(url, ctx)
+}
+
 // ScriptError represents an error related to script execution
 type ScriptError struct {
 	Message string

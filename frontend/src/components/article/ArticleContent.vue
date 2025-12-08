@@ -11,6 +11,11 @@ import VideoPlayer from './parts/VideoPlayer.vue';
 import { useArticleSummary } from '@/composables/article/useArticleSummary';
 import { useArticleTranslation } from '@/composables/article/useArticleTranslation';
 import { useArticleRendering } from '@/composables/article/useArticleRendering';
+import {
+  extractTextWithPlaceholders,
+  restorePreservedElements,
+  hasOnlyPreservedContent,
+} from '@/composables/article/useContentTranslation';
 import './ArticleContent.css';
 
 interface SummaryResult {
@@ -41,7 +46,7 @@ const {
 const { translationSettings, loadTranslationSettings } = useArticleTranslation();
 
 // Use composable for enhanced rendering (math formulas, etc.)
-const { enhanceRendering } = useArticleRendering();
+const { enhanceRendering, renderMathFormulas, highlightCodeBlocks } = useArticleRendering();
 
 // Computed properties for easier access
 const summaryEnabled = computed(() => summarySettings.value.enabled);
@@ -127,7 +132,7 @@ async function translateTitle(article: Article) {
   isTranslatingTitle.value = false;
 }
 
-// Translate content paragraphs
+// Translate content paragraphs while preserving inline elements (formulas, code, images)
 async function translateContentParagraphs(content: string) {
   if (!translationEnabled.value || !content) return;
 
@@ -153,8 +158,25 @@ async function translateContentParagraphs(content: string) {
   const existingTranslations = proseContainer.querySelectorAll('.translation-text');
   existingTranslations.forEach((el) => el.remove());
 
-  // Find all translatable elements (only top-level text elements)
-  const textTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'FIGCAPTION'];
+  // Find all translatable elements
+  // For lists: translate individual li items, translation stays inside the same li
+  // For tables: translate td/th cells, translation stays inside the same cell
+  // For blockquotes: translate inner paragraphs, not the blockquote itself
+  const textTags = [
+    'P',
+    'H1',
+    'H2',
+    'H3',
+    'H4',
+    'H5',
+    'H6',
+    'LI',
+    'TD',
+    'TH',
+    'FIGCAPTION',
+    'DT',
+    'DD',
+  ];
   const elements = proseContainer.querySelectorAll(textTags.join(','));
 
   for (const el of elements) {
@@ -163,21 +185,14 @@ async function translateContentParagraphs(content: string) {
     // Skip if inside a translation element
     if (htmlEl.closest('.translation-text')) continue;
 
-    // Skip if already has translation sibling
-    if (htmlEl.nextElementSibling?.classList.contains('translation-text')) continue;
+    // Skip if already has translation inside
+    if (htmlEl.querySelector('.translation-text')) continue;
 
-    // Skip technical content that should not be translated:
-    // - Code blocks (pre, code)
-    // - Keyboard input (kbd)
-    // - Math formulas (katex)
-    // - Elements with specific classes
+    // Skip elements that are entirely technical content (no translatable text)
     if (
       htmlEl.closest('pre') ||
-      htmlEl.closest('code') ||
+      htmlEl.tagName === 'CODE' ||
       htmlEl.closest('kbd') ||
-      htmlEl.closest('.katex') ||
-      htmlEl.closest('.katex-display') ||
-      htmlEl.closest('.katex-inline') ||
       htmlEl.classList.contains('katex') ||
       htmlEl.classList.contains('katex-display') ||
       htmlEl.classList.contains('katex-inline')
@@ -185,65 +200,61 @@ async function translateContentParagraphs(content: string) {
       continue;
     }
 
-    // Get the visible text content for translation
-    // For elements containing code/kbd/math inline, extract only translatable text
-    let visibleText = '';
-
-    // Check if element contains technical elements
-    const hasTechnicalContent = htmlEl.querySelector('code, kbd, .katex, .katex-inline');
-
-    if (hasTechnicalContent) {
-      // Extract only text nodes, skipping technical elements
-      const textNodes: string[] = [];
-      const walker = document.createTreeWalker(htmlEl, NodeFilter.SHOW_TEXT, {
-        acceptNode: (node) => {
-          const parent = node.parentElement;
-          if (
-            parent?.tagName === 'CODE' ||
-            parent?.tagName === 'KBD' ||
-            parent?.classList.contains('katex') ||
-            parent?.classList.contains('katex-inline')
-          ) {
-            return NodeFilter.FILTER_REJECT;
-          }
-          return NodeFilter.FILTER_ACCEPT;
-        },
-      });
-
-      let node;
-      while ((node = walker.nextNode())) {
-        const text = node.textContent?.trim();
-        if (text) textNodes.push(text);
-      }
-
-      visibleText = textNodes.join(' ').trim();
-    } else {
-      visibleText = htmlEl.textContent?.trim() || '';
+    // Skip elements that only contain preserved content (no translatable text)
+    if (hasOnlyPreservedContent(htmlEl)) {
+      continue;
     }
 
-    if (!visibleText || visibleText.length < 2) continue;
+    // Extract text with placeholders for inline elements (formulas, code, images)
+    const { text: textWithPlaceholders, preservedElements } = extractTextWithPlaceholders(htmlEl);
 
-    // Translate the visible text
-    const translated = await translateText(visibleText);
+    if (!textWithPlaceholders || textWithPlaceholders.length < 2) continue;
+
+    // Translate the text (with placeholders)
+    const translatedText = await translateText(textWithPlaceholders);
 
     // Skip if translation is same as original or empty
-    if (!translated || translated === visibleText) continue;
+    if (!translatedText || translatedText === textWithPlaceholders) continue;
 
-    // Create translation element with same tag type
-    const translationEl = document.createElement(htmlEl.tagName.toLowerCase());
-    translationEl.className = 'translation-text';
-    translationEl.textContent = translated;
+    // Restore preserved elements in the translated text
+    const translatedHTML = restorePreservedElements(translatedText, preservedElements);
 
-    // Copy blockquote styling
-    if (htmlEl.tagName === 'BLOCKQUOTE') {
-      translationEl.style.borderLeft = '4px solid var(--accent-color)';
-      translationEl.style.paddingLeft = '1em';
-      translationEl.style.fontStyle = 'italic';
+    // Determine how to insert translation based on element type
+    const tagName = htmlEl.tagName;
+
+    if (
+      tagName === 'LI' ||
+      tagName === 'TD' ||
+      tagName === 'TH' ||
+      tagName === 'DD' ||
+      tagName === 'DT'
+    ) {
+      // For list items, table cells, definition list items: append translation inside the same element
+      const translationEl = document.createElement('div');
+      translationEl.className = 'translation-text translation-inline';
+      translationEl.innerHTML = translatedHTML;
+      htmlEl.appendChild(translationEl);
+    } else if (htmlEl.closest('blockquote')) {
+      // For elements inside blockquote: append translation inside, styled differently
+      const translationEl = document.createElement('div');
+      translationEl.className = 'translation-text translation-blockquote';
+      translationEl.innerHTML = translatedHTML;
+      htmlEl.appendChild(translationEl);
+    } else {
+      // For standalone paragraphs, headings, figcaption: insert after as sibling
+      const translationEl = document.createElement('div');
+      translationEl.className = 'translation-text';
+      translationEl.innerHTML = translatedHTML;
+      htmlEl.parentNode?.insertBefore(translationEl, htmlEl.nextSibling);
     }
-
-    // Insert translation after original
-    htmlEl.parentNode?.insertBefore(translationEl, htmlEl.nextSibling);
   }
+
+  // Re-apply rendering enhancements to translation elements (for math formulas)
+  await nextTick();
+  proseContainer.querySelectorAll('.translation-text').forEach((el) => {
+    renderMathFormulas(el as HTMLElement);
+    highlightCodeBlocks(el as HTMLElement);
+  });
 
   isTranslatingContent.value = false;
 }

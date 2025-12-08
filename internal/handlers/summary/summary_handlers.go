@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"MrRSS/internal/feed"
 	"MrRSS/internal/handlers/core"
 	"MrRSS/internal/summary"
 	"MrRSS/internal/utils"
@@ -111,57 +112,44 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 
 // getArticleContent fetches the content of an article by ID
 func getArticleContent(h *core.Handler, articleID int64) (string, error) {
-	// Get show_hidden_articles setting to include all articles
-	allArticles, err := h.DB.GetArticles("", 0, "", true, 50000, 0)
+	// Get the article directly by ID (more efficient and includes hidden articles)
+	article, err := h.DB.GetArticleByID(articleID)
 	if err != nil {
-		return "", err
-	}
-
-	var article *struct {
-		FeedID int64
-		URL    string
-	}
-
-	for _, a := range allArticles {
-		if a.ID == articleID {
-			article = &struct {
-				FeedID int64
-				URL    string
-			}{
-				FeedID: a.FeedID,
-				URL:    a.URL,
-			}
-			break
-		}
-	}
-
-	if article == nil {
 		return "", nil
 	}
 
-	// Get the feed URL
+	// Get the feed (including script path for custom script feeds)
 	feeds, err := h.DB.GetFeeds()
 	if err != nil {
 		return "", err
 	}
 
-	var feedURL string
+	var targetFeed *struct {
+		URL        string
+		ScriptPath string
+	}
 	for _, f := range feeds {
 		if f.ID == article.FeedID {
-			feedURL = f.URL
+			targetFeed = &struct {
+				URL        string
+				ScriptPath string
+			}{
+				URL:        f.URL,
+				ScriptPath: f.ScriptPath,
+			}
 			break
 		}
 	}
 
-	if feedURL == "" {
+	if targetFeed == nil {
 		return "", nil
 	}
 
-	// Parse the feed to get fresh content
+	// Parse the feed to get fresh content (handles both regular URLs and custom scripts)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	parsedFeed, err := h.Fetcher.ParseFeed(ctx, feedURL)
+	parsedFeed, err := h.Fetcher.ParseFeedWithScript(ctx, targetFeed.URL, targetFeed.ScriptPath)
 	if err != nil {
 		return "", err
 	}
@@ -169,10 +157,9 @@ func getArticleContent(h *core.Handler, articleID int64) (string, error) {
 	// Find the article in the feed by URL (use normalized comparison for robustness)
 	for _, item := range parsedFeed.Items {
 		if utils.URLsMatch(item.Link, article.URL) {
-			if item.Content != "" {
-				return utils.CleanHTML(item.Content), nil
-			}
-			return utils.CleanHTML(item.Description), nil
+			// Use the centralized content extraction logic to ensure consistency
+			content := feed.ExtractContent(item)
+			return utils.CleanHTML(content), nil
 		}
 	}
 

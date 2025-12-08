@@ -47,23 +47,23 @@ func HandleOPMLImport(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func() {
-		// Collect feed IDs for the newly imported feeds
-		var feedIDs []int64
-		for _, f := range feeds {
-			feedID, err := h.Fetcher.ImportSubscription(f.Title, f.URL, f.Category)
-			if err != nil {
-				log.Printf("Error importing feed %s: %v", f.Title, err)
-				continue
-			}
-			feedIDs = append(feedIDs, feedID)
+	// Import feeds synchronously so they appear in the sidebar immediately
+	var feedIDs []int64
+	for _, f := range feeds {
+		feedID, err := h.Fetcher.ImportSubscription(f.Title, f.URL, f.Category)
+		if err != nil {
+			log.Printf("Error importing feed %s: %v", f.Title, err)
+			continue
 		}
+		feedIDs = append(feedIDs, feedID)
+	}
 
-		// Fetch articles for the newly imported feeds with progress tracking
-		if len(feedIDs) > 0 {
+	// Fetch articles for the newly imported feeds asynchronously with progress tracking
+	if len(feedIDs) > 0 {
+		go func() {
 			h.Fetcher.FetchFeedsByIDs(context.Background(), feedIDs)
-		}
-	}()
+		}()
+	}
 
 	w.WriteHeader(http.StatusOK)
 }

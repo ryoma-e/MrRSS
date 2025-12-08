@@ -12,7 +12,9 @@
   --accent-hover: #0056b3;
   --border-color: #dee2e6;
   --mark-bg-color: rgba(255, 220, 100, 0.4);
-  --table-stripe-color: rgba(0, 0, 0, 0.02);
+  --table-stripe-color: rgba(0, 0, 0, 0.04);
+  --code-bg-color: #f6f8fa;
+  --code-border-color: #d1d9e0;
 }
 
 .dark-mode {
@@ -25,7 +27,9 @@
   --accent-hover: #2b87d9;
   --border-color: #3e3e42;
   --mark-bg-color: rgba(255, 220, 100, 0.25);
-  --table-stripe-color: rgba(255, 255, 255, 0.02);
+  --table-stripe-color: rgba(255, 255, 255, 0.06);
+  --code-bg-color: #1e1e1e;
+  --code-border-color: #3e3e42;
 }
 
 body {

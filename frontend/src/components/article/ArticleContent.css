@@ -1,6 +1,83 @@
 /* Import KaTeX styles for math rendering */
 @import 'katex/dist/katex.min.css';
 
+/* Import Highlight.js theme */
+@import 'highlight.js/styles/github.css';
+
+/* Dark mode uses different highlight theme */
+.dark-mode .prose pre code.hljs,
+.dark-mode .prose pre.hljs {
+  background: var(--code-bg-color);
+  color: #c9d1d9;
+}
+
+/* Highlight.js dark theme tokens */
+.dark-mode .hljs-comment,
+.dark-mode .hljs-quote {
+  color: #8b949e;
+  font-style: italic;
+}
+
+.dark-mode .hljs-keyword,
+.dark-mode .hljs-selector-tag,
+.dark-mode .hljs-addition {
+  color: #ff7b72;
+}
+
+.dark-mode .hljs-number,
+.dark-mode .hljs-string,
+.dark-mode .hljs-meta .hljs-meta-string,
+.dark-mode .hljs-literal,
+.dark-mode .hljs-doctag,
+.dark-mode .hljs-regexp {
+  color: #a5d6ff;
+}
+
+.dark-mode .hljs-title,
+.dark-mode .hljs-section,
+.dark-mode .hljs-name,
+.dark-mode .hljs-selector-id,
+.dark-mode .hljs-selector-class {
+  color: #d2a8ff;
+}
+
+.dark-mode .hljs-attribute,
+.dark-mode .hljs-attr,
+.dark-mode .hljs-variable,
+.dark-mode .hljs-template-variable,
+.dark-mode .hljs-class .hljs-title,
+.dark-mode .hljs-type {
+  color: #79c0ff;
+}
+
+.dark-mode .hljs-symbol,
+.dark-mode .hljs-bullet,
+.dark-mode .hljs-subst,
+.dark-mode .hljs-meta,
+.dark-mode .hljs-meta .hljs-keyword,
+.dark-mode .hljs-selector-attr,
+.dark-mode .hljs-selector-pseudo,
+.dark-mode .hljs-link {
+  color: #ffa657;
+}
+
+.dark-mode .hljs-built_in,
+.dark-mode .hljs-deletion {
+  color: #ffa198;
+}
+
+.dark-mode .hljs-formula {
+  background-color: #388bfd26;
+}
+
+.dark-mode .hljs-emphasis {
+  font-style: italic;
+}
+
+.dark-mode .hljs-strong {
+  font-weight: bold;
+}
+
 /* Prose styling for article content */
 .prose {
   color: var(--text-primary);
@@ -65,6 +142,7 @@
   margin-top: 1.5em;
   margin-bottom: 0.5em;
 }
+
 .prose p {
   margin-top: 1.25em;
   margin-bottom: 1.25em;
@@ -78,6 +156,7 @@
 .prose p:last-child {
   margin-bottom: 0;
 }
+
 .prose a {
   color: var(--accent-color);
   text-decoration: underline;
@@ -97,17 +176,52 @@
   color: var(--accent-color);
   opacity: 0.8;
 }
+
+/* Block images - standalone images */
 .prose img {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
-  margin: 2em 0;
+  margin: 1.5em 0;
   cursor: pointer;
   transition: all 0.3s ease-in-out;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  display: block;
+}
+
+/* Inline images - images within text */
+.prose p img,
+.prose li img,
+.prose td img,
+.prose span img {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.25em;
+  border-radius: 0.25rem;
+  box-shadow: none;
+  max-height: 1.5em;
+}
+
+/* Small inline icons/emoji images */
+.prose img[height='16'],
+.prose img[height='20'],
+.prose img[height='24'],
+.prose img.emoji,
+.prose img.icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.1em;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Medium sized inline images */
+.prose img[width][height] {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0.25em;
+  border-radius: 0.25rem;
 }
 
 .prose img:hover {
@@ -117,15 +231,51 @@
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
+
 .prose pre {
-  background-color: var(--bg-secondary);
-  padding: 1.25em 1.5em;
+  background-color: var(--code-bg-color);
+  padding: 1em 1.25em;
   border-radius: 0.5rem;
   overflow-x: auto;
+  overflow-y: hidden;
   margin: 1.5em 0;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--code-border-color);
   font-size: 0.875em;
-  line-height: 1.7142857;
+  line-height: 1.7;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  position: relative;
+  /* Better text rendering */
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  /* Tab size for proper indentation */
+  -moz-tab-size: 2;
+  tab-size: 2;
+  /* Enable word wrap for long lines */
+  white-space: pre;
+  word-wrap: normal;
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.prose pre::-webkit-scrollbar {
+  height: 8px;
+}
+
+.prose pre::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.prose pre::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.prose pre::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
 
 .prose pre code {
@@ -136,42 +286,58 @@
   font-weight: inherit;
   color: inherit;
   font-size: inherit;
-  font-family: inherit;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
   line-height: inherit;
+  display: block;
+  overflow-x: visible;
+  white-space: pre;
+  word-break: normal;
+  word-wrap: normal;
+}
+
+/* Highlighted code block styling */
+.prose pre code.hljs,
+.prose pre.hljs {
+  background-color: var(--code-bg-color);
+  padding: 0;
 }
 
 .prose code {
   color: var(--text-primary);
-  background-color: var(--bg-secondary);
+  background-color: var(--code-bg-color);
   padding: 0.2em 0.4em;
   border-radius: 0.25rem;
-  font-size: 0.875em;
+  font-size: 0.85em;
   font-weight: 500;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--code-border-color);
   font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  /* Prevent inline code from breaking across lines */
+  white-space: nowrap;
 }
+
+/* Allow inline code in paragraphs to wrap if needed */
+.prose p code,
+.prose li code,
+.prose td code {
+  white-space: normal;
+  word-break: break-word;
+}
+
 .prose blockquote {
   border-left: 4px solid var(--accent-color);
-  padding-left: 1.5em;
-  padding-right: 1.5em;
+  padding-left: 1.25em;
+  padding-right: 1.25em;
   padding-top: 0.75em;
   padding-bottom: 0.75em;
-  margin: 1.6em 0;
+  margin: 1.5em 0;
   font-style: italic;
   color: var(--text-secondary);
   background-color: var(--bg-secondary);
-  border-radius: 0 0.375rem 0.375rem 0;
-  quotes: '\201C' '\201D' '\2018' '\2019';
-}
-
-.prose blockquote p:first-of-type::before {
-  content: open-quote;
-}
-
-.prose blockquote p:last-of-type::after {
-  content: close-quote;
+  border-radius: 0 0.5rem 0.5rem 0;
 }
 
 .prose blockquote p {
@@ -179,8 +345,15 @@
 }
 
 .prose blockquote p + p {
-  margin-top: 1em;
+  margin-top: 0.75em;
 }
+
+/* Nested blockquotes */
+.prose blockquote blockquote {
+  margin: 0.75em 0;
+  border-left-color: var(--border-color);
+}
+
 .prose ul,
 .prose ol {
   margin-top: 1.25em;
@@ -200,27 +373,27 @@
 .prose ul ol,
 .prose ol ul,
 .prose ol ol {
-  margin-top: 0.75em;
-  margin-bottom: 0.75em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 
 .prose li {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
+  margin-top: 0.375em;
+  margin-bottom: 0.375em;
   line-height: 1.75;
 }
 
 .prose li p {
-  margin-top: 0.75em;
-  margin-bottom: 0.75em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
 
 .prose li > *:first-child {
-  margin-top: 1.25em;
+  margin-top: 0;
 }
 
 .prose li > *:last-child {
-  margin-bottom: 1.25em;
+  margin-bottom: 0;
 }
 
 .prose ul > li::marker {
@@ -232,23 +405,201 @@
   font-weight: 600;
 }
 
-/* Translation text styling - lighter color */
+/* ============================================
+   Translation text styling
+   ============================================ */
+
+/* Base translation style - consistent dashed line separator */
 .prose .translation-text {
+  display: block;
   color: var(--text-secondary);
-  opacity: 0.85;
-  margin-top: 0.25em;
-  margin-bottom: 1em;
-  font-size: 0.95em;
   line-height: 1.6;
+  margin-top: 0.2em;
+  margin-bottom: 0;
+  padding-top: 0.2em;
+  border-top: 1px dashed var(--border-color);
+  opacity: 0.9;
 }
 
-/* Blockquote translation preserves blockquote style */
-.prose blockquote.translation-text {
-  border-left: 4px solid var(--accent-color);
-  padding-left: 1em;
+.prose *:has(+ .translation-text) {
+  margin-bottom: 0;
+}
+
+/* Paragraph translation - inherit font size */
+.prose p + .translation-text {
+  font-size: 1em;
+}
+
+/* Inline translation - inside list items, table cells, etc. */
+.prose .translation-text.translation-inline {
+  font-size: 0.95em;
+  margin-top: 0.15em;
+  padding-top: 0.15em;
+}
+
+/* Translation inside blockquote */
+.prose .translation-text.translation-blockquote {
+  font-size: 0.95em;
+  font-style: normal;
+  margin-top: 0.15em;
+  padding-top: 0.15em;
+}
+
+/* Heading translations - same size and weight, different color */
+.prose h1 + .translation-text {
+  font-size: 2.25em;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.5em;
+}
+
+.prose h2 + .translation-text {
+  font-size: 1.875em;
+  font-weight: 700;
+  line-height: 1.3333333;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75em;
+}
+
+.prose h3 + .translation-text {
+  font-size: 1.5em;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.5em;
+}
+
+.prose h4 + .translation-text {
+  font-size: 1.25em;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-bottom: 0.4em;
+}
+
+.prose h5 + .translation-text {
+  font-size: 1.125em;
+  font-weight: 600;
+  line-height: 1.5555556;
+  margin-bottom: 0.4em;
+}
+
+.prose h6 + .translation-text {
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1.6;
+  margin-bottom: 0.4em;
+}
+
+/* Prevent translation from affecting list structure */
+.prose li .translation-text {
+  list-style: none;
+}
+
+/* Table cell translation */
+.prose td .translation-text,
+.prose th .translation-text {
+  font-size: 0.9em;
+}
+
+/* Definition list translation */
+.prose dt .translation-text,
+.prose dd .translation-text {
+  font-size: 0.95em;
+}
+
+/* Figcaption translation */
+.prose figcaption + .translation-text {
+  font-size: 0.875em;
   font-style: italic;
-  color: var(--text-secondary);
-  opacity: 0.75;
+  text-align: center;
+}
+
+/* ============================================
+   Inline elements within translation text
+   ============================================ */
+
+/* Code within translation */
+.prose .translation-text code {
+  font-size: 0.9em;
+  padding: 0.15em 0.35em;
+  background-color: var(--code-bg-color);
+  border-radius: 0.25rem;
+  font-weight: 500;
+  border: 1px solid var(--code-border-color);
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  white-space: nowrap;
+}
+
+/* KaTeX math formulas within translation */
+.prose .translation-text .katex,
+.prose .translation-text .katex-inline {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.1em;
+}
+
+.prose .translation-text .katex-display {
+  display: block;
+  margin: 0.5em 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+/* Images within translation */
+.prose .translation-text img {
+  display: inline-block;
+  vertical-align: middle;
+  max-height: 1.5em;
+  margin: 0 0.25em;
+  border-radius: 0.25rem;
+}
+
+/* SVG icons within translation */
+.prose .translation-text svg {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+  margin: 0 0.1em;
+}
+
+/* Kbd within translation */
+.prose .translation-text kbd {
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+}
+
+/* Subscript and superscript within translation */
+.prose .translation-text sub,
+.prose .translation-text sup {
+  font-size: 0.75em;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.prose .translation-text sup {
+  top: -0.5em;
+}
+
+.prose .translation-text sub {
+  bottom: -0.25em;
+}
+
+/* Abbreviations within translation */
+.prose .translation-text abbr[title] {
+  text-decoration: underline dotted;
+  cursor: help;
 }
 
 /* Audio player styling - podcast support */
@@ -329,7 +680,8 @@
 .prose .video-embed {
   position: relative;
   width: 100%;
-  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  padding-bottom: 56.25%;
+  /* 16:9 aspect ratio */
   margin: 1.5em 0;
   border-radius: 0.75rem;
   overflow: hidden;
@@ -387,13 +739,17 @@
   border-collapse: collapse;
   margin: 2em 0;
   font-size: 0.875em;
-  line-height: 1.7142857;
+  line-height: 1.5;
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   overflow: hidden;
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 .prose thead {
+  background-color: var(--bg-secondary);
   border-bottom: 2px solid var(--border-color);
 }
 
@@ -401,10 +757,12 @@
   background-color: var(--bg-secondary);
   font-weight: 600;
   color: var(--text-primary);
-  padding: 0.875em 1em;
+  padding: 0.75em 1em;
   text-align: left;
   border-right: 1px solid var(--border-color);
-  vertical-align: bottom;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  font-size: 0.9em;
 }
 
 .prose th:last-child {
@@ -412,11 +770,13 @@
 }
 
 .prose td {
-  padding: 0.875em 1em;
+  padding: 0.75em 1em;
   border-right: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--table-stripe-color);
   text-align: left;
   vertical-align: top;
+  color: var(--text-primary);
+  line-height: 1.6;
 }
 
 .prose td:last-child {
@@ -428,11 +788,11 @@
 }
 
 .prose tbody tr:hover {
-  background-color: var(--bg-secondary);
-  transition: background-color 0.2s ease;
+  background-color: var(--bg-tertiary);
+  transition: background-color 0.15s ease;
 }
 
-.prose tbody tr:nth-child(odd) {
+.prose tbody tr:nth-child(even) {
   background-color: var(--table-stripe-color);
 }
 
@@ -603,11 +963,13 @@
 /* Responsive adjustments for mobile devices */
 @media (max-width: 640px) {
   .prose {
-    font-size: 0.9375rem; /* Slightly smaller base font on mobile */
+    font-size: 0.9375rem;
+    /* Slightly smaller base font on mobile */
   }
 
   .prose h1 {
-    font-size: 1.875em; /* Reduce h1 size on mobile */
+    font-size: 1.875em;
+    /* Reduce h1 size on mobile */
     line-height: 1.2;
     margin-bottom: 0.75em;
   }
@@ -622,14 +984,16 @@
   }
 
   .prose table {
-    font-size: 0.8125em; /* Smaller table text on mobile */
+    font-size: 0.8125em;
+    /* Smaller table text on mobile */
     display: block;
     overflow-x: auto;
   }
 
   .prose th,
   .prose td {
-    padding: 0.625em 0.75em; /* Reduce padding on mobile */
+    padding: 0.625em 0.75em;
+    /* Reduce padding on mobile */
   }
 
   .prose blockquote {
@@ -641,13 +1005,45 @@
   }
 
   .prose pre {
-    padding: 1em;
-    font-size: 0.8125em;
+    padding: 0.875em 1em;
+    font-size: 0.75em;
     margin: 1.25em 0;
+    border-radius: 0.375rem;
+    /* Ensure horizontal scroll works well on touch */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .prose code {
+    font-size: 0.8em;
+    padding: 0.15em 0.35em;
   }
 
   .prose img {
     margin: 1.5em 0;
+  }
+
+  /* Inline images on mobile */
+  .prose p img,
+  .prose li img {
+    max-height: 1.25em;
+  }
+
+  /* Translation adjustments for mobile - headings keep same relative size */
+  .prose .translation-text {
+    padding-top: 0.15em;
+    margin-top: 0.15em;
+  }
+
+  .prose h1 + .translation-text {
+    font-size: 1.875em;
+  }
+
+  .prose h2 + .translation-text {
+    font-size: 1.5em;
+  }
+
+  .prose h3 + .translation-text {
+    font-size: 1.25em;
   }
 }
 
@@ -702,6 +1098,21 @@
   overflow-y: hidden;
   padding: 0.5em 0;
   text-align: center;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.prose .katex-display::-webkit-scrollbar {
+  height: 6px;
+}
+
+.prose .katex-display::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.prose .katex-display::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
 }
 
 .prose .katex-inline {
@@ -718,6 +1129,110 @@
 /* Ensure KaTeX respects theme colors */
 .prose .katex .katex-html {
   color: var(--text-primary);
+}
+
+/* ============================================
+   Additional content enhancements
+   ============================================ */
+
+/* Footnotes styling */
+.prose .footnotes {
+  margin-top: 2.5em;
+  padding-top: 1.5em;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.875em;
+  color: var(--text-secondary);
+}
+
+.prose .footnotes ol {
+  padding-left: 1.5em;
+}
+
+.prose .footnotes li {
+  margin: 0.5em 0;
+}
+
+/* Footnote reference links */
+.prose sup a[href^='#fn'],
+.prose a.footnote-ref {
+  font-size: 0.75em;
+  padding: 0 0.25em;
+  text-decoration: none;
+  color: var(--accent-color);
+}
+
+/* Task list styling (GitHub-style checkboxes) */
+.prose ul.task-list,
+.prose ul.contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.prose .task-list-item,
+.prose li.task-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+  margin: 0.375em 0;
+}
+
+.prose .task-list-item input[type='checkbox'] {
+  margin-top: 0.35em;
+  accent-color: var(--accent-color);
+}
+
+/* Image caption styling (when image is followed by em/italic text) */
+.prose img + em,
+.prose figure img + figcaption {
+  display: block;
+  text-align: center;
+  font-size: 0.875em;
+  color: var(--text-secondary);
+  margin-top: 0.5em;
+}
+
+/* Collapsible content animation */
+.prose details {
+  transition: background-color 0.2s ease;
+}
+
+.prose details:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.prose details[open] > *:not(summary) {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* External link indicator */
+.prose a[href^='http']:not([href*='localhost'])::after {
+  content: ' ↗';
+  font-size: 0.75em;
+  vertical-align: super;
+  opacity: 0.6;
+}
+
+/* Don't show external indicator for image links */
+.prose a[href^='http']:has(img)::after {
+  content: none;
+}
+
+/* Highlight text selection */
+.prose ::selection {
+  background-color: var(--accent-color);
+  color: white;
 }
 
 /* Math formula on mobile */

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"MrRSS/internal/feed"
 	"MrRSS/internal/handlers/core"
 	"MrRSS/internal/models"
 	"MrRSS/internal/utils"
@@ -27,22 +28,9 @@ func HandleGetArticleContent(h *core.Handler, w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Get all articles to find the one we need
-	allArticles, err := h.DB.GetArticles("", 0, "", false, 1000, 0)
+	// Get the article directly by ID (more efficient and includes hidden articles)
+	article, err := h.DB.GetArticleByID(articleID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	var article *models.Article
-	for i := range allArticles {
-		if allArticles[i].ID == articleID {
-			article = &allArticles[i]
-			break
-		}
-	}
-
-	if article == nil {
 		http.Error(w, "Article not found", http.StatusNotFound)
 		return
 	}
@@ -54,15 +42,15 @@ func HandleGetArticleContent(h *core.Handler, w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	var feedURL string
+	var targetFeed *models.Feed
 	for i := range feeds {
 		if feeds[i].ID == article.FeedID {
-			feedURL = feeds[i].URL
+			targetFeed = &feeds[i]
 			break
 		}
 	}
 
-	if feedURL == "" {
+	if targetFeed == nil {
 		http.Error(w, "Feed not found", http.StatusNotFound)
 		return
 	}
@@ -71,7 +59,8 @@ func HandleGetArticleContent(h *core.Handler, w http.ResponseWriter, r *http.Req
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	parsedFeed, err := h.Fetcher.ParseFeed(ctx, feedURL)
+	// Use the fetcher to parse the feed (handles both regular URLs and custom scripts)
+	parsedFeed, err := h.Fetcher.ParseFeedWithScript(ctx, targetFeed.URL, targetFeed.ScriptPath)
 	if err != nil {
 		log.Printf("Error parsing feed for article content: %v", err)
 		http.Error(w, "Failed to fetch article content", http.StatusInternalServerError)
@@ -82,10 +71,8 @@ func HandleGetArticleContent(h *core.Handler, w http.ResponseWriter, r *http.Req
 	var content string
 	for _, item := range parsedFeed.Items {
 		if utils.URLsMatch(item.Link, article.URL) {
-			content = item.Content
-			if content == "" {
-				content = item.Description
-			}
+			// Use the centralized content extraction logic to ensure consistency
+			content = feed.ExtractContent(item)
 			// Clean HTML to fix malformed tags that can cause rendering issues
 			content = utils.CleanHTML(content)
 			break
