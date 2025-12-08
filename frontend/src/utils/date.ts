@@ -11,7 +11,16 @@
 export function formatDate(dateStr: string, locale: string = 'en-US'): string {
   if (!dateStr) return '';
   try {
-    return new Date(dateStr).toLocaleDateString(locale);
+    const date = new Date(dateStr);
+    if (locale === 'zh-CN') {
+      // Format as "2023年12月8日" for Chinese
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${year}年${month}月${day}日`;
+    } else {
+      return date.toLocaleDateString(locale);
+    }
   } catch {
     return '';
   }

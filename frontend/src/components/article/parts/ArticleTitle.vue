@@ -52,7 +52,7 @@ const showBilingualTitle = computed(() => {
   >
     <span>{{ article.feed_title }}</span>
     <span class="hidden sm:inline">•</span>
-    <span>{{ formatDate(article.published_at, 'en-US') }}</span>
+    <span>{{ formatDate(article.published_at, $i18n.locale.value) }}</span>
     <span v-if="translationEnabled" class="flex items-center gap-1 text-accent">
       <PhTranslate :size="14" />
       <span class="text-xs">{{ t('autoTranslateEnabled') }}</span>
