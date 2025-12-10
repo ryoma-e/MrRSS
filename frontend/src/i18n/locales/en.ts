@@ -276,6 +276,8 @@ const en: TranslationMessages = {
   requiredField: 'This field is required',
   fieldCannotBeEmpty: 'This field cannot be empty',
   invalidFormat: 'Invalid format',
+  translationCredentialsRequired: 'Translation service requires API key or credentials',
+  summaryCredentialsRequired: 'AI summary requires API key',
   addSubscription: 'Add Subscription',
   saveChanges: 'Save Changes',
   adding: 'Adding...',

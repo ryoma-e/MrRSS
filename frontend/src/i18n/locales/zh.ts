@@ -273,6 +273,8 @@ const zh: TranslationMessages = {
   requiredField: '此项为必填项',
   fieldCannotBeEmpty: '此字段不能为空',
   invalidFormat: '格式不正确',
+  translationCredentialsRequired: '翻译服务需要提供 API 密钥或凭据',
+  summaryCredentialsRequired: 'AI 摘要需要提供 API 密钥',
   addSubscription: '添加订阅',
   saveChanges: '保存更改',
   adding: '添加中...',

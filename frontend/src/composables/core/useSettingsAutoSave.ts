@@ -26,6 +26,39 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
   });
 
   /**
+   * Validate settings before saving
+   */
+  function validateSettings(): boolean {
+    // Translation validation
+    if (settings.value.translation_enabled) {
+      if (settings.value.translation_provider === 'deepl') {
+        if (!settings.value.deepl_api_key?.trim()) {
+          return false;
+        }
+      } else if (settings.value.translation_provider === 'baidu') {
+        if (!settings.value.baidu_app_id?.trim() || !settings.value.baidu_secret_key?.trim()) {
+          return false;
+        }
+      } else if (settings.value.translation_provider === 'ai') {
+        if (!settings.value.ai_api_key?.trim()) {
+          return false;
+        }
+      }
+    }
+
+    // Summary validation
+    if (settings.value.summary_enabled) {
+      if (settings.value.summary_provider === 'ai') {
+        if (!settings.value.summary_ai_api_key?.trim()) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * Initialize translation tracking
    */
   onMounted(() => {
@@ -46,6 +79,12 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
     try {
       // Skip translation clearing on initial load
       if (isInitialLoad) {
+        return;
+      }
+
+      // Validate settings before saving
+      if (!validateSettings()) {
+        console.log('Settings validation failed - skipping auto-save');
         return;
       }
 
@@ -179,5 +218,6 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
   return {
     autoSave,
     debouncedAutoSave,
+    validateSettings,
   };
 }
