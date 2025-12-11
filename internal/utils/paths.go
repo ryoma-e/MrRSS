@@ -77,3 +77,17 @@ func GetLogPath() (string, error) {
 	}
 	return filepath.Join(dataDir, "debug.log"), nil
 }
+
+// GetMediaCacheDir returns the full path to the media cache directory
+func GetMediaCacheDir() (string, error) {
+	dataDir, err := GetDataDir()
+	if err != nil {
+		return "", err
+	}
+	cacheDir := filepath.Join(dataDir, "media_cache")
+	err = os.MkdirAll(cacheDir, 0755)
+	if err != nil {
+		return "", err
+	}
+	return cacheDir, nil
+}

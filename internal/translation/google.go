@@ -10,11 +10,28 @@ import (
 
 type GoogleFreeTranslator struct {
 	client *http.Client
+	db     DBInterface
 }
 
+// NewGoogleFreeTranslator creates a new Google Free Translator
+// db is optional - if nil, no proxy will be used
 func NewGoogleFreeTranslator() *GoogleFreeTranslator {
 	return &GoogleFreeTranslator{
 		client: &http.Client{Timeout: 10 * time.Second},
+		db:     nil,
+	}
+}
+
+// NewGoogleFreeTranslatorWithDB creates a new Google Free Translator with database for proxy support
+func NewGoogleFreeTranslatorWithDB(db DBInterface) *GoogleFreeTranslator {
+	client, err := CreateHTTPClientWithProxy(db, 10*time.Second)
+	if err != nil {
+		// Fallback to default client if proxy creation fails
+		client = &http.Client{Timeout: 10 * time.Second}
+	}
+	return &GoogleFreeTranslator{
+		client: client,
+		db:     db,
 	}
 }
 
@@ -23,14 +40,34 @@ func (t *GoogleFreeTranslator) Translate(text, targetLang string) (string, error
 		return "", nil
 	}
 
-	baseURL := "https://translate.googleapis.com/translate_a/single"
+	// Get the configured endpoint, default to translate.googleapis.com
+	endpoint := "translate.googleapis.com"
+	if t.db != nil {
+		if configuredEndpoint, err := t.db.GetSetting("google_translate_endpoint"); err == nil && configuredEndpoint != "" {
+			endpoint = configuredEndpoint
+		}
+	}
+
+	// Determine which client parameter and path to use based on endpoint
+	var baseURL string
+	var clientParam string
+
+	if endpoint == "clients5.google.com" {
+		baseURL = "https://clients5.google.com/translate_a/t"
+		clientParam = "dict-chrome-ex"
+	} else {
+		// Default to translate.googleapis.com or any other endpoint
+		baseURL = "https://" + endpoint + "/translate_a/single"
+		clientParam = "gtx"
+	}
+
 	u, err := url.Parse(baseURL)
 	if err != nil {
 		return "", err
 	}
 
 	q := u.Query()
-	q.Set("client", "gtx")
+	q.Set("client", clientParam)
 	q.Set("sl", "auto")
 	q.Set("tl", targetLang)
 	q.Set("dt", "t")

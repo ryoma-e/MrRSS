@@ -14,6 +14,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		interval, _ := h.DB.GetSetting("update_interval")
+		refreshMode, _ := h.DB.GetSetting("refresh_mode")
 		translationEnabled, _ := h.DB.GetSetting("translation_enabled")
 		targetLang, _ := h.DB.GetSetting("target_language")
 		provider, _ := h.DB.GetSetting("translation_provider")
@@ -35,6 +36,9 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		shortcuts, _ := h.DB.GetSetting("shortcuts")
 		rules, _ := h.DB.GetSetting("rules")
 		defaultViewMode, _ := h.DB.GetSetting("default_view_mode")
+		mediaCacheEnabled, _ := h.DB.GetSetting("media_cache_enabled")
+		mediaCacheMaxSizeMB, _ := h.DB.GetSetting("media_cache_max_size_mb")
+		mediaCacheMaxAgeDays, _ := h.DB.GetSetting("media_cache_max_age_days")
 		summaryEnabled, _ := h.DB.GetSetting("summary_enabled")
 		summaryLength, _ := h.DB.GetSetting("summary_length")
 		summaryProvider, _ := h.DB.GetSetting("summary_provider")
@@ -42,8 +46,16 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		summaryAIEndpoint, _ := h.DB.GetSetting("summary_ai_endpoint")
 		summaryAIModel, _ := h.DB.GetSetting("summary_ai_model")
 		summaryAISystemPrompt, _ := h.DB.GetSetting("summary_ai_system_prompt")
+		proxyEnabled, _ := h.DB.GetSetting("proxy_enabled")
+		proxyType, _ := h.DB.GetSetting("proxy_type")
+		proxyHost, _ := h.DB.GetSetting("proxy_host")
+		proxyPort, _ := h.DB.GetSetting("proxy_port")
+		proxyUsername, _ := h.DB.GetSetting("proxy_username")
+		proxyPassword, _ := h.DB.GetSetting("proxy_password")
+		googleTranslateEndpoint, _ := h.DB.GetSetting("google_translate_endpoint")
 		json.NewEncoder(w).Encode(map[string]string{
 			"update_interval":          interval,
+			"refresh_mode":             refreshMode,
 			"translation_enabled":      translationEnabled,
 			"target_language":          targetLang,
 			"translation_provider":     provider,
@@ -65,6 +77,9 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			"shortcuts":                shortcuts,
 			"rules":                    rules,
 			"default_view_mode":        defaultViewMode,
+			"media_cache_enabled":      mediaCacheEnabled,
+			"media_cache_max_size_mb":  mediaCacheMaxSizeMB,
+			"media_cache_max_age_days": mediaCacheMaxAgeDays,
 			"summary_enabled":          summaryEnabled,
 			"summary_length":           summaryLength,
 			"summary_provider":         summaryProvider,
@@ -72,10 +87,18 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			"summary_ai_endpoint":      summaryAIEndpoint,
 			"summary_ai_model":         summaryAIModel,
 			"summary_ai_system_prompt": summaryAISystemPrompt,
+			"proxy_enabled":            proxyEnabled,
+			"proxy_type":               proxyType,
+			"proxy_host":                proxyHost,
+			"proxy_port":                proxyPort,
+			"proxy_username":            proxyUsername,
+			"proxy_password":            proxyPassword,
+			"google_translate_endpoint": googleTranslateEndpoint,
 		})
 	case http.MethodPost:
 		var req struct {
 			UpdateInterval        string `json:"update_interval"`
+			RefreshMode           string `json:"refresh_mode"`
 			TranslationEnabled    string `json:"translation_enabled"`
 			TargetLanguage        string `json:"target_language"`
 			TranslationProvider   string `json:"translation_provider"`
@@ -96,6 +119,9 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			Shortcuts             string `json:"shortcuts"`
 			Rules                 string `json:"rules"`
 			DefaultViewMode       string `json:"default_view_mode"`
+			MediaCacheEnabled     string `json:"media_cache_enabled"`
+			MediaCacheMaxSizeMB   string `json:"media_cache_max_size_mb"`
+			MediaCacheMaxAgeDays  string `json:"media_cache_max_age_days"`
 			SummaryEnabled        string `json:"summary_enabled"`
 			SummaryLength         string `json:"summary_length"`
 			SummaryProvider       string `json:"summary_provider"`
@@ -103,6 +129,13 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			SummaryAIEndpoint     string `json:"summary_ai_endpoint"`
 			SummaryAIModel        string `json:"summary_ai_model"`
 			SummaryAISystemPrompt string `json:"summary_ai_system_prompt"`
+			ProxyEnabled          string `json:"proxy_enabled"`
+			ProxyType             string `json:"proxy_type"`
+			ProxyHost             string `json:"proxy_host"`
+			ProxyPort               string `json:"proxy_port"`
+			ProxyUsername           string `json:"proxy_username"`
+			ProxyPassword           string `json:"proxy_password"`
+			GoogleTranslateEndpoint string `json:"google_translate_endpoint"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -110,6 +143,9 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		}
 		if req.UpdateInterval != "" {
 			h.DB.SetSetting("update_interval", req.UpdateInterval)
+		}
+		if req.RefreshMode != "" {
+			h.DB.SetSetting("refresh_mode", req.RefreshMode)
 		}
 		if req.TranslationEnabled != "" {
 			h.DB.SetSetting("translation_enabled", req.TranslationEnabled)
@@ -163,6 +199,18 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			h.DB.SetSetting("default_view_mode", req.DefaultViewMode)
 		}
 
+		if req.MediaCacheEnabled != "" {
+			h.DB.SetSetting("media_cache_enabled", req.MediaCacheEnabled)
+		}
+
+		if req.MediaCacheMaxSizeMB != "" {
+			h.DB.SetSetting("media_cache_max_size_mb", req.MediaCacheMaxSizeMB)
+		}
+
+		if req.MediaCacheMaxAgeDays != "" {
+			h.DB.SetSetting("media_cache_max_age_days", req.MediaCacheMaxAgeDays)
+		}
+
 		if req.SummaryEnabled != "" {
 			h.DB.SetSetting("summary_enabled", req.SummaryEnabled)
 		}
@@ -180,6 +228,21 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		h.DB.SetSetting("summary_ai_endpoint", req.SummaryAIEndpoint)
 		h.DB.SetSetting("summary_ai_model", req.SummaryAIModel)
 		h.DB.SetSetting("summary_ai_system_prompt", req.SummaryAISystemPrompt)
+
+		if req.ProxyEnabled != "" {
+			h.DB.SetSetting("proxy_enabled", req.ProxyEnabled)
+		}
+
+		// Always update proxy settings as they might be cleared
+		// TODO: Consider encrypting proxy credentials before storage for enhanced security
+		h.DB.SetSetting("proxy_type", req.ProxyType)
+		h.DB.SetSetting("proxy_host", req.ProxyHost)
+		h.DB.SetSetting("proxy_port", req.ProxyPort)
+		h.DB.SetSetting("proxy_username", req.ProxyUsername)
+		h.DB.SetSetting("proxy_password", req.ProxyPassword)
+
+		// Always update google_translate_endpoint as it might be reset to default
+		h.DB.SetSetting("google_translate_endpoint", req.GoogleTranslateEndpoint)
 
 		if req.StartupOnBoot != "" {
 			// Get current value to check if it changed

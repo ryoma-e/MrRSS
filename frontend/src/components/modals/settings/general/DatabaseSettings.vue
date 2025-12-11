@@ -1,6 +1,15 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { PhDatabase, PhBroom, PhHardDrive, PhCalendarX, PhEyeSlash } from '@phosphor-icons/vue';
+import {
+  PhDatabase,
+  PhBroom,
+  PhHardDrive,
+  PhCalendarX,
+  PhEyeSlash,
+  PhImage,
+  PhTrash,
+} from '@phosphor-icons/vue';
 import type { SettingsData } from '@/types/settings';
 
 const { t } = useI18n();
@@ -9,7 +18,53 @@ interface Props {
   settings: SettingsData;
 }
 
-defineProps<Props>();
+const { settings } = defineProps<Props>();
+
+const mediaCacheSize = ref<number>(0);
+const isCleaningCache = ref(false);
+
+// Fetch current media cache size
+async function fetchMediaCacheSize() {
+  try {
+    const response = await fetch('/api/media/info');
+    if (response.ok) {
+      const data = await response.json();
+      mediaCacheSize.value = data.cache_size_mb || 0;
+    }
+  } catch (error) {
+    console.error('Failed to fetch media cache size:', error);
+  }
+}
+
+// Clean media cache
+async function cleanMediaCache() {
+  isCleaningCache.value = true;
+  try {
+    const response = await fetch('/api/media/cleanup', { method: 'POST' });
+    if (response.ok) {
+      const data = await response.json();
+      window.showToast(
+        t('mediaCacheCleanup') + ': ' + data.files_cleaned + ' files removed',
+        'success'
+      );
+      await fetchMediaCacheSize();
+    } else {
+      window.showToast(t('errorCleaningDatabase'), 'error');
+    }
+  } catch (error) {
+    console.error('Failed to clean media cache:', error);
+    window.showToast(t('errorCleaningDatabase'), 'error');
+  } finally {
+    isCleaningCache.value = false;
+  }
+}
+
+onMounted(() => {
+  // Only fetch cache size if media cache is enabled
+  if (settings.media_cache_enabled) {
+    fetchMediaCacheSize();
+  }
+});
 </script>
 
 <template>
@@ -96,6 +151,92 @@ defineProps<Props>();
       </div>
       <input type="checkbox" v-model="settings.show_hidden_articles" class="toggle" />
     </div>
+
+    <div class="setting-item">
+      <div class="flex-1 flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">
+        <PhImage :size="20" class="text-text-secondary mt-0.5 shrink-0 sm:w-6 sm:h-6" />
+        <div class="flex-1 min-w-0">
+          <div class="font-medium mb-0 sm:mb-1 text-sm sm:text-base">
+            {{ t('mediaCacheEnabled') }}
+          </div>
+          <div class="text-xs text-text-secondary hidden sm:block">
+            {{ t('mediaCacheEnabledDesc') }}
+          </div>
+        </div>
+      </div>
+      <input type="checkbox" v-model="settings.media_cache_enabled" class="toggle" />
+    </div>
+
+    <div
+      v-if="settings.media_cache_enabled"
+      class="ml-2 sm:ml-4 mt-2 sm:mt-3 space-y-2 sm:space-y-3 border-l-2 border-border pl-2 sm:pl-4"
+    >
+      <div class="sub-setting-item">
+        <div class="flex-1 flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">
+          <PhHardDrive :size="20" class="text-text-secondary mt-0.5 shrink-0 sm:w-6 sm:h-6" />
+          <div class="flex-1 min-w-0">
+            <div class="font-medium mb-0 sm:mb-1 text-sm">{{ t('mediaCacheMaxSize') }}</div>
+            <div class="text-xs text-text-secondary hidden sm:block">
+              {{ t('mediaCacheMaxSizeDesc') }}
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+          <input
+            type="number"
+            v-model="settings.media_cache_max_size_mb"
+            min="10"
+            max="1000"
+            class="input-field w-14 sm:w-20 text-center text-xs sm:text-sm"
+          />
+          <span class="text-xs sm:text-sm text-text-secondary">MB</span>
+        </div>
+      </div>
+
+      <div class="sub-setting-item">
+        <div class="flex-1 flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">
+          <PhCalendarX :size="20" class="text-text-secondary mt-0.5 shrink-0 sm:w-6 sm:h-6" />
+          <div class="flex-1 min-w-0">
+            <div class="font-medium mb-0 sm:mb-1 text-sm">{{ t('mediaCacheMaxAge') }}</div>
+            <div class="text-xs text-text-secondary hidden sm:block">
+              {{ t('mediaCacheMaxAgeDesc') }}
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+          <input
+            type="number"
+            v-model="settings.media_cache_max_age_days"
+            min="1"
+            max="90"
+            class="input-field w-14 sm:w-20 text-center text-xs sm:text-sm"
+          />
+          <span class="text-xs sm:text-sm text-text-secondary">{{ t('days') }}</span>
+        </div>
+      </div>
+
+      <div class="sub-setting-item">
+        <div class="flex-1 flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">
+          <PhTrash :size="20" class="text-text-secondary mt-0.5 shrink-0 sm:w-6 sm:h-6" />
+          <div class="flex-1 min-w-0">
+            <div class="font-medium mb-0 sm:mb-1 text-sm">{{ t('mediaCacheCleanup') }}</div>
+            <div class="text-xs text-text-secondary hidden sm:block">
+              {{ t('mediaCacheCleanupDesc') }}
+            </div>
+            <div class="text-xs text-text-secondary mt-1">
+              {{ t('currentCacheSize') }}: {{ mediaCacheSize.toFixed(2) }} MB
+            </div>
+          </div>
+        </div>
+        <button
+          @click="cleanMediaCache"
+          :disabled="isCleaningCache"
+          class="btn-secondary text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5"
+        >
+          {{ isCleaningCache ? t('cleaning') : t('cleanupMediaCache') }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -118,5 +259,11 @@ defineProps<Props>();
 }
 .sub-setting-item {
   @apply flex items-center sm:items-start justify-between gap-2 sm:gap-4 p-2 sm:p-2.5 rounded-md bg-bg-tertiary;
+}
+.btn-secondary {
+  @apply bg-bg-tertiary hover:bg-bg-secondary border border-border text-text-primary rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.setting-group {
+  @apply space-y-2 sm:space-y-3;
 }
 </style>

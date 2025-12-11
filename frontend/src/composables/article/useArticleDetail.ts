@@ -3,6 +3,7 @@ import { useAppStore } from '@/stores/app';
 import { useI18n } from 'vue-i18n';
 import { BrowserOpenURL } from '@/wailsjs/wailsjs/runtime/runtime';
 import type { Article } from '@/types/models';
+import { proxyImagesInHtml, isMediaCacheEnabled } from '@/utils/mediaProxy';
 
 type ViewMode = 'original' | 'rendered';
 type RenderAction = 'showContent' | 'showOriginal' | null;
@@ -145,7 +146,16 @@ export function useArticleDetail() {
       const res = await fetch(`/api/articles/content?id=${article.value.id}`);
       if (res.ok) {
         const data = await res.json();
-        articleContent.value = data.content || '';
+        let content = data.content || '';
+
+        // Proxy images if media cache is enabled
+        const cacheEnabled = await isMediaCacheEnabled();
+        if (cacheEnabled && content) {
+          // Use article URL as referer for anti-hotlinking
+          content = proxyImagesInHtml(content, article.value.url);
+        }
+
+        articleContent.value = content;
         // Wait for DOM to update, then attach event listeners
         await nextTick();
         attachContentEventListeners();

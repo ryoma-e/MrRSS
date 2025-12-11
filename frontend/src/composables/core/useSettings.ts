@@ -12,6 +12,7 @@ export function useSettings() {
 
   const settings: Ref<SettingsData> = ref({
     update_interval: settingsDefaults.update_interval,
+    refresh_mode: settingsDefaults.refresh_mode,
     translation_enabled: settingsDefaults.translation_enabled,
     target_language: settingsDefaults.target_language,
     translation_provider: settingsDefaults.translation_provider,
@@ -24,6 +25,9 @@ export function useSettings() {
     last_article_update: settingsDefaults.last_article_update,
     show_hidden_articles: settingsDefaults.show_hidden_articles,
     default_view_mode: settingsDefaults.default_view_mode,
+    media_cache_enabled: settingsDefaults.media_cache_enabled,
+    media_cache_max_size_mb: settingsDefaults.media_cache_max_size_mb,
+    media_cache_max_age_days: settingsDefaults.media_cache_max_age_days,
     startup_on_boot: settingsDefaults.startup_on_boot,
     shortcuts: settingsDefaults.shortcuts,
     rules: settingsDefaults.rules,
@@ -40,6 +44,13 @@ export function useSettings() {
     ai_endpoint: settingsDefaults.ai_endpoint,
     ai_model: settingsDefaults.ai_model,
     ai_system_prompt: settingsDefaults.ai_system_prompt,
+    proxy_enabled: settingsDefaults.proxy_enabled,
+    proxy_type: settingsDefaults.proxy_type,
+    proxy_host: settingsDefaults.proxy_host,
+    proxy_port: settingsDefaults.proxy_port,
+    proxy_username: settingsDefaults.proxy_username,
+    proxy_password: settingsDefaults.proxy_password,
+    google_translate_endpoint: settingsDefaults.google_translate_endpoint,
   });
 
   /**
@@ -51,7 +62,8 @@ export function useSettings() {
       const data = await res.json();
 
       settings.value = {
-        update_interval: data.update_interval || settingsDefaults.update_interval,
+        update_interval: parseInt(data.update_interval) || settingsDefaults.update_interval,
+        refresh_mode: data.refresh_mode || settingsDefaults.refresh_mode,
         translation_enabled: data.translation_enabled === 'true',
         target_language: data.target_language || settingsDefaults.target_language,
         translation_provider: data.translation_provider || settingsDefaults.translation_provider,
@@ -65,6 +77,11 @@ export function useSettings() {
         last_article_update: data.last_article_update || settingsDefaults.last_article_update,
         show_hidden_articles: data.show_hidden_articles === 'true',
         default_view_mode: data.default_view_mode || settingsDefaults.default_view_mode,
+        media_cache_enabled: data.media_cache_enabled === 'true',
+        media_cache_max_size_mb:
+          parseInt(data.media_cache_max_size_mb) || settingsDefaults.media_cache_max_size_mb,
+        media_cache_max_age_days:
+          parseInt(data.media_cache_max_age_days) || settingsDefaults.media_cache_max_age_days,
         startup_on_boot: data.startup_on_boot === 'true',
         shortcuts: data.shortcuts || settingsDefaults.shortcuts,
         rules: data.rules || settingsDefaults.rules,
@@ -82,6 +99,14 @@ export function useSettings() {
         ai_endpoint: data.ai_endpoint || settingsDefaults.ai_endpoint,
         ai_model: data.ai_model || settingsDefaults.ai_model,
         ai_system_prompt: data.ai_system_prompt || settingsDefaults.ai_system_prompt,
+        proxy_enabled: data.proxy_enabled === 'true',
+        proxy_type: data.proxy_type || settingsDefaults.proxy_type,
+        proxy_host: data.proxy_host || settingsDefaults.proxy_host,
+        proxy_port: data.proxy_port || settingsDefaults.proxy_port,
+        proxy_username: data.proxy_username || settingsDefaults.proxy_username,
+        proxy_password: data.proxy_password || settingsDefaults.proxy_password,
+        google_translate_endpoint:
+          data.google_translate_endpoint || settingsDefaults.google_translate_endpoint,
       };
 
       return settings.value;

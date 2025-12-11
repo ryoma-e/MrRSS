@@ -1,15 +1,17 @@
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhEyeSlash, PhStar, PhClockCountdown } from '@phosphor-icons/vue';
 import type { Article } from '@/types/models';
 import { formatDate as formatDateUtil } from '@/utils/date';
+import { getProxiedMediaUrl, isMediaCacheEnabled } from '@/utils/mediaProxy';
 
 interface Props {
   article: Article;
   isActive: boolean;
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
   click: [];
@@ -19,6 +21,15 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n();
 
+const mediaCacheEnabled = ref(false);
+const imageUrl = computed(() => {
+  if (!props.article.image_url) return '';
+  if (mediaCacheEnabled.value) {
+    return getProxiedMediaUrl(props.article.image_url, props.article.url);
+  }
+  return props.article.image_url;
+});
+
 function formatDate(dateStr: string): string {
   return formatDateUtil(dateStr, locale.value === 'zh-CN' ? 'zh-CN' : 'en-US');
 }
@@ -27,6 +38,10 @@ function handleImageError(event: Event) {
   const target = event.target as HTMLImageElement;
   target.style.display = 'none';
 }
+
+onMounted(async () => {
+  mediaCacheEnabled.value = await isMediaCacheEnabled();
+});
 </script>
 
 <template>
@@ -46,7 +61,7 @@ function handleImageError(event: Event) {
   >
     <img
       v-if="article.image_url"
-      :src="article.image_url"
+      :src="imageUrl"
       class="w-16 h-12 sm:w-20 sm:h-[60px] object-cover rounded bg-bg-tertiary shrink-0 border border-border"
       @error="handleImageError"
     />

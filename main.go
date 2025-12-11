@@ -21,6 +21,7 @@ import (
 	handlers "MrRSS/internal/handlers/core"
 	discovery "MrRSS/internal/handlers/discovery"
 	feedhandlers "MrRSS/internal/handlers/feed"
+	media "MrRSS/internal/handlers/media"
 	opml "MrRSS/internal/handlers/opml"
 	rules "MrRSS/internal/handlers/rules"
 	script "MrRSS/internal/handlers/script"
@@ -135,6 +136,9 @@ func main() {
 	apiMux.HandleFunc("/api/scripts/dir", func(w http.ResponseWriter, r *http.Request) { script.HandleGetScriptsDir(h, w, r) })
 	apiMux.HandleFunc("/api/scripts/open", func(w http.ResponseWriter, r *http.Request) { script.HandleOpenScriptsDir(h, w, r) })
 	apiMux.HandleFunc("/api/scripts/list", func(w http.ResponseWriter, r *http.Request) { script.HandleListScripts(h, w, r) })
+	apiMux.HandleFunc("/api/media/proxy", func(w http.ResponseWriter, r *http.Request) { media.HandleMediaProxy(h, w, r) })
+	apiMux.HandleFunc("/api/media/cleanup", func(w http.ResponseWriter, r *http.Request) { media.HandleMediaCacheCleanup(h, w, r) })
+	apiMux.HandleFunc("/api/media/info", func(w http.ResponseWriter, r *http.Request) { media.HandleMediaCacheInfo(h, w, r) })
 
 	// Static Files
 	log.Println("Setting up static files...")

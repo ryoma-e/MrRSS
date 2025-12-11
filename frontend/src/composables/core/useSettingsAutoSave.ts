@@ -73,6 +73,7 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
           update_interval: (
             settings.value.update_interval ?? settingsDefaults.update_interval
           ).toString(),
+          refresh_mode: settings.value.refresh_mode ?? settingsDefaults.refresh_mode,
           translation_enabled: (
             settings.value.translation_enabled ?? settingsDefaults.translation_enabled
           ).toString(),
@@ -101,6 +102,15 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
             settings.value.show_hidden_articles ?? settingsDefaults.show_hidden_articles
           ).toString(),
           default_view_mode: settings.value.default_view_mode ?? settingsDefaults.default_view_mode,
+          media_cache_enabled: (
+            settings.value.media_cache_enabled ?? settingsDefaults.media_cache_enabled
+          ).toString(),
+          media_cache_max_size_mb: (
+            settings.value.media_cache_max_size_mb ?? settingsDefaults.media_cache_max_size_mb
+          ).toString(),
+          media_cache_max_age_days: (
+            settings.value.media_cache_max_age_days ?? settingsDefaults.media_cache_max_age_days
+          ).toString(),
           startup_on_boot: (
             settings.value.startup_on_boot ?? settingsDefaults.startup_on_boot
           ).toString(),
@@ -117,6 +127,16 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
           summary_ai_model: settings.value.summary_ai_model ?? settingsDefaults.summary_ai_model,
           summary_ai_system_prompt:
             settings.value.summary_ai_system_prompt ?? settingsDefaults.summary_ai_system_prompt,
+          proxy_enabled: (
+            settings.value.proxy_enabled ?? settingsDefaults.proxy_enabled
+          ).toString(),
+          proxy_type: settings.value.proxy_type ?? settingsDefaults.proxy_type,
+          proxy_host: settings.value.proxy_host ?? settingsDefaults.proxy_host,
+          proxy_port: settings.value.proxy_port ?? settingsDefaults.proxy_port,
+          proxy_username: settings.value.proxy_username ?? settingsDefaults.proxy_username,
+          proxy_password: settings.value.proxy_password ?? settingsDefaults.proxy_password,
+          google_translate_endpoint:
+            settings.value.google_translate_endpoint ?? settingsDefaults.google_translate_endpoint,
         }),
       });
 
