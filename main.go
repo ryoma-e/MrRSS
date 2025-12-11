@@ -62,6 +62,14 @@ func main() {
 	log.SetOutput(f)
 
 	log.Println("Starting application...")
+
+	// Log portable mode status
+	if utils.IsPortableMode() {
+		log.Println("Running in PORTABLE mode")
+	} else {
+		log.Println("Running in NORMAL mode")
+	}
+
 	log.Printf("Log file: %s", logPath)
 
 	// Get database path

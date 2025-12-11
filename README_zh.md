@@ -41,9 +41,17 @@
 
 从 [Releases](https://github.com/WCY-dt/MrRSS/releases/latest) 页面下载适合您平台的最新安装包：
 
+**标准安装版：**
+
 - **Windows:** `MrRSS-{version}-windows-amd64-installer.exe` / `MrRSS-{version}-windows-arm64-installer.exe`
 - **macOS:** `MrRSS-{version}-darwin-universal.dmg`
 - **Linux:** `MrRSS-{version}-linux-amd64.AppImage` / `MrRSS-{version}-linux-arm64.AppImage`
+
+**便携版**（无需安装，所有数据在一个文件夹内）：
+
+- **Windows:** `MrRSS-{version}-windows-{arch}-portable.zip`
+- **Linux:** `MrRSS-{version}-linux-{arch}-portable.tar.gz`
+- **macOS:** `MrRSS-{version}-darwin-{arch}-portable.zip`
 
 #### 选项 2: 源码构建
 
@@ -112,11 +120,15 @@ sudo apt-get install libgtk-3-dev libwebkit2gtk-4.1-dev gcc pkg-config
 
 ### 数据存储
 
-MrRSS 将所有用户数据（数据库、设置）存储在特定平台的目录中：
+**正常模式**（默认）：
 
 - **Windows:** `%APPDATA%\MrRSS\` (例如 `C:\Users\YourName\AppData\Roaming\MrRSS\`)
 - **macOS:** `~/Library/Application Support/MrRSS/`
 - **Linux:** `~/.local/share/MrRSS/`
+
+**便携模式**（当 `portable.txt` 文件存在时）：
+
+- 所有数据存储在 `data/` 文件夹中
 
 这确保了您的数据在应用更新和重新安装时得以保留。
 

@@ -41,9 +41,17 @@
 
 Download the latest installer for your platform from the [Releases](https://github.com/WCY-dt/MrRSS/releases/latest) page:
 
+**Standard Installation:**
+
 - **Windows:** `MrRSS-{version}-windows-amd64-installer.exe` / `MrRSS-{version}-windows-arm64-installer.exe`
 - **macOS:** `MrRSS-{version}-darwin-universal.dmg`
 - **Linux:** `MrRSS-{version}-linux-amd64.AppImage` / `MrRSS-{version}-linux-arm64.AppImage`
+
+**Portable Version** (no installation required, all data in one folder):
+
+- **Windows:** `MrRSS-{version}-windows-{arch}-portable.zip`
+- **Linux:** `MrRSS-{version}-linux-{arch}-portable.tar.gz`
+- **macOS:** `MrRSS-{version}-darwin-{arch}-portable.zip`
 
 #### Option 2: Build from Source
 
@@ -112,11 +120,15 @@ sudo apt-get install libgtk-3-dev libwebkit2gtk-4.1-dev gcc pkg-config
 
 ### Data Storage
 
-MrRSS stores all user data (database, settings) in platform-specific directories:
+**Normal Mode** (default):
 
 - **Windows:** `%APPDATA%\MrRSS\` (e.g., `C:\Users\YourName\AppData\Roaming\MrRSS\`)
 - **macOS:** `~/Library/Application Support/MrRSS/`
 - **Linux:** `~/.local/share/MrRSS/`
+
+**Portable Mode** (when `portable.txt` exists):
+
+- All data stored in `data/` folder
 
 This ensures your data persists across application updates and reinstalls.
 
