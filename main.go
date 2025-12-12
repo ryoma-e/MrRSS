@@ -8,12 +8,14 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"MrRSS/internal/database"
 	"MrRSS/internal/feed"
@@ -30,11 +32,35 @@ import (
 	translationhandlers "MrRSS/internal/handlers/translation"
 	update "MrRSS/internal/handlers/update"
 	"MrRSS/internal/translation"
+	"MrRSS/internal/tray"
 	"MrRSS/internal/utils"
 )
 
 //go:embed frontend/dist/*
 var frontendFiles embed.FS
+
+//go:embed build/appicon.png
+var trayIconPNG []byte
+
+//go:embed build/windows/icon.ico
+var trayIconICO []byte
+
+type windowState struct {
+	width  int
+	height int
+	x      int
+	y      int
+	valid  atomic.Bool
+}
+
+// getTrayIcon returns the appropriate icon bytes for the current platform
+func getTrayIcon() []byte {
+	// Windows requires .ico format, other platforms use .png
+	if utils.IsWindows() {
+		return trayIconICO
+	}
+	return trayIconPNG
+}
 
 type CombinedHandler struct {
 	apiMux     *http.ServeMux
@@ -100,6 +126,12 @@ func main() {
 	fetcher := feed.NewFetcher(db, translator)
 	h := handlers.NewHandler(db, fetcher, translator)
 
+	// Use platform-specific icon format
+	trayIconBytes := getTrayIcon()
+	trayManager := tray.NewManager(h, trayIconBytes)
+	var quitRequested atomic.Bool
+	var lastWindowState windowState
+
 	// API Routes
 	log.Println("Setting up API routes...")
 	apiMux := http.NewServeMux()
@@ -162,6 +194,43 @@ func main() {
 		fileServer: fileServer,
 	}
 
+	shouldCloseToTray := func() bool {
+		val, err := db.GetSetting("close_to_tray")
+		return err == nil && val == "true"
+	}
+
+	startTray := func(ctx context.Context) {
+		if trayManager == nil || trayManager.IsRunning() {
+			return
+		}
+		trayManager.Start(ctx, func() {
+			quitRequested.Store(true)
+			runtime.Quit(ctx)
+		}, func() {
+			if lastWindowState.valid.Load() {
+				runtime.WindowSetSize(ctx, lastWindowState.width, lastWindowState.height)
+				runtime.WindowSetPosition(ctx, lastWindowState.x, lastWindowState.y)
+			}
+			runtime.WindowShow(ctx)
+			runtime.WindowUnminimise(ctx)
+		})
+	}
+
+	storeWindowState := func(ctx context.Context) {
+		if ctx == nil {
+			return
+		}
+
+		w, h := runtime.WindowGetSize(ctx)
+		lastWindowState.width = w
+		lastWindowState.height = h
+
+		x, y := runtime.WindowGetPosition(ctx)
+		lastWindowState.x = x
+		lastWindowState.y = y
+		lastWindowState.valid.Store(true)
+	}
+
 	// Start background scheduler
 	log.Println("Starting background scheduler...")
 	bgCtx, bgCancel := context.WithCancel(context.Background())
@@ -180,6 +249,10 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 1},
 		OnShutdown: func(ctx context.Context) {
 			log.Println("Shutting down...")
+
+			if trayManager != nil {
+				trayManager.Stop()
+			}
 
 			// Stop background tasks first
 			bgCancel()
@@ -205,12 +278,35 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			log.Println("App started")
 
+			if shouldCloseToTray() {
+				startTray(ctx)
+			}
+
 			// Start background scheduler after a longer delay to allow UI to show first
 			go func() {
 				time.Sleep(5 * time.Second)
 				log.Println("Starting background scheduler...")
 				h.StartBackgroundScheduler(bgCtx)
 			}()
+		},
+		OnBeforeClose: func(ctx context.Context) bool {
+			if quitRequested.Load() {
+				return false
+			}
+
+			if shouldCloseToTray() {
+				storeWindowState(ctx)
+				// Fallback start in case tray failed to start on startup
+				startTray(ctx)
+				if trayManager != nil && trayManager.IsRunning() {
+					runtime.WindowHide(ctx)
+				} else {
+					runtime.WindowMinimise(ctx)
+				}
+				return true
+			}
+
+			return false
 		},
 	})
 

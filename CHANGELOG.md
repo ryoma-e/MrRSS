@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Supported portable mode for running MrRSS from USB drives with all data stored in a single folder.
+- Supported minimizing to system tray on close action.
 - Supported hiding preview images in article list for a more compact view.
 
 ### Fixed

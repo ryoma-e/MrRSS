@@ -114,6 +114,9 @@ export function useSettingsAutoSave(settings: Ref<SettingsData>) {
           startup_on_boot: (
             settings.value.startup_on_boot ?? settingsDefaults.startup_on_boot
           ).toString(),
+          close_to_tray: (
+            settings.value.close_to_tray ?? settingsDefaults.close_to_tray
+          ).toString(),
           shortcuts: settings.value.shortcuts ?? settingsDefaults.shortcuts,
           summary_enabled: (
             settings.value.summary_enabled ?? settingsDefaults.summary_enabled

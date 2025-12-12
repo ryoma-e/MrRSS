@@ -149,6 +149,8 @@ const en: TranslationMessages = {
   showArticlePreviewImagesDesc: 'Display preview images in the article list',
   startupOnBoot: 'Start on System Boot',
   startupOnBootDesc: 'Automatically start MrRSS when your computer starts',
+  closeToTray: 'Minimize to Tray on Close',
+  closeToTrayDesc: 'Hide the window to the system tray instead of quitting',
   database: 'Database',
   autoCleanup: 'Auto Cleanup',
   autoCleanupDesc: 'Automatically remove old articles to save space',

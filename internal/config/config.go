@@ -20,6 +20,7 @@ type Defaults struct {
 	Theme                    string `json:"theme"`
 	DefaultViewMode          string `json:"default_view_mode"`
 	StartupOnBoot            bool   `json:"startup_on_boot"`
+	CloseToTray              bool   `json:"close_to_tray"`
 	ShowHiddenArticles       bool   `json:"show_hidden_articles"`
 	TranslationEnabled       bool   `json:"translation_enabled"`
 	TargetLanguage           string `json:"target_language"`
@@ -85,6 +86,8 @@ func GetString(key string) string {
 		return defaults.DefaultViewMode
 	case "startup_on_boot":
 		return strconv.FormatBool(defaults.StartupOnBoot)
+	case "close_to_tray":
+		return strconv.FormatBool(defaults.CloseToTray)
 	case "show_hidden_articles":
 		return strconv.FormatBool(defaults.ShowHiddenArticles)
 	case "translation_enabled":

@@ -33,6 +33,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		lastUpdate, _ := h.DB.GetSetting("last_article_update")
 		showHidden, _ := h.DB.GetSetting("show_hidden_articles")
 		startupOnBoot, _ := h.DB.GetSetting("startup_on_boot")
+		closeToTray, _ := h.DB.GetSetting("close_to_tray")
 		shortcuts, _ := h.DB.GetSetting("shortcuts")
 		rules, _ := h.DB.GetSetting("rules")
 		defaultViewMode, _ := h.DB.GetSetting("default_view_mode")
@@ -75,6 +76,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			"last_article_update":         lastUpdate,
 			"show_hidden_articles":        showHidden,
 			"startup_on_boot":             startupOnBoot,
+			"close_to_tray":               closeToTray,
 			"shortcuts":                   shortcuts,
 			"rules":                       rules,
 			"default_view_mode":           defaultViewMode,
@@ -118,6 +120,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			Theme                    string `json:"theme"`
 			ShowHiddenArticles       string `json:"show_hidden_articles"`
 			StartupOnBoot            string `json:"startup_on_boot"`
+			CloseToTray              string `json:"close_to_tray"`
 			Shortcuts                string `json:"shortcuts"`
 			Rules                    string `json:"rules"`
 			DefaultViewMode          string `json:"default_view_mode"`
@@ -190,6 +193,10 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 
 		if req.ShowHiddenArticles != "" {
 			h.DB.SetSetting("show_hidden_articles", req.ShowHiddenArticles)
+		}
+
+		if req.CloseToTray != "" {
+			h.DB.SetSetting("close_to_tray", req.CloseToTray)
 		}
 
 		// Always update shortcuts as it might be cleared or modified

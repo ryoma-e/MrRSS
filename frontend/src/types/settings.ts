@@ -27,6 +27,7 @@ export interface SettingsData {
   show_hidden_articles: boolean;
   default_view_mode: string;
   startup_on_boot: boolean;
+  close_to_tray: boolean;
   shortcuts: string;
   rules: string;
   summary_enabled: boolean;

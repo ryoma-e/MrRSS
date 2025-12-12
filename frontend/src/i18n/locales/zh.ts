@@ -146,6 +146,8 @@ const zh: TranslationMessages = {
   showArticlePreviewImagesDesc: '在文章列表中显示预览图片',
   startupOnBoot: '开机自启动',
   startupOnBootDesc: '电脑启动时自动启动 MrRSS',
+  closeToTray: '关闭时最小化到托盘',
+  closeToTrayDesc: '点击关闭时隐藏到系统托盘并继续运行',
   database: '数据库',
   autoCleanup: '自动清理',
   autoCleanupDesc: '自动删除旧文章以节省空间',
