@@ -54,91 +54,94 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		proxyUsername, _ := h.DB.GetSetting("proxy_username")
 		proxyPassword, _ := h.DB.GetSetting("proxy_password")
 		googleTranslateEndpoint, _ := h.DB.GetSetting("google_translate_endpoint")
+		showArticlePreviewImages, _ := h.DB.GetSetting("show_article_preview_images")
 		json.NewEncoder(w).Encode(map[string]string{
-			"update_interval":           interval,
-			"refresh_mode":              refreshMode,
-			"translation_enabled":       translationEnabled,
-			"target_language":           targetLang,
-			"translation_provider":      provider,
-			"deepl_api_key":             apiKey,
-			"baidu_app_id":              baiduAppID,
-			"baidu_secret_key":          baiduSecretKey,
-			"ai_api_key":                aiAPIKey,
-			"ai_endpoint":               aiEndpoint,
-			"ai_model":                  aiModel,
-			"ai_system_prompt":          aiSystemPrompt,
-			"auto_cleanup_enabled":      autoCleanup,
-			"max_cache_size_mb":         maxCacheSize,
-			"max_article_age_days":      maxArticleAge,
-			"language":                  language,
-			"theme":                     theme,
-			"last_article_update":       lastUpdate,
-			"show_hidden_articles":      showHidden,
-			"startup_on_boot":           startupOnBoot,
-			"close_to_tray":             closeToTray,
-			"shortcuts":                 shortcuts,
-			"rules":                     rules,
-			"default_view_mode":         defaultViewMode,
-			"media_cache_enabled":       mediaCacheEnabled,
-			"media_cache_max_size_mb":   mediaCacheMaxSizeMB,
-			"media_cache_max_age_days":  mediaCacheMaxAgeDays,
-			"summary_enabled":           summaryEnabled,
-			"summary_length":            summaryLength,
-			"summary_provider":          summaryProvider,
-			"summary_ai_api_key":        summaryAIAPIKey,
-			"summary_ai_endpoint":       summaryAIEndpoint,
-			"summary_ai_model":          summaryAIModel,
-			"summary_ai_system_prompt":  summaryAISystemPrompt,
-			"proxy_enabled":             proxyEnabled,
-			"proxy_type":                proxyType,
-			"proxy_host":                proxyHost,
-			"proxy_port":                proxyPort,
-			"proxy_username":            proxyUsername,
-			"proxy_password":            proxyPassword,
-			"google_translate_endpoint": googleTranslateEndpoint,
+			"update_interval":             interval,
+			"refresh_mode":                refreshMode,
+			"translation_enabled":         translationEnabled,
+			"target_language":             targetLang,
+			"translation_provider":        provider,
+			"deepl_api_key":               apiKey,
+			"baidu_app_id":                baiduAppID,
+			"baidu_secret_key":            baiduSecretKey,
+			"ai_api_key":                  aiAPIKey,
+			"ai_endpoint":                 aiEndpoint,
+			"ai_model":                    aiModel,
+			"ai_system_prompt":            aiSystemPrompt,
+			"auto_cleanup_enabled":        autoCleanup,
+			"max_cache_size_mb":           maxCacheSize,
+			"max_article_age_days":        maxArticleAge,
+			"language":                    language,
+			"theme":                       theme,
+			"last_article_update":         lastUpdate,
+			"show_hidden_articles":        showHidden,
+			"startup_on_boot":             startupOnBoot,
+			"close_to_tray":               closeToTray,
+			"shortcuts":                   shortcuts,
+			"rules":                       rules,
+			"default_view_mode":           defaultViewMode,
+			"media_cache_enabled":         mediaCacheEnabled,
+			"media_cache_max_size_mb":     mediaCacheMaxSizeMB,
+			"media_cache_max_age_days":    mediaCacheMaxAgeDays,
+			"summary_enabled":             summaryEnabled,
+			"summary_length":              summaryLength,
+			"summary_provider":            summaryProvider,
+			"summary_ai_api_key":          summaryAIAPIKey,
+			"summary_ai_endpoint":         summaryAIEndpoint,
+			"summary_ai_model":            summaryAIModel,
+			"summary_ai_system_prompt":    summaryAISystemPrompt,
+			"proxy_enabled":               proxyEnabled,
+			"proxy_type":                  proxyType,
+			"proxy_host":                  proxyHost,
+			"proxy_port":                  proxyPort,
+			"proxy_username":              proxyUsername,
+			"proxy_password":              proxyPassword,
+			"google_translate_endpoint":   googleTranslateEndpoint,
+			"show_article_preview_images": showArticlePreviewImages,
 		})
 	case http.MethodPost:
 		var req struct {
-			UpdateInterval          string `json:"update_interval"`
-			RefreshMode             string `json:"refresh_mode"`
-			TranslationEnabled      string `json:"translation_enabled"`
-			TargetLanguage          string `json:"target_language"`
-			TranslationProvider     string `json:"translation_provider"`
-			DeepLAPIKey             string `json:"deepl_api_key"`
-			BaiduAppID              string `json:"baidu_app_id"`
-			BaiduSecretKey          string `json:"baidu_secret_key"`
-			AIAPIKey                string `json:"ai_api_key"`
-			AIEndpoint              string `json:"ai_endpoint"`
-			AIModel                 string `json:"ai_model"`
-			AISystemPrompt          string `json:"ai_system_prompt"`
-			AutoCleanupEnabled      string `json:"auto_cleanup_enabled"`
-			MaxCacheSizeMB          string `json:"max_cache_size_mb"`
-			MaxArticleAgeDays       string `json:"max_article_age_days"`
-			Language                string `json:"language"`
-			Theme                   string `json:"theme"`
-			ShowHiddenArticles      string `json:"show_hidden_articles"`
-			StartupOnBoot           string `json:"startup_on_boot"`
-			CloseToTray             string `json:"close_to_tray"`
-			Shortcuts               string `json:"shortcuts"`
-			Rules                   string `json:"rules"`
-			DefaultViewMode         string `json:"default_view_mode"`
-			MediaCacheEnabled       string `json:"media_cache_enabled"`
-			MediaCacheMaxSizeMB     string `json:"media_cache_max_size_mb"`
-			MediaCacheMaxAgeDays    string `json:"media_cache_max_age_days"`
-			SummaryEnabled          string `json:"summary_enabled"`
-			SummaryLength           string `json:"summary_length"`
-			SummaryProvider         string `json:"summary_provider"`
-			SummaryAIAPIKey         string `json:"summary_ai_api_key"`
-			SummaryAIEndpoint       string `json:"summary_ai_endpoint"`
-			SummaryAIModel          string `json:"summary_ai_model"`
-			SummaryAISystemPrompt   string `json:"summary_ai_system_prompt"`
-			ProxyEnabled            string `json:"proxy_enabled"`
-			ProxyType               string `json:"proxy_type"`
-			ProxyHost               string `json:"proxy_host"`
-			ProxyPort               string `json:"proxy_port"`
-			ProxyUsername           string `json:"proxy_username"`
-			ProxyPassword           string `json:"proxy_password"`
-			GoogleTranslateEndpoint string `json:"google_translate_endpoint"`
+			UpdateInterval           string `json:"update_interval"`
+			RefreshMode              string `json:"refresh_mode"`
+			TranslationEnabled       string `json:"translation_enabled"`
+			TargetLanguage           string `json:"target_language"`
+			TranslationProvider      string `json:"translation_provider"`
+			DeepLAPIKey              string `json:"deepl_api_key"`
+			BaiduAppID               string `json:"baidu_app_id"`
+			BaiduSecretKey           string `json:"baidu_secret_key"`
+			AIAPIKey                 string `json:"ai_api_key"`
+			AIEndpoint               string `json:"ai_endpoint"`
+			AIModel                  string `json:"ai_model"`
+			AISystemPrompt           string `json:"ai_system_prompt"`
+			AutoCleanupEnabled       string `json:"auto_cleanup_enabled"`
+			MaxCacheSizeMB           string `json:"max_cache_size_mb"`
+			MaxArticleAgeDays        string `json:"max_article_age_days"`
+			Language                 string `json:"language"`
+			Theme                    string `json:"theme"`
+			ShowHiddenArticles       string `json:"show_hidden_articles"`
+			StartupOnBoot            string `json:"startup_on_boot"`
+			CloseToTray              string `json:"close_to_tray"`
+			Shortcuts                string `json:"shortcuts"`
+			Rules                    string `json:"rules"`
+			DefaultViewMode          string `json:"default_view_mode"`
+			MediaCacheEnabled        string `json:"media_cache_enabled"`
+			MediaCacheMaxSizeMB      string `json:"media_cache_max_size_mb"`
+			MediaCacheMaxAgeDays     string `json:"media_cache_max_age_days"`
+			SummaryEnabled           string `json:"summary_enabled"`
+			SummaryLength            string `json:"summary_length"`
+			SummaryProvider          string `json:"summary_provider"`
+			SummaryAIAPIKey          string `json:"summary_ai_api_key"`
+			SummaryAIEndpoint        string `json:"summary_ai_endpoint"`
+			SummaryAIModel           string `json:"summary_ai_model"`
+			SummaryAISystemPrompt    string `json:"summary_ai_system_prompt"`
+			ProxyEnabled             string `json:"proxy_enabled"`
+			ProxyType                string `json:"proxy_type"`
+			ProxyHost                string `json:"proxy_host"`
+			ProxyPort                string `json:"proxy_port"`
+			ProxyUsername            string `json:"proxy_username"`
+			ProxyPassword            string `json:"proxy_password"`
+			GoogleTranslateEndpoint  string `json:"google_translate_endpoint"`
+			ShowArticlePreviewImages string `json:"show_article_preview_images"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -250,6 +253,10 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 
 		// Always update google_translate_endpoint as it might be reset to default
 		h.DB.SetSetting("google_translate_endpoint", req.GoogleTranslateEndpoint)
+
+		if req.ShowArticlePreviewImages != "" {
+			h.DB.SetSetting("show_article_preview_images", req.ShowArticlePreviewImages)
+		}
 
 		if req.StartupOnBoot != "" {
 			// Get current value to check if it changed

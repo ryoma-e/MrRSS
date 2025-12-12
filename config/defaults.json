@@ -39,5 +39,6 @@
   "shortcuts": "",
   "rules": "",
   "last_article_update": "",
-  "google_translate_endpoint": "translate.googleapis.com"
+  "google_translate_endpoint": "translate.googleapis.com",
+  "show_article_preview_images": true
 }

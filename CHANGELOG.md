@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Supported portable mode for running MrRSS from USB drives with all data stored in a single folder.
 - Supported minimizing to system tray on close action.
+- Supported hiding preview images in article list for a more compact view.
+
+### Fixed
+
+- Fixed the issue where some images wrapped in links can not be operated correctly.
+- Fixed the issue where single-line link can not be translated correctly.
+- Fixed the issue where some links can not be opened in the default browser.
 
 ## [1.2.13] - 2025-12-11
 

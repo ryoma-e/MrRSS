@@ -142,6 +142,8 @@ const zh: TranslationMessages = {
   viewModeRendered: '渲染内容',
   showHiddenArticles: '显示隐藏文章',
   showHiddenArticlesDesc: '显示已被隐藏的文章',
+  showArticlePreviewImages: '显示预览图片',
+  showArticlePreviewImagesDesc: '在文章列表中显示预览图片',
   startupOnBoot: '开机自启动',
   startupOnBootDesc: '电脑启动时自动启动 MrRSS',
   closeToTray: '关闭时最小化到托盘',

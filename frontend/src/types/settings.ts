@@ -44,6 +44,7 @@ export interface SettingsData {
   proxy_username: string;
   proxy_password: string;
   google_translate_endpoint: string;
+  show_article_preview_images: boolean;
   [key: string]: unknown; // Allow additional properties
 }
 

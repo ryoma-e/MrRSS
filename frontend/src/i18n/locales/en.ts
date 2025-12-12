@@ -145,6 +145,8 @@ const en: TranslationMessages = {
   viewModeRendered: 'Rendered Content',
   showHiddenArticles: 'Show Hidden Articles',
   showHiddenArticlesDesc: 'Display articles that have been hidden',
+  showArticlePreviewImages: 'Show Preview Images',
+  showArticlePreviewImagesDesc: 'Display preview images in the article list',
   startupOnBoot: 'Start on System Boot',
   startupOnBootDesc: 'Automatically start MrRSS when your computer starts',
   closeToTray: 'Minimize to Tray on Close',
