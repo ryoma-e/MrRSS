@@ -173,7 +173,9 @@ export function useArticleDetail() {
 
   // Unwrap images from hyperlinks
   // This ensures images can be clicked directly without triggering link navigation
+  // Works on both main content and translated content
   function unwrapImagesFromLinks() {
+    // Process all links in prose content (both main content and translations)
     const links = document.querySelectorAll<HTMLAnchorElement>('.prose a');
     links.forEach((link) => {
       const images = link.querySelectorAll('img');
@@ -249,32 +251,31 @@ export function useArticleDetail() {
         );
       });
     });
+
+    // Also attach link event listeners (for text-only links after unwrapping)
+    attachLinkEventListeners();
   }
 
-  // Attach event listeners to links and images in rendered content
-  function attachContentEventListeners() {
-    // Attach image event handlers first
-    attachImageEventListeners();
-
-    // Handle all links - open in external browser, but skip if link contains an image (let image handler take precedence)
+  // Attach event listeners to links in rendered content
+  // Called after images have been unwrapped from links
+  function attachLinkEventListeners() {
+    // Handle all links - open in external browser
+    // At this point, all images have been unwrapped from links,
+    // so any remaining links are text-only and should open in browser
     const links = document.querySelectorAll('.prose a');
     links.forEach((link) => {
-      link.addEventListener(
+      // Remove any existing listeners by cloning
+      const newLink = link.cloneNode(true) as HTMLAnchorElement;
+      link.parentNode?.replaceChild(newLink, link);
+
+      // Add fresh event listener
+      newLink.addEventListener(
         'click',
         (e: Event) => {
-          // Check if the link contains an image
-          const hasImage = link.querySelector('img');
-          if (hasImage) {
-            // Let the image click handler take precedence - don't open the link
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          }
-
-          // For text links, open in external browser
+          // Open in external browser
           e.preventDefault();
           e.stopPropagation();
-          const href = link.getAttribute('href');
+          const href = newLink.getAttribute('href');
           if (href) {
             BrowserOpenURL(href);
           }
@@ -282,6 +283,18 @@ export function useArticleDetail() {
         true
       ); // Use capture phase to ensure our handler runs first
     });
+  }
+
+  // Attach event listeners to links and images in rendered content
+  function attachContentEventListeners() {
+    // First unwrap images from links
+    unwrapImagesFromLinks();
+    
+    // Then attach image event handlers
+    attachImageEventListeners();
+
+    // Finally attach link event handlers (after unwrapping)
+    attachLinkEventListeners();
   }
 
   function closeImageViewer() {
