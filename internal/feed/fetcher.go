@@ -319,7 +319,7 @@ func (f *Fetcher) FetchSingleFeed(ctx context.Context, feed models.Feed) {
 	}
 	f.mu.Unlock()
 
-	// Setup translator based on settings (only once per session)
+	// Setup translator based on settings
 	f.setupTranslator()
 
 	// Fetch the feed
