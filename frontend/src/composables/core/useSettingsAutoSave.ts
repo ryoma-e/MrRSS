@@ -175,6 +175,9 @@ export function useSettingsAutoSave(settings: Ref<SettingsData> | (() => Setting
             settingsRef.value.max_concurrent_refreshes ?? settingsDefaults.max_concurrent_refreshes,
           last_network_test:
             settingsRef.value.last_network_test ?? settingsDefaults.last_network_test,
+          image_gallery_enabled: (
+            settingsRef.value.image_gallery_enabled ?? settingsDefaults.image_gallery_enabled
+          ).toString(),
         }),
       });
 
