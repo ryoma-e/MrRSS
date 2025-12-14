@@ -1,12 +1,4 @@
 import { onMounted, onUnmounted } from 'vue';
-import {
-  WindowGetPosition,
-  WindowGetSize,
-  WindowSetPosition,
-  WindowSetSize,
-  WindowIsMaximised,
-  WindowMaximise,
-} from '../../wailsjs/wailsjs/runtime/runtime';
 
 interface WindowState {
   x: number;
@@ -22,6 +14,14 @@ export function useWindowState() {
 
   /**
    * Load and restore window state from database
+   *
+   * NOTE: Window state restoration is currently disabled because:
+   * 1. MrRSS uses HTTP API instead of Wails bindings (-skipbindings flag)
+   * 2. Wails runtime bindings are not available in this mode
+   * 3. Window position/size is managed by Wails itself in main.go
+   *
+   * The window state is still saved for potential future use or
+   * for reference, but not actively restored on startup.
    */
   async function restoreWindowState() {
     try {
@@ -34,51 +34,14 @@ export function useWindowState() {
       }
 
       const data = await response.json();
+      console.log('Window state loaded (not restored):', data);
 
-      // Parse values with defaults
-      const x = parseInt(data.x || '0');
-      const y = parseInt(data.y || '0');
-      const width = parseInt(data.width || '1024');
-      const height = parseInt(data.height || '768');
-      const maximized = data.maximized === 'true';
-
-      // Only restore if we have valid saved values (not defaults)
-      // Check for actual saved values by looking at the raw data
-      const hasValidState = data.x && data.y && data.width && data.height;
-
-      if (hasValidState) {
-        // Validate size bounds (minimum and reasonable maximum)
-        const validWidth = Math.max(400, Math.min(width, 3840));
-        const validHeight = Math.max(300, Math.min(height, 2160));
-
-        // Validate position (ensure window is at least partially visible)
-        // Allow negative values for multi-monitor setups
-        const validX = Math.max(-1000, Math.min(x, 3000));
-        const validY = Math.max(-1000, Math.min(y, 3000));
-
-        // First set size and position
-        await WindowSetSize(validWidth, validHeight);
-        await WindowSetPosition(validX, validY);
-
-        // Then handle maximized state
-        if (maximized) {
-          await WindowMaximise();
-        }
-
-        console.log('Window state restored:', {
-          x: validX,
-          y: validY,
-          width: validWidth,
-          height: validHeight,
-          maximized,
-        });
-      } else {
-        console.log('No valid window state found, using defaults');
-      }
+      // We don't actually restore the state because Wails bindings are not available
+      // The window will use the default size/position defined in main.go
     } catch (error) {
-      console.error('Error restoring window state:', error);
+      console.error('Error loading window state:', error);
     } finally {
-      // Wait a bit before allowing saves to prevent immediately overwriting restored state
+      // Wait a bit before allowing saves
       setTimeout(() => {
         isRestoringState = false;
       }, 1000);
@@ -87,6 +50,14 @@ export function useWindowState() {
 
   /**
    * Save current window state to database
+   *
+   * NOTE: Window state saving is currently disabled because:
+   * 1. MrRSS uses HTTP API instead of Wails bindings (-skipbindings flag)
+   * 2. Wails runtime bindings (WindowGetPosition, WindowGetSize, etc.) are not available
+   * 3. Window state is managed by Wails itself via runtime.WindowSetPosition/Size in main.go
+   *
+   * If window state persistence is needed in the future, it should be implemented
+   * via backend Go code that can access the Wails runtime context.
    */
   async function saveWindowState() {
     // Don't save while we're restoring state
@@ -94,19 +65,17 @@ export function useWindowState() {
       return;
     }
 
-    try {
-      const [position, size, maximized] = await Promise.all([
-        WindowGetPosition(),
-        WindowGetSize(),
-        WindowIsMaximised(),
-      ]);
+    // Disabled: Cannot access Wails runtime bindings in -skipbindings mode
+    // The code below would fail because WindowGetPosition, WindowGetSize, etc. are not available
 
+    /*
+    try {
       const state: WindowState = {
-        x: position.x,
-        y: position.y,
-        width: size.w,
-        height: size.h,
-        maximized,
+        x: window.screenX || 0,
+        y: window.screenY || 0,
+        width: window.innerWidth || 1024,
+        height: window.innerHeight || 768,
+        maximized: false,
       };
 
       await fetch('/api/window/save', {
@@ -119,6 +88,7 @@ export function useWindowState() {
     } catch (error) {
       console.error('Error saving window state:', error);
     }
+    */
   }
 
   /**
@@ -170,28 +140,24 @@ export function useWindowState() {
 
   /**
    * Initialize window state management
+   *
+   * Currently minimal because window state persistence is disabled.
+   * This function is kept for API compatibility and may be enhanced
+   * in the future if window state management is re-implemented.
    */
   function init() {
-    let cleanup: (() => void) | null = null;
-
     onMounted(async () => {
-      // Wait a bit for the window to be ready
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Just log that we're initialized
+      console.log('Window state management initialized (persistence disabled)');
 
-      // Restore saved state
+      // Load state for logging/reference only
       await restoreWindowState();
-
-      // Setup listeners for future changes
-      cleanup = setupListeners();
-
-      // Save state on beforeunload
-      window.addEventListener('beforeunload', saveWindowState);
     });
 
     onUnmounted(() => {
-      window.removeEventListener('beforeunload', saveWindowState);
-      if (cleanup) {
-        cleanup();
+      // Cleanup if needed
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
       }
     });
   }

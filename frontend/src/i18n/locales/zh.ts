@@ -475,6 +475,9 @@ const zh: TranslationMessages = {
   editRule: '编辑规则',
   deleteRule: '删除规则',
   noRules: '暂无规则',
+
+  // Network
+  network: '网络',
   noRulesHint: '创建规则以自动处理文章',
   ruleEnabled: '已启用',
   ruleDisabled: '已禁用',
@@ -534,22 +537,15 @@ const zh: TranslationMessages = {
   // Network Settings
   networkSettings: '网络设置',
   networkSettingsDescription: '自动检测网络速度以优化并行刷新订阅源的性能',
-  networkSpeed: '网络速度',
-  networkSpeed_slow: '慢速',
-  networkSpeed_medium: '中速',
-  networkSpeed_fast: '快速',
-  bandwidth: '带宽',
-  latency: '延迟',
-  maxConcurrentRefreshes: '最大并发刷新数',
+  bandwidthLabel: '带宽',
+  latencyLabel: '延迟',
+  bandwidthMbps: '兆每秒',
+  latencyMs: '毫秒',
   lastDetection: '上次检测',
-  reDetectNetwork: '重新检测网络',
+  reDetectNetwork: '重新检测',
   detecting: '检测中...',
   networkDetectionComplete: '网络检测完成',
   networkDetectionFailed: '网络检测失败',
-  justNow: '刚刚',
-  minutesAgo: '{count} 分钟前',
-  hoursAgo: '{count} 小时前',
-  daysAgo: '{count} 天前',
 };
 
 export default zh;

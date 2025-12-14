@@ -480,6 +480,9 @@ const en: TranslationMessages = {
   editRule: 'Edit Rule',
   deleteRule: 'Delete Rule',
   noRules: 'No rules defined',
+
+  // Network
+  network: 'Network',
   noRulesHint: 'Create a rule to automatically process articles',
   ruleEnabled: 'Enabled',
   ruleDisabled: 'Disabled',
@@ -541,22 +544,15 @@ const en: TranslationMessages = {
   networkSettings: 'Network Settings',
   networkSettingsDescription:
     'Automatic network speed detection to optimize parallel feed refresh performance',
-  networkSpeed: 'Network Speed',
-  networkSpeed_slow: 'Slow',
-  networkSpeed_medium: 'Medium',
-  networkSpeed_fast: 'Fast',
-  bandwidth: 'Bandwidth',
-  latency: 'Latency',
-  maxConcurrentRefreshes: 'Max Concurrent Refreshes',
+  bandwidthLabel: 'Bandwidth',
+  latencyLabel: 'Latency',
+  bandwidthMbps: 'Mbps',
+  latencyMs: 'ms',
   lastDetection: 'Last Detection',
-  reDetectNetwork: 'Re-detect Network',
+  reDetectNetwork: 'Re-detect',
   detecting: 'Detecting...',
   networkDetectionComplete: 'Network detection complete',
   networkDetectionFailed: 'Network detection failed',
-  justNow: 'Just now',
-  minutesAgo: '{count} minute ago | {count} minutes ago',
-  hoursAgo: '{count} hour ago | {count} hours ago',
-  daysAgo: '{count} day ago | {count} days ago',
 };
 
 export default en;

@@ -7,8 +7,6 @@ import { useI18n } from 'vue-i18n';
 import { PhWarning } from '@phosphor-icons/vue';
 import AppearanceSettings from './AppearanceSettings.vue';
 import UpdateSettings from './UpdateSettings.vue';
-import ProxySettings from './ProxySettings.vue';
-import NetworkSettings from './NetworkSettings.vue';
 import DatabaseSettings from './DatabaseSettings.vue';
 import TranslationSettings from './TranslationSettings.vue';
 import SummarySettings from './SummarySettings.vue';
@@ -32,8 +30,7 @@ const settingsRef = computed(() => props.settings);
 useSettingsAutoSave(settingsRef);
 
 // Use validation composable
-const { isValid, isTranslationValid, isSummaryValid, isProxyValid } =
-  useSettingsValidation(settingsRef);
+const { isValid, isTranslationValid, isSummaryValid } = useSettingsValidation(settingsRef);
 
 // Handler for settings updates from child components
 function handleUpdateSettings(updatedSettings: SettingsData) {
@@ -62,10 +59,6 @@ function handleUpdateSettings(updatedSettings: SettingsData) {
           <span v-if="!isSummaryValid">
             {{ t('summaryCredentialsRequired') }}
           </span>
-          <span v-if="(!isTranslationValid || !isSummaryValid) && !isProxyValid"> • </span>
-          <span v-if="!isProxyValid">
-            {{ t('proxyCredentialsRequired') }}
-          </span>
         </div>
       </div>
     </div>
@@ -73,10 +66,6 @@ function handleUpdateSettings(updatedSettings: SettingsData) {
     <AppearanceSettings :settings="settings" @update:settings="handleUpdateSettings" />
 
     <UpdateSettings :settings="settings" @update:settings="handleUpdateSettings" />
-
-    <NetworkSettings />
-
-    <ProxySettings :settings="settings" @update:settings="handleUpdateSettings" />
 
     <DatabaseSettings :settings="settings" @update:settings="handleUpdateSettings" />
 

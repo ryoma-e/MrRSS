@@ -42,6 +42,10 @@ func NewDetector() *Detector {
 			"https://www.google.com/favicon.ico",
 			"https://www.cloudflare.com/favicon.ico",
 			"https://www.github.com/favicon.ico",
+			// Chinese domestic sites for better connectivity in China
+			"https://www.baidu.com/favicon.ico",
+			"https://www.qq.com/favicon.ico",
+			"https://www.aliyun.com/favicon.ico",
 		},
 		timeout: 10 * time.Second,
 	}
@@ -52,7 +56,7 @@ func (d *Detector) DetectSpeed(ctx context.Context) DetectionResult {
 	result := DetectionResult{
 		DetectionTime:  time.Now(),
 		SpeedLevel:     SpeedMedium, // Default fallback
-		MaxConcurrency: 5,            // Default fallback
+		MaxConcurrency: 5,           // Default fallback
 	}
 
 	// Test latency first
@@ -175,13 +179,13 @@ func (d *Detector) calculateSpeedLevel(latencyMs int64, bandwidthMbps float64) (
 	// Determine speed level based on both latency and bandwidth
 	if latencyMs > 200 || bandwidthMbps < 1.0 {
 		speedLevel = SpeedSlow
-		maxConcurrency = 3
+		maxConcurrency = 5
 	} else if latencyMs > 100 || bandwidthMbps < 10.0 {
 		speedLevel = SpeedMedium
-		maxConcurrency = 5
+		maxConcurrency = 8
 	} else {
 		speedLevel = SpeedFast
-		maxConcurrency = 10
+		maxConcurrency = 15
 	}
 
 	return speedLevel, maxConcurrency

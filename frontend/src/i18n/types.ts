@@ -366,6 +366,9 @@ export interface TranslationMessages {
   deleteRule: string;
   noRules: string;
   noRulesHint: string;
+
+  // Network
+  network: string;
   ruleEnabled: string;
   ruleDisabled: string;
   ruleCondition: string;
@@ -424,22 +427,15 @@ export interface TranslationMessages {
   // Network Settings
   networkSettings: string;
   networkSettingsDescription: string;
-  networkSpeed: string;
-  networkSpeed_slow: string;
-  networkSpeed_medium: string;
-  networkSpeed_fast: string;
-  bandwidth: string;
-  latency: string;
-  maxConcurrentRefreshes: string;
+  bandwidthLabel: string;
+  latencyLabel: string;
+  bandwidthMbps: string;
+  latencyMs: string;
   lastDetection: string;
   reDetectNetwork: string;
   detecting: string;
   networkDetectionComplete: string;
   networkDetectionFailed: string;
-  justNow: string;
-  minutesAgo: string;
-  hoursAgo: string;
-  daysAgo: string;
 }
 
 export type SupportedLocale = 'en-US' | 'zh-CN';

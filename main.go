@@ -217,8 +217,37 @@ func main() {
 			runtime.Quit(ctx)
 		}, func() {
 			if lastWindowState.valid.Load() {
-				runtime.WindowSetSize(ctx, lastWindowState.width, lastWindowState.height)
-				runtime.WindowSetPosition(ctx, lastWindowState.x, lastWindowState.y)
+				// Validate window state before restoring
+				width := lastWindowState.width
+				height := lastWindowState.height
+				x := lastWindowState.x
+				y := lastWindowState.y
+
+				// Ensure minimum window size
+				if width < 400 {
+					width = 1024
+				}
+				if height < 300 {
+					height = 768
+				}
+
+				// Ensure window is at least partially on screen
+				// Allow some negative values for multi-monitor setups, but not extreme ones
+				if x < -1000 || x > 3000 {
+					x = 100
+				}
+				if y < -1000 || y > 3000 {
+					y = 100
+				}
+
+				log.Printf("Restoring window state: x=%d, y=%d, width=%d, height=%d", x, y, width, height)
+				runtime.WindowSetSize(ctx, width, height)
+				runtime.WindowSetPosition(ctx, x, y)
+			} else {
+				// No valid state, use safe defaults
+				log.Println("No valid window state, using defaults")
+				runtime.WindowSetSize(ctx, 1024, 768)
+				runtime.WindowCenter(ctx)
 			}
 			runtime.WindowShow(ctx)
 			runtime.WindowUnminimise(ctx)
@@ -231,13 +260,23 @@ func main() {
 		}
 
 		w, h := runtime.WindowGetSize(ctx)
-		lastWindowState.width = w
-		lastWindowState.height = h
-
 		x, y := runtime.WindowGetPosition(ctx)
-		lastWindowState.x = x
-		lastWindowState.y = y
-		lastWindowState.valid.Store(true)
+
+		// Only store state if it's valid (reasonable size and position)
+		if w >= 400 && h >= 300 && w <= 4000 && h <= 3000 {
+			if x > -1000 && x < 3000 && y > -1000 && y < 3000 {
+				lastWindowState.width = w
+				lastWindowState.height = h
+				lastWindowState.x = x
+				lastWindowState.y = y
+				lastWindowState.valid.Store(true)
+				log.Printf("Stored window state: x=%d, y=%d, width=%d, height=%d", x, y, w, h)
+			} else {
+				log.Printf("Window position invalid (x=%d, y=%d), not storing", x, y)
+			}
+		} else {
+			log.Printf("Window size invalid (width=%d, height=%d), not storing", w, h)
+		}
 	}
 
 	// Start background scheduler
@@ -286,6 +325,12 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			log.Println("App started")
 
+			// Ensure window is visible and properly sized on startup
+			runtime.WindowSetSize(ctx, 1024, 768)
+			runtime.WindowCenter(ctx)
+			runtime.WindowShow(ctx)
+			log.Println("Window initialized with default size and centered")
+
 			if shouldCloseToTray() {
 				startTray(ctx)
 			}
@@ -296,7 +341,7 @@ func main() {
 				detector := network.NewDetector()
 				detectCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 				defer cancel()
-				
+
 				result := detector.DetectSpeed(detectCtx)
 				if result.DetectionSuccess {
 					db.SetSetting("network_speed", string(result.SpeedLevel))

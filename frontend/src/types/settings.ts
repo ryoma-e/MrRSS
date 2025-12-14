@@ -82,4 +82,4 @@ export interface InstallResponse {
   success: boolean;
 }
 
-export type TabName = 'general' | 'feeds' | 'rules' | 'shortcuts' | 'about';
+export type TabName = 'general' | 'feeds' | 'rules' | 'network' | 'shortcuts' | 'about';
