@@ -4,13 +4,13 @@ package tray
 
 import (
 	"context"
-	"runtime"
 	"sync"
 	"sync/atomic"
 
 	"fyne.io/systray"
 
 	"MrRSS/internal/handlers/core"
+	"MrRSS/internal/utils"
 )
 
 // Manager provides a thin wrapper around the system tray menu.
@@ -77,7 +77,7 @@ func (m *Manager) run(ctx context.Context, onQuit func(), onShow func()) {
 
 	// On MacOS, don't set title (only show icon)
 	// On other platforms, show the title
-	if runtime.GOOS != "darwin" {
+	if !utils.IsMacOS() {
 		systray.SetTitle(labels.title)
 	}
 	systray.SetTooltip(labels.tooltip)

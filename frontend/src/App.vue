@@ -311,7 +311,7 @@ function onFeedUpdated(): void {
 }
 
 /* Adjust toast position for MacOS */
-.macos-padding ~ .toast-container {
+.app-container.macos-padding .toast-container {
   top: 38px; /* Account for MacOS top padding */
 }
 
@@ -323,7 +323,7 @@ function onFeedUpdated(): void {
     top: 20px;
     gap: 10px;
   }
-  .macos-padding ~ .toast-container {
+  .app-container.macos-padding .toast-container {
     top: 48px;
   }
 }
