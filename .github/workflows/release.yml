@@ -41,12 +41,6 @@ jobs:
             echo "This is a stable release version: $VERSION"
           fi
 
-      - name: Update version in wails.json
-        run: |
-          VERSION="${{ steps.get_version.outputs.version }}"
-          sed -i 's/"version": ".*"/"version": "'$VERSION'"/' wails.json
-          sed -i 's/"productVersion": ".*"/"productVersion": "'$VERSION'"/' wails.json
-
       - name: Check if tag exists
         id: check_tag
         run: |

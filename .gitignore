@@ -40,6 +40,7 @@ build/appimage/
 build/appimagetool-x86_64.AppImage
 dist/
 wailsjs/wailsjs/runtime/
+frontend/bindings/
 
 # database files
 *.db

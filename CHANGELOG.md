@@ -5,24 +5,18 @@ All notable changes to MrRSS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.0-alpha.1] - 2025-12-17
 
 ### Changed
 
 - **BREAKING**: Upgraded from Wails v2 to Wails v3 (alpha) framework
-  - Migrated to new `application.New()` API
+  - Migrated to new API
   - Replaced external systray library with Wails v3 built-in system tray
   - Updated single instance handling to use v3 API
   - Updated event handling to use v3 hooks
-  - Removed deprecated `wailsjsdir` configuration
   - Updated build system to use Taskfile and Wails v3 CLI
   - Updated dependencies to work with WebKit2GTK 4.1 and libsoup 3.0
-
-### Fixed
-
-- Fixed GitHub Actions workflows compatibility with Wails v3
-- Removed references to obsolete Wails v2 build steps
-- Fixed YAML syntax errors in CI/CD pipelines
+- Changed GitHub Actions workflows compatibility with Wails v3
 
 ## [1.2.20] - 2025-12-16
 
