@@ -160,7 +160,7 @@ When making changes, follow these guidelines:
 - **File Length**: When a file becomes too long (typically over 300-400 lines), consider splitting it into smaller, focused modules
 - **Folder Organization**: When a folder contains too many files (typically over 10-15 files), create subfolders to organize related functionality
 - **Refactoring**: Extract reusable logic into composables (frontend) or separate packages (backend)
-- **Build Verification**: Before completing any change, run `wails build -skipbindings` to verify the application can be built and packaged correctly
+- **Build Verification**: Before completing any change, run `wails3 build` to verify the application can be built and packaged correctly
 
 ### Settings Management (CRITICAL)
 

@@ -61,12 +61,12 @@ export function useArticleActions(
             {
               label: t('copyLink'),
               action: 'copyLink',
-              icon: 'ph-copy',
+              icon: 'ph-link',
             },
             {
               label: t('copyTitle'),
               action: 'copyTitle',
-              icon: 'ph-copy',
+              icon: 'ph-text-t',
             },
             { separator: true },
             {

@@ -266,6 +266,8 @@ const zh: TranslationMessages = {
   proxySettings: '代理设置',
   enableProxy: '启用代理',
   enableProxyDesc: '使用代理服务器获取订阅和文章',
+  systemProxyInfo:
+    '软件默认会自动使用操作系统的代理设置，通常无需手动配置。仅在需要使用不同于系统代理的特定代理时才需要启用此选项。',
   proxyType: '代理类型',
   proxyTypeDesc: '选择要使用的代理协议',
   proxyHost: '代理主机',
