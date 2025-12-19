@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"MrRSS/internal/aiusage"
 	"MrRSS/internal/database"
 	"MrRSS/internal/discovery"
 	"MrRSS/internal/feed"
@@ -36,6 +37,7 @@ type Handler struct {
 	DB               *database.DB
 	Fetcher          *feed.Fetcher
 	Translator       translation.Translator
+	AITracker        *aiusage.Tracker
 	DiscoveryService *discovery.Service
 	App              *application.App // Wails app instance for browser integration
 
@@ -51,6 +53,7 @@ func NewHandler(db *database.DB, fetcher *feed.Fetcher, translator translation.T
 		DB:               db,
 		Fetcher:          fetcher,
 		Translator:       translator,
+		AITracker:        aiusage.NewTracker(db),
 		DiscoveryService: discovery.NewService(),
 	}
 }

@@ -68,46 +68,66 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 	}
 
 	var result summary.SummaryResult
+	usedFallback := false
 
 	if provider == "ai" {
-		// Use AI summarization (use encrypted method for API key)
-		apiKey, err := h.DB.GetEncryptedSetting("summary_ai_api_key")
-		if err != nil || apiKey == "" {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"error": "missing_ai_api_key",
-			})
-			return
-		}
+		// Check if AI usage limit is reached - fallback to local if so
+		if h.AITracker.IsLimitReached() {
+			log.Printf("AI usage limit reached, falling back to local summarization")
+			summarizer := summary.NewSummarizer()
+			result = summarizer.Summarize(content, summaryLength)
+			usedFallback = true
+		} else {
+			// Use AI summarization (use encrypted method for API key)
+			apiKey, err := h.DB.GetEncryptedSetting("summary_ai_api_key")
+			if err != nil || apiKey == "" {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]interface{}{
+					"error": "missing_ai_api_key",
+				})
+				return
+			}
 
-		// Get endpoint and model with fallback to defaults
-		endpoint, _ := h.DB.GetSetting("summary_ai_endpoint")
-		model, _ := h.DB.GetSetting("summary_ai_model")
-		systemPrompt, _ := h.DB.GetSetting("summary_ai_system_prompt")
+			// Apply rate limiting for AI requests
+			h.AITracker.WaitForRateLimit()
 
-		aiSummarizer := summary.NewAISummarizer(apiKey, endpoint, model)
-		if systemPrompt != "" {
-			aiSummarizer.SetSystemPrompt(systemPrompt)
+			// Get endpoint and model with fallback to defaults
+			endpoint, _ := h.DB.GetSetting("summary_ai_endpoint")
+			model, _ := h.DB.GetSetting("summary_ai_model")
+			systemPrompt, _ := h.DB.GetSetting("summary_ai_system_prompt")
+
+			aiSummarizer := summary.NewAISummarizer(apiKey, endpoint, model)
+			if systemPrompt != "" {
+				aiSummarizer.SetSystemPrompt(systemPrompt)
+			}
+			aiResult, err := aiSummarizer.Summarize(content, summaryLength)
+			if err != nil {
+				log.Printf("Error generating AI summary: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			result = aiResult
+
+			// Track AI usage
+			h.AITracker.TrackSummary(content, result.Summary)
 		}
-		aiResult, err := aiSummarizer.Summarize(content, summaryLength)
-		if err != nil {
-			log.Printf("Error generating AI summary: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		result = aiResult
 	} else {
 		// Use local algorithm
 		summarizer := summary.NewSummarizer()
 		result = summarizer.Summarize(content, summaryLength)
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	response := map[string]interface{}{
 		"summary":        result.Summary,
 		"sentence_count": result.SentenceCount,
 		"is_too_short":   result.IsTooShort,
-	})
+	}
+	if usedFallback {
+		response["used_fallback"] = true
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
 
 // getArticleContent fetches the content of an article by ID
