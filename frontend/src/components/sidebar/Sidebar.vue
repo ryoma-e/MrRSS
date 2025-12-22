@@ -4,6 +4,7 @@ import { useAppStore } from '@/stores/app';
 import { useI18n } from 'vue-i18n';
 import { PhPlus, PhGear, PhMagnifyingGlass, PhX } from '@phosphor-icons/vue';
 import { useSidebar } from '@/composables/core/useSidebar';
+import { useDragDrop } from '@/composables/ui/useDragDrop';
 import SidebarNavItem from './SidebarNavItem.vue';
 import SidebarCategory from './SidebarCategory.vue';
 
@@ -54,6 +55,40 @@ const {
   onFeedContextMenu,
   onCategoryContextMenu,
 } = useSidebar();
+
+// Drag and drop functionality
+const { draggingFeedId, dragOverCategory, onDragStart, onDragEnd, onDragOver, onDrop } =
+  useDragDrop();
+
+// Handle drag events from categories
+function handleDragStart(feedId: number, event: Event) {
+  onDragStart(feedId, event);
+}
+
+function handleDragEnd() {
+  onDragEnd();
+}
+
+function handleDragOver(categoryName: string, feedId: number | null, event: Event) {
+  if (!draggingFeedId.value) return;
+  onDragOver(categoryName, feedId, event);
+}
+
+async function handleDrop(categoryName: string, feeds: any[]) {
+  if (!draggingFeedId.value) return;
+
+  const result = await onDrop(categoryName, feeds);
+
+  if (result.success) {
+    // Refresh feeds to show updated order
+    store.fetchFeeds();
+    window.showToast(t('feedReordered'), 'success');
+  } else {
+    window.showToast(t('errorReorderingFeed') + ': ' + result.error, 'error');
+  }
+
+  onDragEnd();
+}
 
 const emitShowAddFeed = () => window.dispatchEvent(new CustomEvent('show-add-feed'));
 const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settings'));
@@ -145,11 +180,16 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
         :unread-count="categoryUnreadCounts[name] || 0"
         :current-feed-id="store.currentFeedId"
         :feed-unread-counts="store.unreadCounts.feedCounts"
+        :is-drag-over="dragOverCategory === name"
         @toggle="toggleCategory(name)"
         @select-category="store.setCategory(name)"
         @select-feed="store.setFeed"
         @category-context-menu="(e) => onCategoryContextMenu(e, name)"
         @feed-context-menu="onFeedContextMenu"
+        @dragstart="(feedId, e) => handleDragStart(feedId, e)"
+        @dragend="handleDragEnd"
+        @dragover="(feedId, e) => handleDragOver(name, feedId, e)"
+        @drop="() => handleDrop(name, data._feeds)"
       />
 
       <!-- Uncategorized -->
@@ -163,10 +203,15 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
         :unread-count="categoryUnreadCounts['uncategorized'] || 0"
         :current-feed-id="store.currentFeedId"
         :feed-unread-counts="store.unreadCounts.feedCounts"
+        :is-drag-over="dragOverCategory === 'uncategorized'"
         @toggle="toggleCategory('uncategorized')"
         @select-feed="store.setFeed"
         @category-context-menu="(e) => onCategoryContextMenu(e, 'uncategorized')"
         @feed-context-menu="onFeedContextMenu"
+        @dragstart="(feedId, e) => handleDragStart(feedId, e)"
+        @dragend="handleDragEnd"
+        @dragover="(feedId, e) => handleDragOver('uncategorized', feedId, e)"
+        @drop="() => handleDrop('uncategorized', tree.uncategorized)"
       />
     </div>
 

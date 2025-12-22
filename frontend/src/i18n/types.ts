@@ -526,6 +526,11 @@ export interface TranslationMessages {
   freshrssMissingCredentials: string;
 
   isInDevelopment: string;
+
+  // Drag and Drop
+  dragToReorder: string;
+  feedReordered: string;
+  errorReorderingFeed: string;
 }
 
 export type SupportedLocale = 'en-US' | 'zh-CN';

@@ -110,6 +110,10 @@ func (db *DB) Init() error {
 		// Migration: Add is_image_mode column to feeds table for image gallery feature
 		// Error is ignored - if column exists, the operation fails harmlessly.
 		_, _ = db.Exec(`ALTER TABLE feeds ADD COLUMN is_image_mode BOOLEAN DEFAULT 0`)
+
+		// Migration: Add position column to feeds table for custom ordering
+		// Error is ignored - if column exists, the operation fails harmlessly.
+		_, _ = db.Exec(`ALTER TABLE feeds ADD COLUMN position INTEGER DEFAULT 0`)
 	})
 	return err
 }

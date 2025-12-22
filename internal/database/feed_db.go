@@ -18,8 +18,17 @@ func (db *DB) AddFeed(feed *models.Feed) (int64, error) {
 
 	if err == sql.ErrNoRows {
 		// Feed doesn't exist, insert new
-		query := `INSERT INTO feeds (title, url, link, description, category, image_url, script_path, hide_from_timeline, proxy_url, proxy_enabled, refresh_interval, is_image_mode, type, xpath_item, xpath_item_title, xpath_item_content, xpath_item_uri, xpath_item_author, xpath_item_timestamp, xpath_item_time_format, xpath_item_thumbnail, xpath_item_categories, xpath_item_uid, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-		result, err := db.Exec(query, feed.Title, feed.URL, feed.Link, feed.Description, feed.Category, feed.ImageURL, feed.ScriptPath, feed.HideFromTimeline, feed.ProxyURL, feed.ProxyEnabled, feed.RefreshInterval, feed.IsImageMode, feed.Type, feed.XPathItem, feed.XPathItemTitle, feed.XPathItemContent, feed.XPathItemUri, feed.XPathItemAuthor, feed.XPathItemTimestamp, feed.XPathItemTimeFormat, feed.XPathItemThumbnail, feed.XPathItemCategories, feed.XPathItemUid, time.Now())
+		// Get next position in category if not specified
+		position := feed.Position
+		if position == 0 {
+			position, err = db.GetNextPositionInCategory(feed.Category)
+			if err != nil {
+				return 0, err
+			}
+		}
+
+		query := `INSERT INTO feeds (title, url, link, description, category, image_url, position, script_path, hide_from_timeline, proxy_url, proxy_enabled, refresh_interval, is_image_mode, type, xpath_item, xpath_item_title, xpath_item_content, xpath_item_uri, xpath_item_author, xpath_item_timestamp, xpath_item_time_format, xpath_item_thumbnail, xpath_item_categories, xpath_item_uid, last_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		result, err := db.Exec(query, feed.Title, feed.URL, feed.Link, feed.Description, feed.Category, feed.ImageURL, position, feed.ScriptPath, feed.HideFromTimeline, feed.ProxyURL, feed.ProxyEnabled, feed.RefreshInterval, feed.IsImageMode, feed.Type, feed.XPathItem, feed.XPathItemTitle, feed.XPathItemContent, feed.XPathItemUri, feed.XPathItemAuthor, feed.XPathItemTimestamp, feed.XPathItemTimeFormat, feed.XPathItemThumbnail, feed.XPathItemCategories, feed.XPathItemUid, time.Now())
 		if err != nil {
 			return 0, err
 		}
@@ -33,8 +42,8 @@ func (db *DB) AddFeed(feed *models.Feed) (int64, error) {
 	}
 
 	// Feed exists, update it
-	query := `UPDATE feeds SET title = ?, link = ?, description = ?, category = ?, image_url = ?, script_path = ?, hide_from_timeline = ?, proxy_url = ?, proxy_enabled = ?, refresh_interval = ?, is_image_mode = ?, type = ?, xpath_item = ?, xpath_item_title = ?, xpath_item_content = ?, xpath_item_uri = ?, xpath_item_author = ?, xpath_item_timestamp = ?, xpath_item_time_format = ?, xpath_item_thumbnail = ?, xpath_item_categories = ?, xpath_item_uid = ?, last_updated = ? WHERE id = ?`
-	_, err = db.Exec(query, feed.Title, feed.Link, feed.Description, feed.Category, feed.ImageURL, feed.ScriptPath, feed.HideFromTimeline, feed.ProxyURL, feed.ProxyEnabled, feed.RefreshInterval, feed.IsImageMode, feed.Type, feed.XPathItem, feed.XPathItemTitle, feed.XPathItemContent, feed.XPathItemUri, feed.XPathItemAuthor, feed.XPathItemTimestamp, feed.XPathItemTimeFormat, feed.XPathItemThumbnail, feed.XPathItemCategories, feed.XPathItemUid, time.Now(), existingID)
+	query := `UPDATE feeds SET title = ?, link = ?, description = ?, category = ?, image_url = ?, position = ?, script_path = ?, hide_from_timeline = ?, proxy_url = ?, proxy_enabled = ?, refresh_interval = ?, is_image_mode = ?, type = ?, xpath_item = ?, xpath_item_title = ?, xpath_item_content = ?, xpath_item_uri = ?, xpath_item_author = ?, xpath_item_timestamp = ?, xpath_item_time_format = ?, xpath_item_thumbnail = ?, xpath_item_categories = ?, xpath_item_uid = ?, last_updated = ? WHERE id = ?`
+	_, err = db.Exec(query, feed.Title, feed.Link, feed.Description, feed.Category, feed.ImageURL, feed.Position, feed.ScriptPath, feed.HideFromTimeline, feed.ProxyURL, feed.ProxyEnabled, feed.RefreshInterval, feed.IsImageMode, feed.Type, feed.XPathItem, feed.XPathItemTitle, feed.XPathItemContent, feed.XPathItemUri, feed.XPathItemAuthor, feed.XPathItemTimestamp, feed.XPathItemTimeFormat, feed.XPathItemThumbnail, feed.XPathItemCategories, feed.XPathItemUid, time.Now(), existingID)
 	return existingID, err
 }
 
@@ -50,10 +59,10 @@ func (db *DB) DeleteFeed(id int64) error {
 	return err
 }
 
-// GetFeeds returns all feeds.
+// GetFeeds returns all feeds ordered by category and position.
 func (db *DB) GetFeeds() ([]models.Feed, error) {
 	db.WaitForReady()
-	rows, err := db.Query("SELECT id, title, url, link, description, category, image_url, last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0), COALESCE(is_image_mode, 0), COALESCE(type, ''), COALESCE(xpath_item, ''), COALESCE(xpath_item_title, ''), COALESCE(xpath_item_content, ''), COALESCE(xpath_item_uri, ''), COALESCE(xpath_item_author, ''), COALESCE(xpath_item_timestamp, ''), COALESCE(xpath_item_time_format, ''), COALESCE(xpath_item_thumbnail, ''), COALESCE(xpath_item_categories, ''), COALESCE(xpath_item_uid, '') FROM feeds")
+	rows, err := db.Query("SELECT id, title, url, link, description, category, image_url, COALESCE(position, 0), last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0), COALESCE(is_image_mode, 0), COALESCE(type, ''), COALESCE(xpath_item, ''), COALESCE(xpath_item_title, ''), COALESCE(xpath_item_content, ''), COALESCE(xpath_item_uri, ''), COALESCE(xpath_item_author, ''), COALESCE(xpath_item_timestamp, ''), COALESCE(xpath_item_time_format, ''), COALESCE(xpath_item_thumbnail, ''), COALESCE(xpath_item_categories, ''), COALESCE(xpath_item_uid, '') FROM feeds ORDER BY category ASC, position ASC, id ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +72,7 @@ func (db *DB) GetFeeds() ([]models.Feed, error) {
 	for rows.Next() {
 		var f models.Feed
 		var link, category, imageURL, lastError, scriptPath, proxyURL, feedType, xpathItem, xpathItemTitle, xpathItemContent, xpathItemUri, xpathItemAuthor, xpathItemTimestamp, xpathItemTimeFormat, xpathItemThumbnail, xpathItemCategories, xpathItemUid sql.NullString
-		if err := rows.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval, &f.IsImageMode, &feedType, &xpathItem, &xpathItemTitle, &xpathItemContent, &xpathItemUri, &xpathItemAuthor, &xpathItemTimestamp, &xpathItemTimeFormat, &xpathItemThumbnail, &xpathItemCategories, &xpathItemUid); err != nil {
+		if err := rows.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.Position, &f.LastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval, &f.IsImageMode, &feedType, &xpathItem, &xpathItemTitle, &xpathItemContent, &xpathItemUri, &xpathItemAuthor, &xpathItemTimestamp, &xpathItemTimeFormat, &xpathItemThumbnail, &xpathItemCategories, &xpathItemUid); err != nil {
 			return nil, err
 		}
 		f.Link = link.String
@@ -91,11 +100,11 @@ func (db *DB) GetFeeds() ([]models.Feed, error) {
 // GetFeedByID retrieves a specific feed by its ID.
 func (db *DB) GetFeedByID(id int64) (*models.Feed, error) {
 	db.WaitForReady()
-	row := db.QueryRow("SELECT id, title, url, link, description, category, image_url, last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0), COALESCE(is_image_mode, 0), COALESCE(type, ''), COALESCE(xpath_item, ''), COALESCE(xpath_item_title, ''), COALESCE(xpath_item_content, ''), COALESCE(xpath_item_uri, ''), COALESCE(xpath_item_author, ''), COALESCE(xpath_item_timestamp, ''), COALESCE(xpath_item_time_format, ''), COALESCE(xpath_item_thumbnail, ''), COALESCE(xpath_item_categories, ''), COALESCE(xpath_item_uid, '') FROM feeds WHERE id = ?", id)
+	row := db.QueryRow("SELECT id, title, url, link, description, category, image_url, COALESCE(position, 0), last_updated, last_error, COALESCE(discovery_completed, 0), COALESCE(script_path, ''), COALESCE(hide_from_timeline, 0), COALESCE(proxy_url, ''), COALESCE(proxy_enabled, 0), COALESCE(refresh_interval, 0), COALESCE(is_image_mode, 0), COALESCE(type, ''), COALESCE(xpath_item, ''), COALESCE(xpath_item_title, ''), COALESCE(xpath_item_content, ''), COALESCE(xpath_item_uri, ''), COALESCE(xpath_item_author, ''), COALESCE(xpath_item_timestamp, ''), COALESCE(xpath_item_time_format, ''), COALESCE(xpath_item_thumbnail, ''), COALESCE(xpath_item_categories, ''), COALESCE(xpath_item_uid, '') FROM feeds WHERE id = ?", id)
 
 	var f models.Feed
 	var link, category, imageURL, lastError, scriptPath, proxyURL, feedType, xpathItem, xpathItemTitle, xpathItemContent, xpathItemUri, xpathItemAuthor, xpathItemTimestamp, xpathItemTimeFormat, xpathItemThumbnail, xpathItemCategories, xpathItemUid sql.NullString
-	if err := row.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.LastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval, &f.IsImageMode, &feedType, &xpathItem, &xpathItemTitle, &xpathItemContent, &xpathItemUri, &xpathItemAuthor, &xpathItemTimestamp, &xpathItemTimeFormat, &xpathItemThumbnail, &xpathItemCategories, &xpathItemUid); err != nil {
+	if err := row.Scan(&f.ID, &f.Title, &f.URL, &link, &f.Description, &category, &imageURL, &f.Position, &f.LastUpdated, &lastError, &f.DiscoveryCompleted, &scriptPath, &f.HideFromTimeline, &proxyURL, &f.ProxyEnabled, &f.RefreshInterval, &f.IsImageMode, &feedType, &xpathItem, &xpathItemTitle, &xpathItemContent, &xpathItemUri, &xpathItemAuthor, &xpathItemTimestamp, &xpathItemTimeFormat, &xpathItemThumbnail, &xpathItemCategories, &xpathItemUid); err != nil {
 		return nil, err
 	}
 	f.Link = link.String
@@ -146,6 +155,13 @@ func (db *DB) UpdateFeed(id int64, title, url, category, scriptPath string, hide
 	return err
 }
 
+// UpdateFeedWithPosition updates a feed including its position field.
+func (db *DB) UpdateFeedWithPosition(id int64, title, url, category, scriptPath string, position int, hideFromTimeline bool, proxyURL string, proxyEnabled bool, refreshInterval int, isImageMode bool, feedType string, xpathItem, xpathItemTitle, xpathItemContent, xpathItemUri, xpathItemAuthor, xpathItemTimestamp, xpathItemTimeFormat, xpathItemThumbnail, xpathItemCategories, xpathItemUid string) error {
+	db.WaitForReady()
+	_, err := db.Exec("UPDATE feeds SET title = ?, url = ?, category = ?, script_path = ?, position = ?, hide_from_timeline = ?, proxy_url = ?, proxy_enabled = ?, refresh_interval = ?, is_image_mode = ?, type = ?, xpath_item = ?, xpath_item_title = ?, xpath_item_content = ?, xpath_item_uri = ?, xpath_item_author = ?, xpath_item_timestamp = ?, xpath_item_time_format = ?, xpath_item_thumbnail = ?, xpath_item_categories = ?, xpath_item_uid = ? WHERE id = ?", title, url, category, scriptPath, position, hideFromTimeline, proxyURL, proxyEnabled, refreshInterval, isImageMode, feedType, xpathItem, xpathItemTitle, xpathItemContent, xpathItemUri, xpathItemAuthor, xpathItemTimestamp, xpathItemTimeFormat, xpathItemThumbnail, xpathItemCategories, xpathItemUid, id)
+	return err
+}
+
 // UpdateFeedCategory updates a feed's category.
 func (db *DB) UpdateFeedCategory(id int64, category string) error {
 	db.WaitForReady()
@@ -179,4 +195,77 @@ func (db *DB) MarkFeedDiscovered(id int64) error {
 	db.WaitForReady()
 	_, err := db.Exec("UPDATE feeds SET discovery_completed = 1 WHERE id = ?", id)
 	return err
+}
+
+// UpdateFeedPosition updates a feed's category and position.
+func (db *DB) UpdateFeedPosition(id int64, category string, position int) error {
+	db.WaitForReady()
+	_, err := db.Exec("UPDATE feeds SET category = ?, position = ? WHERE id = ?", category, position, id)
+	return err
+}
+
+// ReorderFeed reorders feeds within a category after moving a feed.
+// This adjusts the positions of other feeds to maintain consistent ordering.
+func (db *DB) ReorderFeed(feedID int64, newCategory string, newPosition int) error {
+	db.WaitForReady()
+
+	// Get the feed being moved
+	var oldCategory string
+	var oldPosition int
+	err := db.QueryRow("SELECT COALESCE(category, ''), COALESCE(position, 0) FROM feeds WHERE id = ?", feedID).Scan(&oldCategory, &oldPosition)
+	if err != nil {
+		return err
+	}
+
+	// Update the moved feed to new position first
+	_, err = db.Exec("UPDATE feeds SET category = ?, position = ? WHERE id = ?", newCategory, newPosition, feedID)
+	if err != nil {
+		return err
+	}
+
+	// If moving within the same category
+	if oldCategory == newCategory {
+		if oldPosition < newPosition {
+			// Moving down: decrement positions of feeds between old and new position
+			_, err = db.Exec(`
+				UPDATE feeds SET position = position - 1
+				WHERE category = ? AND position > ? AND position <= ? AND id != ?
+			`, newCategory, oldPosition, newPosition, feedID)
+		} else if oldPosition > newPosition {
+			// Moving up: increment positions of feeds between new and old position
+			_, err = db.Exec(`
+				UPDATE feeds SET position = position + 1
+				WHERE category = ? AND position >= ? AND position < ? AND id != ?
+			`, newCategory, newPosition, oldPosition, feedID)
+		}
+	} else {
+		// Moving to different category
+		// Decrement positions in old category after old position
+		_, err = db.Exec(`
+			UPDATE feeds SET position = position - 1
+			WHERE category = ? AND position > ?
+		`, oldCategory, oldPosition)
+		if err != nil {
+			return err
+		}
+
+		// Increment positions in new category at and after new position
+		_, err = db.Exec(`
+			UPDATE feeds SET position = position + 1
+			WHERE category = ? AND position >= ? AND id != ?
+		`, newCategory, newPosition, feedID)
+	}
+
+	return err
+}
+
+// GetNextPositionInCategory returns the next available position in a category.
+func (db *DB) GetNextPositionInCategory(category string) (int, error) {
+	db.WaitForReady()
+	var maxPos int
+	err := db.QueryRow("SELECT COALESCE(MAX(position), -1) FROM feeds WHERE category = ?", category).Scan(&maxPos)
+	if err != nil {
+		return 0, err
+	}
+	return maxPos + 1, nil
 }

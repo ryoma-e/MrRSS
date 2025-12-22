@@ -701,6 +701,11 @@ const en: TranslationMessages = {
   freshrssMissingCredentials: 'Please enter FreshRSS server URL, username, and password',
 
   isInDevelopment: 'This feature is in development and may not work as expected.',
+
+  // Drag and Drop
+  dragToReorder: 'Drag to reorder or move to another category',
+  feedReordered: 'Feed reordered successfully',
+  errorReorderingFeed: 'Failed to reorder feed',
 };
 
 export default en;

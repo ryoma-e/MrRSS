@@ -693,6 +693,11 @@ const zh: TranslationMessages = {
   freshrssMissingCredentials: '请提供所有 FreshRSS 凭据以启用同步',
 
   isInDevelopment: '该功能仍在开发中，可能不稳定且存在问题。',
+
+  // Drag and Drop
+  dragToReorder: '拖动可重新排序或移动到其他分组',
+  feedReordered: '订阅源重排序成功',
+  errorReorderingFeed: '重排序订阅源失败',
 };
 
 export default zh;

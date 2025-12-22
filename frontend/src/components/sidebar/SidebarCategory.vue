@@ -12,6 +12,8 @@ interface Props {
   unreadCount: number;
   currentFeedId: number | null;
   feedUnreadCounts: Record<number, number>;
+  isDragOver?: boolean;
+  dropTargetFeedId?: number | null;
 }
 
 defineProps<Props>();
@@ -22,11 +24,27 @@ const emit = defineEmits<{
   selectFeed: [feedId: number];
   categoryContextMenu: [event: MouseEvent];
   feedContextMenu: [event: MouseEvent, feed: Feed];
+  dragOver: [feedId: number | null, event: Event];
+  drop: [];
+  dragstart: [feedId: number, event: Event];
+  dragend: [];
 }>();
+
+function handleDragOver(feedId: number | null, event: Event) {
+  emit('dragOver', feedId, event);
+}
+
+function handleDrop() {
+  emit('drop');
+}
 </script>
 
 <template>
-  <div class="mb-1">
+  <div
+    :class="['mb-1 category-container', isDragOver ? 'drag-over' : '']"
+    @dragover.self="(e) => handleDragOver(null, e)"
+    @drop.self="handleDrop"
+  >
     <div
       :class="['category-header', isActive ? 'active' : '']"
       @contextmenu="(e) => emit('categoryContextMenu', e)"
@@ -44,7 +62,7 @@ const emit = defineEmits<{
         @click.stop="emit('toggle')"
       />
     </div>
-    <div v-show="isOpen" class="pl-2">
+    <div v-show="isOpen" class="pl-2 feeds-list">
       <SidebarFeed
         v-for="feed in feeds"
         :key="feed.id"
@@ -53,6 +71,10 @@ const emit = defineEmits<{
         :unread-count="feedUnreadCounts[feed.id] || 0"
         @click="emit('selectFeed', feed.id)"
         @contextmenu="(e) => emit('feedContextMenu', e, feed)"
+        @dragstart="(e) => emit('dragstart', feed.id, e)"
+        @dragend="emit('dragend')"
+        @dragover="(e) => handleDragOver(feed.id, e)"
+        @drop.prevent="handleDrop"
       />
     </div>
   </div>
@@ -82,6 +104,13 @@ const emit = defineEmits<{
 .category-header.active {
   @apply bg-bg-tertiary text-accent;
 }
+
+.category-container.drag-over {
+  @apply rounded-lg;
+  border: 1px solid var(--color-accent, #6366f1);
+  background-color: var(--color-bg-tertiary, rgba(99, 102, 241, 0.05));
+}
+
 .unread-badge {
   @apply text-[9px] sm:text-[10px] font-semibold rounded-full min-w-[14px] sm:min-w-[16px] h-[14px] sm:h-[16px] px-0.5 sm:px-1 flex items-center justify-center;
   background-color: rgba(120, 120, 120, 0.25);
