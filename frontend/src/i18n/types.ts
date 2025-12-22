@@ -268,6 +268,7 @@ export interface TranslationMessages {
   // Confirm Dialogs
   confirm: string;
   cancel: string;
+  done: string;
   deleteFeedTitle: string;
   deleteFeedMessage: string;
   deleteMultipleFeedsTitle: string;

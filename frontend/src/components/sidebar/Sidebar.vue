@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useAppStore } from '@/stores/app';
 import { useI18n } from 'vue-i18n';
-import { PhPlus, PhGear, PhMagnifyingGlass, PhX } from '@phosphor-icons/vue';
+import { PhPlus, PhGear, PhMagnifyingGlass, PhX, PhPencil, PhCheck } from '@phosphor-icons/vue';
 import { useSidebar } from '@/composables/core/useSidebar';
 import { useDragDrop } from '@/composables/ui/useDragDrop';
 import SidebarNavItem from './SidebarNavItem.vue';
@@ -10,6 +10,13 @@ import SidebarCategory from './SidebarCategory.vue';
 
 const store = useAppStore();
 const { t } = useI18n();
+
+// Edit mode for drag reordering
+const isEditMode = ref(false);
+
+function toggleEditMode() {
+  isEditMode.value = !isEditMode.value;
+}
 
 // Check if image gallery feature is enabled
 const imageGalleryEnabled = ref(false);
@@ -57,8 +64,16 @@ const {
 } = useSidebar();
 
 // Drag and drop functionality
-const { draggingFeedId, dragOverCategory, onDragStart, onDragEnd, onDragOver, onDrop } =
-  useDragDrop();
+const {
+  draggingFeedId,
+  dragOverCategory,
+  dropPreview,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+} = useDragDrop();
 
 // Handle drag events from categories
 function handleDragStart(feedId: number, event: Event) {
@@ -70,8 +85,12 @@ function handleDragEnd() {
 }
 
 function handleDragOver(categoryName: string, feedId: number | null, event: Event) {
-  if (!draggingFeedId.value) return;
+  console.log('[Sidebar] handleDragOver called with:', { categoryName, feedId, event });
   onDragOver(categoryName, feedId, event);
+}
+
+function handleDragLeave() {
+  onDragLeave();
 }
 
 async function handleDrop(categoryName: string, feeds: any[]) {
@@ -181,6 +200,8 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
         :current-feed-id="store.currentFeedId"
         :feed-unread-counts="store.unreadCounts.feedCounts"
         :is-drag-over="dragOverCategory === name"
+        :is-edit-mode="isEditMode"
+        :drop-preview="dropPreview"
         @toggle="toggleCategory(name)"
         @select-category="store.setCategory(name)"
         @select-feed="store.setFeed"
@@ -188,7 +209,8 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
         @feed-context-menu="onFeedContextMenu"
         @dragstart="(feedId, e) => handleDragStart(feedId, e)"
         @dragend="handleDragEnd"
-        @dragover="(feedId, e) => handleDragOver(name, feedId, e)"
+        @feed-drag-over="(feedId, e) => handleDragOver(name, feedId, e)"
+        @dragleave="handleDragLeave"
         @drop="() => handleDrop(name, data._feeds)"
       />
 
@@ -204,13 +226,16 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
         :current-feed-id="store.currentFeedId"
         :feed-unread-counts="store.unreadCounts.feedCounts"
         :is-drag-over="dragOverCategory === 'uncategorized'"
+        :is-edit-mode="isEditMode"
+        :drop-preview="dropPreview"
         @toggle="toggleCategory('uncategorized')"
         @select-feed="store.setFeed"
         @category-context-menu="(e) => onCategoryContextMenu(e, 'uncategorized')"
         @feed-context-menu="onFeedContextMenu"
         @dragstart="(feedId, e) => handleDragStart(feedId, e)"
         @dragend="handleDragEnd"
-        @dragover="(feedId, e) => handleDragOver('uncategorized', feedId, e)"
+        @feed-drag-over="(feedId, e) => handleDragOver('uncategorized', feedId, e)"
+        @dragleave="handleDragLeave"
         @drop="() => handleDrop('uncategorized', tree.uncategorized)"
       />
     </div>
@@ -218,6 +243,15 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
     <div class="p-2 sm:p-4 border-t border-border flex gap-1.5 sm:gap-2">
       <button class="footer-btn" :title="t('addFeed')" @click="emitShowAddFeed">
         <PhPlus :size="18" class="sm:w-5 sm:h-5" />
+      </button>
+      <button
+        class="footer-btn"
+        :class="{ 'text-accent': isEditMode }"
+        :title="isEditMode ? t('done') : t('edit')"
+        @click="toggleEditMode"
+      >
+        <PhPencil v-if="!isEditMode" :size="18" class="sm:w-5 sm:h-5" />
+        <PhCheck v-else :size="18" class="sm:w-5 sm:h-5" />
       </button>
       <button class="footer-btn" :title="t('settings')" @click="emitShowSettings">
         <PhGear :size="18" class="sm:w-5 sm:h-5" />

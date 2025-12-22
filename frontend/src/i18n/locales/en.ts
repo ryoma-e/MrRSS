@@ -429,6 +429,7 @@ const en: TranslationMessages = {
   // Confirm Dialogs
   confirm: 'Confirm',
   cancel: 'Cancel',
+  done: 'Done',
   deleteFeedTitle: 'Delete Feed',
   deleteFeedMessage: 'Are you sure you want to delete this feed?',
   deleteMultipleFeedsTitle: 'Delete Multiple Feeds',

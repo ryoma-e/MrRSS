@@ -11,6 +11,7 @@ interface Props {
   isActive: boolean;
   unreadCount: number;
   isDragging?: boolean;
+  isEditMode?: boolean;
 }
 
 defineProps<Props>();
@@ -46,11 +47,13 @@ function handleDragEnd() {
 <template>
   <div
     :class="['feed-item', isActive ? 'active' : '', isDraggingSelf ? 'dragging' : '']"
+    :data-feed-id="feed.id"
     @click="emit('click')"
     @contextmenu="(e) => emit('contextmenu', e)"
   >
-    <!-- Drag handle -->
+    <!-- Drag handle (only visible in edit mode) -->
     <div
+      v-if="isEditMode"
       class="drag-handle"
       draggable="true"
       :title="t('dragToReorder')"

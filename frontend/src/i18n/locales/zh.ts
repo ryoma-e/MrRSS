@@ -424,6 +424,7 @@ const zh: TranslationMessages = {
   // Confirm Dialogs
   confirm: '确认',
   cancel: '取消',
+  done: '完成',
   deleteFeedTitle: '删除订阅',
   deleteFeedMessage: '确定要删除这个订阅吗？',
   deleteMultipleFeedsTitle: '删除多个订阅',

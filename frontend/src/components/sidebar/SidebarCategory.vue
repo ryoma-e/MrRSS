@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { PhFolder, PhFolderDashed, PhCaretDown } from '@phosphor-icons/vue';
 import type { Feed } from '@/types/models';
+import type { DropPreview } from '@/composables/ui/useDragDrop';
 import SidebarFeed from './SidebarFeed.vue';
 
 interface Props {
@@ -13,7 +14,8 @@ interface Props {
   currentFeedId: number | null;
   feedUnreadCounts: Record<number, number>;
   isDragOver?: boolean;
-  dropTargetFeedId?: number | null;
+  isEditMode?: boolean;
+  dropPreview?: DropPreview;
 }
 
 defineProps<Props>();
@@ -24,25 +26,50 @@ const emit = defineEmits<{
   selectFeed: [feedId: number];
   categoryContextMenu: [event: MouseEvent];
   feedContextMenu: [event: MouseEvent, feed: Feed];
-  dragOver: [feedId: number | null, event: Event];
+  feedDragOver: [feedId: number | null, event: Event];
   drop: [];
   dragstart: [feedId: number, event: Event];
   dragend: [];
 }>();
 
-function handleDragOver(feedId: number | null, event: Event) {
-  emit('dragOver', feedId, event);
+// Handle dragover on the feeds-list container using event delegation
+function handleFeedsListDragOver(event: DragEvent) {
+  // Prevent default to allow drop
+  event.preventDefault();
+
+  // Find which feed item we're hovering over
+  const target = event.target as HTMLElement;
+  const feedItem = target.closest('.feed-item');
+
+  if (feedItem) {
+    // Get the feed ID from the data attribute
+    const feedIdStr = feedItem.getAttribute('data-feed-id');
+    const feedId = feedIdStr ? parseInt(feedIdStr, 10) : null;
+    console.log('[SidebarCategory] Emitting feedDragOver with feedId:', feedId, 'event:', event);
+    emit('feedDragOver', feedId, event);
+  } else {
+    // Not hovering over any specific feed
+    console.log('[SidebarCategory] Emitting feedDragOver with null feedId, event:', event);
+    emit('feedDragOver', null, event);
+  }
 }
 
 function handleDrop() {
   emit('drop');
+}
+
+// Handle dragover on category container (for dropping at category level)
+function handleCategoryDragOver(event: DragEvent) {
+  event.preventDefault();
+  emit('feedDragOver', null, event);
 }
 </script>
 
 <template>
   <div
     :class="['mb-1 category-container', isDragOver ? 'drag-over' : '']"
-    @dragover.self="(e) => handleDragOver(null, e)"
+    @dragover.self="handleCategoryDragOver"
+    @dragleave.self="() => {}"
     @drop.self="handleDrop"
   >
     <div
@@ -62,20 +89,49 @@ function handleDrop() {
         @click.stop="emit('toggle')"
       />
     </div>
-    <div v-show="isOpen" class="pl-2 feeds-list">
-      <SidebarFeed
-        v-for="feed in feeds"
-        :key="feed.id"
-        :feed="feed"
-        :is-active="currentFeedId === feed.id"
-        :unread-count="feedUnreadCounts[feed.id] || 0"
-        @click="emit('selectFeed', feed.id)"
-        @contextmenu="(e) => emit('feedContextMenu', e, feed)"
-        @dragstart="(e) => emit('dragstart', feed.id, e)"
-        @dragend="emit('dragend')"
-        @dragover="(e) => handleDragOver(feed.id, e)"
-        @drop.prevent="handleDrop"
-      />
+    <div
+      v-show="isOpen"
+      class="pl-2 feeds-list"
+      @dragover="handleFeedsListDragOver"
+      @drop.prevent="handleDrop"
+    >
+      <template v-for="feed in feeds" :key="feed.id">
+        <!-- Drop indicator above this feed -->
+        <div
+          v-if="
+            isDragOver &&
+            dropPreview &&
+            dropPreview.targetFeedId === feed.id &&
+            dropPreview.beforeTarget
+          "
+          class="drop-indicator"
+        ></div>
+        <SidebarFeed
+          :feed="feed"
+          :is-active="currentFeedId === feed.id"
+          :unread-count="feedUnreadCounts[feed.id] || 0"
+          :is-edit-mode="isEditMode"
+          @click="emit('selectFeed', feed.id)"
+          @contextmenu="(e) => emit('feedContextMenu', e, feed)"
+          @dragstart="(e) => emit('dragstart', feed.id, e)"
+          @dragend="emit('dragend')"
+        />
+        <!-- Drop indicator below this feed -->
+        <div
+          v-if="
+            isDragOver &&
+            dropPreview &&
+            dropPreview.targetFeedId === feed.id &&
+            !dropPreview.beforeTarget
+          "
+          class="drop-indicator"
+        ></div>
+      </template>
+      <!-- Drop indicator at the end when dragging over category but not over a specific feed -->
+      <div
+        v-if="isDragOver && feeds.length > 0 && dropPreview && dropPreview.targetFeedId === null"
+        class="drop-indicator"
+      ></div>
     </div>
   </div>
 </template>
@@ -109,6 +165,28 @@ function handleDrop() {
   @apply rounded-lg;
   border: 1px solid var(--color-accent, #6366f1);
   background-color: var(--color-bg-tertiary, rgba(99, 102, 241, 0.05));
+}
+
+.feeds-list {
+  position: relative;
+}
+
+.drop-indicator {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-accent, #6366f1), transparent);
+  margin: 2px 0;
+  border-radius: 1.5px;
+  animation: pulse-indicator 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-indicator {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .unread-badge {
