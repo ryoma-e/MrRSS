@@ -3,7 +3,9 @@
 package core
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +18,8 @@ import (
 	"MrRSS/internal/models"
 	"MrRSS/internal/translation"
 	"MrRSS/internal/utils"
+
+	"codeberg.org/readeck/go-readability/v2"
 
 	"github.com/mmcdole/gofeed"
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -134,6 +138,24 @@ func (h *Handler) GetArticleContent(articleID int64) (string, error) {
 	}
 
 	return "", nil
+}
+
+// FetchFullArticleContent fetches the full article content from the original URL using readability.
+func (h *Handler) FetchFullArticleContent(url string) (string, error) {
+	// Use FromURL which handles the HTTP request internally
+	article, err := readability.FromURL(url, 30*time.Second)
+	if err != nil {
+		return "", fmt.Errorf("readability parse: %w", err)
+	}
+
+	// Render the article content as HTML
+	var buf bytes.Buffer
+	err = article.RenderHTML(&buf)
+	if err != nil {
+		return "", fmt.Errorf("render HTML: %w", err)
+	}
+
+	return buf.String(), nil
 }
 
 // findMatchingFeedItem finds the best matching feed item for an article using multiple criteria

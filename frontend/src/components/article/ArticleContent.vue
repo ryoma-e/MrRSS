@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { PhSpinnerGap, PhArticleNyTimes } from '@phosphor-icons/vue';
 import type { Article } from '@/types/models';
 import ArticleTitle from './parts/ArticleTitle.vue';
 import ArticleSummary from './parts/ArticleSummary.vue';
@@ -49,6 +50,10 @@ const { t } = useI18n();
 const { settings: appSettings, fetchSettings } = useSettings();
 const isChatPanelOpen = ref(false);
 
+// Full-text fetching state
+const isFetchingFullArticle = ref(false);
+const fullArticleContent = ref('');
+
 // Fetch settings on mount to get actual values
 onMounted(async () => {
   try {
@@ -66,6 +71,23 @@ const showChatButton = computed(() => {
     props.articleContent &&
     props.showContent
   );
+});
+
+// Computed to check if full-text fetching should be shown
+const showFullTextButton = computed(() => {
+  return (
+    appSettings.value.full_text_fetch_enabled &&
+    !props.isLoadingContent &&
+    props.articleContent &&
+    props.article?.url &&
+    props.showContent &&
+    !fullArticleContent.value // Don't show if we already have full content
+  );
+});
+
+// Computed for the content to display (full article if available, otherwise RSS content)
+const displayContent = computed(() => {
+  return fullArticleContent.value || props.articleContent;
 });
 
 // Use composables for summary and translation
@@ -136,6 +158,32 @@ async function translateText(text: string): Promise<string> {
     window.showToast(t('errorTranslating'), 'error');
   }
   return '';
+}
+
+// Fetch full article content from the original URL
+async function fetchFullArticle() {
+  if (!props.article?.id) return;
+
+  isFetchingFullArticle.value = true;
+  try {
+    const res = await fetch(`/api/articles/fetch-full?id=${props.article.id}`, {
+      method: 'POST',
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      fullArticleContent.value = data.content || '';
+      window.showToast(t('fullArticleFetched'), 'success');
+    } else {
+      console.error('Error fetching full article:', res.status);
+      window.showToast(t('errorFetchingFullArticle'), 'error');
+    }
+  } catch (e) {
+    console.error('Error fetching full article:', e);
+    window.showToast(t('errorFetchingFullArticle'), 'error');
+  } finally {
+    isFetchingFullArticle.value = false;
+  }
 }
 
 // Generate summary for the current article
@@ -469,11 +517,26 @@ watch(
         @generate-summary="generateSummary(props.article)"
       />
 
+      <!-- Full-text fetch button -->
+      <div v-if="showFullTextButton" class="flex justify-center mt-4 mb-4">
+        <button
+          :disabled="isFetchingFullArticle"
+          class="btn-secondary flex items-center gap-2"
+          @click="fetchFullArticle"
+        >
+          <PhSpinnerGap v-if="isFetchingFullArticle" :size="16" class="animate-spin" />
+          <PhArticleNyTimes v-else :size="16" />
+          <span>{{
+            isFetchingFullArticle ? t('fetchingFullArticle') : t('fetchFullArticle')
+          }}</span>
+        </button>
+      </div>
+
       <ArticleLoading v-if="isLoadingContent" />
 
       <ArticleBody
         v-else
-        :article-content="articleContent"
+        :article-content="displayContent"
         :is-translating-content="isTranslatingContent"
         :has-media-content="!!(article.audio_url || article.video_url)"
       />
@@ -492,3 +555,11 @@ watch(
     />
   </div>
 </template>
+
+<style scoped>
+@reference "../../../../style.css";
+
+.btn-secondary {
+  @apply bg-bg-tertiary border border-border text-text-primary px-3 sm:px-4 py-1.5 sm:py-2 rounded-md cursor-pointer flex items-center gap-1.5 sm:gap-2 font-medium hover:bg-bg-secondary transition-colors;
+}
+</style>

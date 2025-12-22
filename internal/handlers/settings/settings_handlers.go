@@ -71,6 +71,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		freshRSSServerURL, _ := h.DB.GetSetting("freshrss_server_url")
 		freshRSSUsername, _ := h.DB.GetSetting("freshrss_username")
 		freshRSSAPIPassword, _ := h.DB.GetEncryptedSetting("freshrss_api_password")
+		fullTextFetchEnabled, _ := h.DB.GetSetting("full_text_fetch_enabled")
 		json.NewEncoder(w).Encode(map[string]string{
 			"update_interval":             interval,
 			"refresh_mode":                refreshMode,
@@ -130,6 +131,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			"freshrss_server_url":         freshRSSServerURL,
 			"freshrss_username":           freshRSSUsername,
 			"freshrss_api_password":       freshRSSAPIPassword,
+			"full_text_fetch_enabled":     fullTextFetchEnabled,
 		})
 	case http.MethodPost:
 		var req struct {
@@ -190,6 +192,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			FreshRSSServerURL        string `json:"freshrss_server_url"`
 			FreshRSSUsername         string `json:"freshrss_username"`
 			FreshRSSAPIPassword      string `json:"freshrss_api_password"`
+			FullTextFetchEnabled     string `json:"full_text_fetch_enabled"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -413,6 +416,10 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			log.Printf("Failed to save FreshRSS API password: %v", err)
 			http.Error(w, "Failed to save FreshRSS API password", http.StatusInternalServerError)
 			return
+		}
+
+		if req.FullTextFetchEnabled != "" {
+			h.DB.SetSetting("full_text_fetch_enabled", req.FullTextFetchEnabled)
 		}
 
 		w.WriteHeader(http.StatusOK)

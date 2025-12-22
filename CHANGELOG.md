@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supported drag-and-drop to reorder feeds or change feed categories. (#288)
 - Supported AI Chat on article content. And of course **it's disabled by default**! (#286)
 - Supported exporting articles to Obsidian. (#289)
+- Supported extracting full article content from original website when RSS feed only provides summary. (#266)
 
 ### Changed
 
