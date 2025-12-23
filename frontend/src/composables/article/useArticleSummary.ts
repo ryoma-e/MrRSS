@@ -46,7 +46,10 @@ export function useArticleSummary() {
   }
 
   // Generate summary for an article
-  async function generateSummary(article: Article): Promise<SummaryResult | null> {
+  async function generateSummary(
+    article: Article,
+    content?: string
+  ): Promise<SummaryResult | null> {
     if (!summarySettings.value.enabled) {
       return null;
     }
@@ -70,6 +73,7 @@ export function useArticleSummary() {
         body: JSON.stringify({
           article_id: article.id,
           length: summarySettings.value.length,
+          content: content,
         }),
       });
 

@@ -174,6 +174,21 @@ async function fetchFullArticle() {
       const data = await res.json();
       fullArticleContent.value = data.content || '';
       window.showToast(t('fullArticleFetched'), 'success');
+
+      // After fetching full content, regenerate summary and trigger translation
+      if (props.article) {
+        if (shouldAutoGenerateSummary()) {
+          setTimeout(() => generateSummary(props.article), 100);
+        }
+        if (translationEnabled.value) {
+          // Reset translation tracking to allow re-translation with full content
+          lastTranslatedArticleId.value = null;
+          translateTitle(props.article);
+          // Wait for DOM to update with new content before translating
+          await nextTick();
+          translateContentParagraphs(fullArticleContent.value);
+        }
+      }
     } else {
       console.error('Error fetching full article:', res.status);
       window.showToast(t('errorFetchingFullArticle'), 'error');
@@ -195,7 +210,7 @@ async function generateSummary(article: Article) {
   summaryResult.value = null;
   translatedSummary.value = '';
 
-  const result = await generateSummaryComposable(article);
+  const result = await generateSummaryComposable(article, displayContent.value);
   summaryResult.value = result;
 
   // Auto-translate summary if translation is enabled
@@ -402,6 +417,7 @@ watch(
       translatedSummary.value = '';
       translatedTitle.value = '';
       lastTranslatedArticleId.value = null; // Reset translation tracking
+      fullArticleContent.value = ''; // Reset full article content when switching articles
 
       if (props.article) {
         if (shouldAutoGenerateSummary()) {

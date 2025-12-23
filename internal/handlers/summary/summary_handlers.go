@@ -18,7 +18,8 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 
 	var req struct {
 		ArticleID int64  `json:"article_id"`
-		Length    string `json:"length"` // "short", "medium", "long"
+		Length    string `json:"length"`            // "short", "medium", "long"
+		Content   string `json:"content,omitempty"` // Optional: use provided content instead of fetching from DB
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,7 +42,7 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 	}
 
 	// Get the article content
-	content, err := getArticleContent(h, req.ArticleID)
+	content, err := getArticleContent(h, req.ArticleID, req.Content)
 	if err != nil {
 		log.Printf("Error getting article content for summary: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -130,7 +131,13 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(response)
 }
 
-// getArticleContent fetches the content of an article by ID
-func getArticleContent(h *core.Handler, articleID int64) (string, error) {
+// getArticleContent fetches the content of an article by ID, or uses provided content
+func getArticleContent(h *core.Handler, articleID int64, providedContent string) (string, error) {
+	// If content is provided, use it directly
+	if providedContent != "" {
+		return providedContent, nil
+	}
+
+	// Otherwise, fetch from database/cache
 	return h.GetArticleContent(articleID)
 }
