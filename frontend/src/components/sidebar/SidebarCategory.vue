@@ -81,6 +81,14 @@ function handleFeedsListDragOver(event: DragEvent) {
     const feedsList = event.currentTarget as HTMLElement;
     if (feedsList) {
       const feedItems = Array.from(feedsList.querySelectorAll('.feed-item'));
+
+      // If there are no feed items (empty category), emit null immediately
+      if (feedItems.length === 0) {
+        console.log('[SidebarCategory] Empty category, emitting feedDragOver with null feedId');
+        emit('feedDragOver', null, event);
+        return;
+      }
+
       const listRect = feedsList.getBoundingClientRect();
       const mouseY = event.clientY - listRect.top;
 
@@ -109,7 +117,8 @@ function handleFeedsListDragOver(event: DragEvent) {
   }
 }
 
-function handleDrop() {
+function handleDrop(event: DragEvent) {
+  event.preventDefault();
   emit('drop');
 }
 
@@ -144,7 +153,7 @@ const checkIsOpen = (path: string) => {
     :data-level="level"
     @dragover.self="handleCategoryDragOver"
     @dragleave.self="(e) => $emit('dragleave', props.name, e)"
-    @drop.self="handleDrop"
+    @drop.self.prevent="handleDrop"
   >
     <div
       :class="['category-header', isActive ? 'active' : '']"
@@ -206,10 +215,12 @@ const checkIsOpen = (path: string) => {
           ></div>
         </div>
       </template>
-      <!-- Drop indicator at the end when dragging over category but not over a specific feed -->
+
+      <!-- Drop indicator for empty category or at the end when dragging over -->
       <div
-        v-if="isDragOver && feeds.length > 0 && dropPreview && dropPreview.targetFeedId === null"
+        v-if="isDragOver && dropPreview && dropPreview.targetFeedId === null"
         class="drop-indicator end-indicator"
+        :class="{ 'empty-category-indicator': feeds.length === 0 }"
       ></div>
 
       <!-- Child categories (multi-level support) -->
@@ -230,7 +241,7 @@ const checkIsOpen = (path: string) => {
           :is-drag-over="false"
           :is-edit-mode="isEditMode"
           :dragging-feed-id="draggingFeedId"
-          :is-category-open="isCategoryOpen"
+          :is-category-open="props.isCategoryOpen"
           @toggle="emit('childToggle', fullPath + '/' + childName)"
           @select-category="(path) => emit('childSelectCategory', path)"
           @category-context-menu="(e, path) => emit('childContextMenu', e, path)"
@@ -303,6 +314,7 @@ const checkIsOpen = (path: string) => {
 
 .feeds-list {
   position: relative;
+  min-height: 40px; /* Ensure empty categories have a drop zone */
 }
 
 /* Wrapper to position drop indicators relative to each feed */
@@ -328,6 +340,13 @@ const checkIsOpen = (path: string) => {
   position: relative;
   margin-top: 2px;
   margin-bottom: 2px;
+}
+
+/* Empty category indicator - more prominent */
+.drop-indicator.empty-category-indicator {
+  height: 4px;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 @keyframes pulse-indicator {

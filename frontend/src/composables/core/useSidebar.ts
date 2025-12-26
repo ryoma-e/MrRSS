@@ -99,6 +99,11 @@ export function useSidebar() {
       if (newCategories) {
         const hasSavedState = localStorage.getItem('openCategories') !== null;
         newCategories.forEach((cat) => {
+          // Always auto-expand 'uncategorized' category
+          if (cat === 'uncategorized' && !openCategories.value.has(cat)) {
+            openCategories.value.add(cat);
+            return;
+          }
           // Only auto-expand if this is a new category and no saved state exists
           if (!openCategories.value.has(cat) && !hasSavedState) {
             openCategories.value.add(cat);
