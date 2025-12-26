@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed the issue of some incorrect styles in settings page.
+
 ## [1.3.10] - 2025-12-26
 
 ### Added
@@ -14,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Supported import and export feeds in JSON format. (#317)
 - Supported choosing auto expand content for each feed. (#306)
 - Supported uploading CSS files for customized styling of articles. (#324)
-- Supported showing only unread articles in article list. (#319)
+- Supported showing only unread articles in article list. (#318)
 
 ### Changed
 

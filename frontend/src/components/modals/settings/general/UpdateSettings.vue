@@ -64,7 +64,6 @@ function formatLastUpdate(timestamp: string): string {
         <option value="fixed">{{ t('fixedInterval') }}</option>
         <option value="intelligent">{{ t('intelligentInterval') }}</option>
       </select>
-      <span class="text-xs sm:text-sm text-text-secondary">{{ t('minutes') }}</span>
     </div>
 
     <!-- Auto Update Interval (shown when fixed mode is selected) -->
@@ -97,6 +96,7 @@ function formatLastUpdate(timestamp: string): string {
               })
           "
         />
+        <span class="text-xs sm:text-sm text-text-secondary">{{ t('minutes') }}</span>
       </div>
     </div>
   </div>
