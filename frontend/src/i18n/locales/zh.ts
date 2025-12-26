@@ -582,6 +582,7 @@ const zh: TranslationMessages = {
   settingsTitle: '设置',
   setUsageLimit: '设置使用上限',
   setUsageLimitDesc: 'Token 使用数量上限（设置为 0 时则无限制）',
+  showOnlyUnread: '仅显示未读文章',
   shortcutArticles: '文章',
   shortcutCleared: '快捷键已清除',
   shortcutConflict: '此快捷键已被使用',

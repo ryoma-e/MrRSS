@@ -590,6 +590,7 @@ const en: TranslationMessages = {
   settingsTitle: 'Settings',
   setUsageLimit: 'Set Usage Limit',
   setUsageLimitDesc: 'Maximum number of tokens allowed (set to 0 for unlimited)',
+  showOnlyUnread: 'Show only unread articles',
   shortcutArticles: 'Articles',
   shortcutCleared: 'Shortcut cleared',
   shortcutConflict: 'This shortcut is already in use',
