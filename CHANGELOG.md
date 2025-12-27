@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fixed the issue where macOS privacy permission dialog appears repeatedly when opening articles. (#337)
+- Fixed the issue where GPU occupation is high when opening settings page. (#339)
 
 ## [1.3.11] - 2025-12-26
 
