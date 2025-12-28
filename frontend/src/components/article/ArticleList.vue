@@ -11,6 +11,9 @@ import {
   PhCheckCircle,
   PhEye,
   PhEyeSlash,
+  PhCircle,
+  PhClock,
+  PhLightning,
 } from '@phosphor-icons/vue';
 import ArticleFilterModal from '../modals/filter/ArticleFilterModal.vue';
 import ArticleItem from './ArticleItem.vue';
@@ -407,52 +410,78 @@ function handleHoverMarkAsRead(articleId: number): void {
                     (store.refreshProgress.queue_task_count || 0) > 0 ||
                     (store.refreshProgress.article_click_count || 0) > 0)
                 "
-                class="absolute right-0 top-full mt-2 z-50 w-72 bg-bg-secondary border border-bg-tertiary rounded-lg shadow-xl overflow-hidden"
+                class="absolute right-0 top-full mt-2 z-50 w-72 bg-bg-secondary rounded-lg shadow-xl overflow-hidden"
               >
-                <div class="p-3">
-                  <div class="text-xs font-semibold text-text-primary mb-2">
+                <div class="px-3 py-2">
+                  <div class="text-xs font-semibold text-text-primary mb-2 flex items-center gap-2">
+                    <PhArrowClockwise :size="12" class="animate-spin-slow" />
                     {{ t('refreshing') }}
                   </div>
 
-                  <!-- Pool Tasks - Show all tasks in order of creation -->
+                  <!-- Pool Tasks - Show all tasks sorted alphabetically -->
                   <div v-if="(store.refreshProgress.pool_task_count || 0) > 0" class="mb-2">
-                    <div class="text-[10px] text-text-secondary uppercase tracking-wide mb-1">
+                    <div
+                      class="text-[10px] text-text-secondary mb-1.5 font-medium flex items-center gap-1"
+                    >
+                      <PhCircle :size="10" class="text-accent" />
                       {{ t('activeTasks') }} ({{ store.refreshProgress.pool_task_count || 0 }})
                     </div>
-                    <div
-                      v-for="(task, index) in store.refreshProgress.pool_tasks || []"
-                      :key="'pool-' + index"
-                      class="text-xs text-text-primary bg-bg-tertiary px-2 py-1 rounded mb-1 last:mb-0 truncate"
-                      :title="task.feed_title"
-                    >
-                      {{ task.feed_title }}
+                    <div class="space-y-0.5">
+                      <div
+                        v-for="(task, index) in store.refreshProgress.pool_tasks || []"
+                        :key="'pool-' + index"
+                        class="text-xs text-text-primary bg-accent/10 px-2.5 py-1.5 rounded truncate"
+                        :title="task.feed_title"
+                      >
+                        <div class="flex items-center gap-2">
+                          <PhCircle :size="10" class="text-accent animate-pulse flex-shrink-0" />
+                          <span class="truncate flex-1">{{ task.feed_title }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <!-- Queue Tasks - Show first 3 -->
                   <div v-if="(store.refreshProgress.queue_task_count || 0) > 0">
-                    <div class="text-[10px] text-text-secondary uppercase tracking-wide mb-1">
+                    <div
+                      class="text-[10px] text-text-secondary mb-1.5 font-medium flex items-center gap-1"
+                    >
+                      <PhClock :size="10" />
                       {{ t('queuedTasks') }} ({{ store.refreshProgress.queue_task_count || 0 }})
                     </div>
-                    <div
-                      v-for="(task, index) in store.refreshProgress.queue_tasks || []"
-                      :key="'queue-' + index"
-                      class="text-xs text-text-secondary bg-bg-tertiary/50 px-2 py-1 rounded mb-1 last:mb-0 truncate"
-                      :title="task.feed_title"
-                    >
-                      {{ task.feed_title }}
+                    <div class="space-y-0.5">
+                      <div
+                        v-for="(task, index) in store.refreshProgress.queue_tasks || []"
+                        :key="'queue-' + index"
+                        class="text-xs text-text-secondary bg-bg-tertiary/50 px-2.5 py-1.5 rounded truncate"
+                        :title="task.feed_title"
+                      >
+                        <div class="flex items-center gap-2">
+                          <PhClock :size="10" class="flex-shrink-0" />
+                          <span class="truncate flex-1">{{ task.feed_title }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   <!-- Article Click Tasks -->
-                  <div v-if="(store.refreshProgress.article_click_count || 0) > 0" class="mt-2">
-                    <div class="text-[10px] text-text-secondary uppercase tracking-wide mb-1">
+                  <div
+                    v-if="(store.refreshProgress.article_click_count || 0) > 0"
+                    class="mt-2 pt-2 border-t border-border/50"
+                  >
+                    <div
+                      class="text-[10px] text-text-secondary mb-1.5 font-medium flex items-center gap-1"
+                    >
+                      <PhLightning :size="10" class="text-accent" />
                       {{ t('immediateTasks') }} ({{
                         store.refreshProgress.article_click_count || 0
                       }})
                     </div>
-                    <div class="text-xs text-text-primary bg-bg-tertiary px-2 py-1 rounded">
-                      {{ t('fetchingArticleContent') }}
+                    <div class="text-xs text-accent bg-accent/10 px-2.5 py-1.5 rounded truncate">
+                      <div class="flex items-center gap-2">
+                        <PhLightning :size="10" class="flex-shrink-0" />
+                        <span class="truncate">{{ t('fetchingArticleContent') }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

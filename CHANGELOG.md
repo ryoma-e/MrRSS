@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+**BREAKING**: The basic system (including feed fetcher, scheduler, and database cleaner) has been re-architected to improve performance and maintainability. The following changes may affect existing setups:
+
+- *Fetching all feeds may not refresh feeds that is not setted as "Using global refresh settings".*
+- *All the article contents are now cached, so enabling "Auto Cleanup" is recommended to avoid excessive database size growth.*
+- *Maximum refresh time interval of intelligent refresh scheduling is changed from 3 hours to 24 hours.*
+- *Feed refresh now has 5 seconds timeout. Then a 10 seconds timeout retry is performed.*
+
+### Added
+
+- Supported displaying feeds that are refreshing in progress or waiting to refresh in the feed list.
+
 ### Changed
 
 - Offer users a setting to enable or disable auto installation of updates after download. (#336)

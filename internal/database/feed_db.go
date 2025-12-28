@@ -206,6 +206,20 @@ func (db *DB) UpdateFeedError(id int64, errorMsg string) error {
 	return err
 }
 
+// ClearAllFeedErrors clears error messages for all feeds.
+func (db *DB) ClearAllFeedErrors() error {
+	db.WaitForReady()
+	_, err := db.Exec("UPDATE feeds SET last_error = ''")
+	return err
+}
+
+// UpdateFeedLastUpdated updates a feed's last_updated timestamp.
+func (db *DB) UpdateFeedLastUpdated(id int64) error {
+	db.WaitForReady()
+	_, err := db.Exec("UPDATE feeds SET last_updated = datetime('now') WHERE id = ?", id)
+	return err
+}
+
 // MarkFeedDiscovered marks a feed as having completed discovery.
 func (db *DB) MarkFeedDiscovered(id int64) error {
 	db.WaitForReady()

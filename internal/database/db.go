@@ -118,15 +118,15 @@ func (db *DB) Init() error {
 		_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN summary TEXT DEFAULT ''`)
 
 		// Migration: Add unique_id column to articles table for better deduplication
-		// This replaces URL-based deduplication with title+feed_id+published_at based deduplication
+		// This replaces URL-based deduplication with title+feed_id+published_date based deduplication
 		_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN unique_id TEXT UNIQUE`)
 
 		// Migration: Migrate existing articles to generate unique_id
-		// For existing articles, generate unique_id from title+feed_id+published_at
+		// For existing articles, generate unique_id from title+feed_id+published_date (date only, not full timestamp)
 		// If url was UNIQUE before, keep it but unique_id is now the primary deduplication key
 		db.Exec(`
 			UPDATE articles
-			SET unique_id = LOWER(HEX(MD5(title || '|' || feed_id || '|' || COALESCE(strftime('%Y-%m-%d %H:%M:%S', published_at), ''))))
+			SET unique_id = LOWER(HEX(MD5(title || '|' || feed_id || '|' || COALESCE(strftime('%Y-%m-%d', published_at), ''))))
 			WHERE unique_id IS NULL
 		`)
 
@@ -163,7 +163,7 @@ func (db *DB) Init() error {
 					INSERT INTO articles_new (id, feed_id, title, url, image_url, audio_url, video_url, translated_title, published_at, is_read, is_favorite, is_hidden, is_read_later, summary, unique_id)
 					SELECT id, feed_id, title, url, image_url, audio_url, video_url, translated_title, published_at, is_read, is_favorite, is_hidden, is_read_later,
 						COALESCE(summary, '') as summary,
-						LOWER(HEX(MD5(title || '|' || feed_id || '|' || COALESCE(strftime('%Y-%m-%d %H:%M:%S', published_at), '')))) as unique_id
+						LOWER(HEX(MD5(title || '|' || feed_id || '|' || COALESCE(strftime('%Y-%m-%d', published_at), '')))) as unique_id
 					FROM articles
 				`)
 				// Drop old table and rename new table

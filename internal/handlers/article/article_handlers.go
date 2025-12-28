@@ -3,6 +3,7 @@ package article
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
 	"time"
 
 	"MrRSS/internal/handlers/core"
@@ -51,6 +52,11 @@ func HandleTaskDetails(h *core.Handler, w http.ResponseWriter, r *http.Request) 
 			CreatedAt: task.CreatedAt.Format(time.RFC3339),
 		}
 	}
+
+	// Sort pool tasks alphabetically by feed title
+	sort.Slice(poolTasks, func(i, j int) bool {
+		return poolTasks[i].FeedTitle < poolTasks[j].FeedTitle
+	})
 
 	// Get queue tasks (limit to first 3)
 	queueTasksRaw := tm.GetQueueTasks(3)

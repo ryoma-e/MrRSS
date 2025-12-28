@@ -119,9 +119,17 @@ func main() {
 		logPath = "debug.log"
 	}
 
-	f, _ := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	defer f.Close()
-	log.SetOutput(f)
+	// Clear previous log by opening in truncate mode
+	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		log.Printf("Failed to open log file: %v", err)
+		// Fallback to stdout
+		f = nil
+	}
+	if f != nil {
+		defer f.Close()
+		log.SetOutput(f)
+	}
 
 	log.Println("Starting application...")
 

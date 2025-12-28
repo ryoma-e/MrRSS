@@ -35,23 +35,51 @@ func (h *Handler) StartBackgroundScheduler(ctx context.Context) {
 		}
 	}()
 
-	// Check refresh mode
+	// Start the scheduler based on refresh mode
 	refreshMode, _ := h.DB.GetSetting("refresh_mode")
 
 	if refreshMode == "intelligent" {
-		// Use intelligent refresh mode with per-feed intervals
-		h.startIntelligentScheduler(ctx)
+		// Use intelligent refresh mode
+		h.startScheduler(ctx, true)
 	} else {
 		// Use fixed interval mode (default)
-		h.startFixedScheduler(ctx)
+		h.startScheduler(ctx, false)
 	}
 }
 
-// startFixedScheduler uses a fixed interval for all feeds (but respects per-feed custom intervals)
-func (h *Handler) startFixedScheduler(ctx context.Context) {
-	// Use a ticker to check feeds every minute
-	ticker := time.NewTicker(1 * time.Minute)
-	defer ticker.Stop()
+// startScheduler is the unified scheduler that handles both fixed and intelligent modes
+// Logic:
+// 1. Individual feeds with custom intervals (RefreshInterval != 0) are scheduled individually
+// 2. Global refresh is triggered at the global interval for feeds using global setting (RefreshInterval == 0)
+func (h *Handler) startScheduler(ctx context.Context, intelligentMode bool) {
+	modeName := "fixed"
+	if intelligentMode {
+		modeName = "intelligent"
+	}
+	log.Printf("Starting %s interval scheduler", modeName)
+
+	// Track last global refresh time
+	// Try to load from settings, or initialize to current time if not exists
+	lastGlobalRefreshStr, err := h.DB.GetSetting("last_global_refresh")
+	var lastGlobalRefresh time.Time
+	if err != nil {
+		// First time running - set to current time and save
+		lastGlobalRefresh = time.Now()
+		lastGlobalRefreshStr = lastGlobalRefresh.Format(time.RFC3339)
+		h.DB.SetSetting("last_global_refresh", lastGlobalRefreshStr)
+		log.Printf("First run - initialized last_global_refresh to %v", lastGlobalRefresh)
+		// Trigger initial global refresh for first-time users
+		go h.triggerGlobalRefresh(ctx, intelligentMode, &lastGlobalRefresh)
+	} else {
+		// Parse stored time
+		lastGlobalRefresh, err = time.Parse(time.RFC3339, lastGlobalRefreshStr)
+		if err != nil {
+			log.Printf("Failed to parse last_global_refresh (%s): %v, resetting to now", lastGlobalRefreshStr, err)
+			lastGlobalRefresh = time.Now()
+		} else {
+			log.Printf("Loaded last_global_refresh from settings: %v", lastGlobalRefresh)
+		}
+	}
 
 	// Get global interval
 	getGlobalInterval := func() time.Duration {
@@ -63,150 +91,115 @@ func (h *Handler) startFixedScheduler(ctx context.Context) {
 		return time.Duration(interval) * time.Minute
 	}
 
-	log.Printf("Starting fixed interval scheduler (global interval: %v)", getGlobalInterval())
+	globalInterval := getGlobalInterval()
+	log.Printf("Global refresh interval: %v", globalInterval)
 
-	for {
-		select {
-		case <-ctx.Done():
-			log.Println("Stopping fixed interval scheduler")
-			return
-		case <-ticker.C:
-			// Check each feed to see if it needs refresh
-			go h.refreshFeedsWithFixedInterval(ctx, getGlobalInterval())
-		}
-	}
-}
-
-// refreshFeedsWithFixedInterval checks and refreshes feeds based on fixed intervals
-func (h *Handler) refreshFeedsWithFixedInterval(ctx context.Context, globalInterval time.Duration) {
-	feeds, err := h.DB.GetFeeds()
-	if err != nil {
-		log.Printf("Error getting feeds for fixed refresh: %v", err)
-		return
-	}
-
-	for i, feed := range feeds {
-		// Check if context is cancelled
-		select {
-		case <-ctx.Done():
-			return
-		default:
-		}
-
-		// Create local copy to avoid loop variable capture issues
-		currentFeed := feed
-
-		// Determine refresh interval for this feed
-		// Feed-level settings override global settings:
-		// - RefreshInterval > 0: Use custom fixed interval (in minutes)
-		// - RefreshInterval == -1: Use intelligent interval (even in fixed mode)
-		// - RefreshInterval == 0: Use global interval (follows global mode)
-		var refreshInterval time.Duration
-		if currentFeed.RefreshInterval > 0 {
-			// Use per-feed custom fixed interval
-			refreshInterval = time.Duration(currentFeed.RefreshInterval) * time.Minute
-		} else if currentFeed.RefreshInterval == -1 {
-			// Feed explicitly requests intelligent interval
-			// This allows individual feeds to use intelligent refresh even when global mode is fixed
-			calculator := h.Fetcher.GetIntelligentRefreshCalculator()
-			refreshInterval = calculator.CalculateInterval(currentFeed)
-		} else {
-			// Use global fixed interval (RefreshInterval == 0)
-			refreshInterval = globalInterval
-		}
-
-		// Check if feed needs refresh based on last_updated time
-		timeSinceUpdate := time.Since(currentFeed.LastUpdated)
-		if timeSinceUpdate >= refreshInterval {
-			// Apply staggered delay to avoid thundering herd
-			staggerDelay := h.Fetcher.GetStaggeredDelay(currentFeed.ID, len(feeds))
-
-			// Schedule feed refresh with stagger
-			// If custom interval (>0 or -1), add to queue tail individually
-			// If global interval (0), it will be handled by FetchAll instead
-			if currentFeed.RefreshInterval != 0 {
-				go func(f models.Feed, delay time.Duration, interval time.Duration) {
-					time.Sleep(delay)
-					select {
-					case <-ctx.Done():
-						return
-					default:
-						log.Printf("Auto-refreshing feed %s (interval: %v, fixed mode)", f.Title, interval)
-						// Scheduled refresh = add to queue tail
-						h.Fetcher.FetchSingleFeed(ctx, f, false)
-					}
-
-					// Run media cache cleanup if enabled
-					mediaCacheEnabled, _ := h.DB.GetSetting("media_cache_enabled")
-					if mediaCacheEnabled == "true" {
-						h.cleanupMediaCache()
-					}
-				}(currentFeed, staggerDelay, refreshInterval)
-			}
-		}
-
-		// Small delay between checking feeds to avoid CPU spikes
-		if i < len(feeds)-1 {
-			time.Sleep(100 * time.Millisecond)
-		}
-	}
-
-	// For feeds with RefreshInterval == 0 (use global setting), trigger FetchAll once
-	// This will add them all to queue tail together
-	needsGlobalRefresh := false
-	for _, feed := range feeds {
-		if feed.RefreshInterval == 0 {
-			needsGlobalRefresh = true
-			break
-		}
-	}
-
-	if needsGlobalRefresh {
-		// Filter feeds that use global interval
-		globalFeeds := make([]models.Feed, 0)
-		for _, feed := range feeds {
-			if feed.RefreshInterval == 0 {
-				globalFeeds = append(globalFeeds, feed)
-			}
-		}
-		if len(globalFeeds) > 0 {
-			log.Printf("Triggering global refresh for %d feeds using global interval", len(globalFeeds))
-			h.Fetcher.FetchAll(ctx)
-		}
-	}
-}
-
-// startIntelligentScheduler uses per-feed intervals with staggered refresh
-func (h *Handler) startIntelligentScheduler(ctx context.Context) {
-	log.Println("Starting intelligent refresh scheduler")
-
+	// Use a ticker to check every minute
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Stopping intelligent scheduler")
+			log.Println("Stopping scheduler")
 			return
 		case <-ticker.C:
-			// Check each feed to see if it needs refresh
-			go h.refreshFeedsIntelligently(ctx)
+			// Check if we need to trigger global refresh
+			timeSinceLastGlobal := time.Since(lastGlobalRefresh)
+			if timeSinceLastGlobal >= globalInterval {
+				log.Printf("Time since last global refresh (%v) >= global interval (%v), triggering global refresh",
+					timeSinceLastGlobal, globalInterval)
+				// Trigger global refresh for feeds using global setting
+				// Note: lastGlobalRefresh will be updated inside triggerGlobalRefresh
+				go h.triggerGlobalRefresh(ctx, intelligentMode, &lastGlobalRefresh)
+			}
+
+			// Schedule individual feeds with custom intervals
+			go h.scheduleIndividualFeeds(ctx, intelligentMode)
 		}
 	}
 }
 
-// refreshFeedsIntelligently checks and refreshes feeds based on their individual intervals
-func (h *Handler) refreshFeedsIntelligently(ctx context.Context) {
+// triggerGlobalRefresh triggers a global refresh for all feeds with RefreshInterval == 0
+// In intelligent mode, this calculates intervals per feed
+// In fixed mode, all feeds refresh together at the global interval
+func (h *Handler) triggerGlobalRefresh(ctx context.Context, intelligentMode bool, lastGlobalRefresh *time.Time) {
+	// Update last global refresh time to now
+	*lastGlobalRefresh = time.Now()
+	log.Printf("Global refresh triggered at %v", *lastGlobalRefresh)
+
+	// Save to settings for persistence across restarts
+	lastGlobalRefreshStr := lastGlobalRefresh.Format(time.RFC3339)
+	if err := h.DB.SetSetting("last_global_refresh", lastGlobalRefreshStr); err != nil {
+		log.Printf("Failed to save last_global_refresh to settings: %v", err)
+	}
 	feeds, err := h.DB.GetFeeds()
 	if err != nil {
-		log.Printf("Error getting feeds for intelligent refresh: %v", err)
+		log.Printf("Error getting feeds for global refresh: %v", err)
 		return
 	}
 
-	// Use intelligent refresh calculator
+	// Filter feeds that use global setting (RefreshInterval == 0)
+	globalFeeds := make([]models.Feed, 0)
+	for _, feed := range feeds {
+		if feed.RefreshInterval == 0 {
+			globalFeeds = append(globalFeeds, feed)
+		}
+	}
+
+	if len(globalFeeds) == 0 {
+		return
+	}
+
+	log.Printf("Triggering global refresh for %d feeds (intelligent mode: %v)", len(globalFeeds), intelligentMode)
+
+	if intelligentMode {
+		// In intelligent mode, schedule each feed individually with calculated intervals
+		calculator := h.Fetcher.GetIntelligentRefreshCalculator()
+		for _, feed := range globalFeeds {
+			interval := calculator.CalculateInterval(feed)
+			staggerDelay := h.Fetcher.GetStaggeredDelay(feed.ID, len(globalFeeds))
+
+			go func(f models.Feed, delay time.Duration, calculatedInterval time.Duration) {
+				time.Sleep(delay)
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					log.Printf("Auto-refreshing feed %s (intelligent mode, interval: %v)", f.Title, calculatedInterval)
+					h.Fetcher.FetchSingleFeed(ctx, f, false)
+				}
+			}(feed, staggerDelay, interval)
+		}
+	} else {
+		// In fixed mode, refresh all feeds together
+		h.Fetcher.FetchAll(ctx)
+	}
+
+	// Run media cache cleanup if enabled
+	mediaCacheEnabled, _ := h.DB.GetSetting("media_cache_enabled")
+	if mediaCacheEnabled == "true" {
+		h.cleanupMediaCache()
+	}
+}
+
+// scheduleIndividualFeeds schedules feeds with custom intervals (RefreshInterval != 0)
+// These feeds are refreshed independently of the global refresh cycle
+func (h *Handler) scheduleIndividualFeeds(ctx context.Context, intelligentMode bool) {
+	feeds, err := h.DB.GetFeeds()
+	if err != nil {
+		log.Printf("Error getting feeds for individual scheduling: %v", err)
+		return
+	}
+
 	calculator := h.Fetcher.GetIntelligentRefreshCalculator()
 
-	for i, feed := range feeds {
+	for _, feed := range feeds {
+		// Skip feeds using global setting (RefreshInterval == 0)
+		if feed.RefreshInterval == 0 {
+			continue
+		}
+
 		// Check if context is cancelled
 		select {
 		case <-ctx.Done():
@@ -214,64 +207,34 @@ func (h *Handler) refreshFeedsIntelligently(ctx context.Context) {
 		default:
 		}
 
-		// Create local copy to avoid loop variable capture issues
-		currentFeed := feed
-
-		// Determine refresh interval for this feed
-		// Feed-level settings override global settings:
-		// - RefreshInterval > 0: Use custom fixed interval (in minutes)
-		// - RefreshInterval == -1: Use intelligent interval (explicit request)
-		// - RefreshInterval == 0: Use global interval (intelligent in this mode)
+		// Determine refresh interval
 		var refreshInterval time.Duration
-		if currentFeed.RefreshInterval > 0 {
-			// Use per-feed custom fixed interval
-			refreshInterval = time.Duration(currentFeed.RefreshInterval) * time.Minute
-		} else if currentFeed.RefreshInterval == -1 {
-			// Feed explicitly requests intelligent interval
-			refreshInterval = calculator.CalculateInterval(currentFeed)
-		} else {
-			// Use global intelligent interval (RefreshInterval == 0)
-			// In intelligent mode, 0 means "use intelligent calculation"
-			refreshInterval = calculator.CalculateInterval(currentFeed)
+		if feed.RefreshInterval > 0 {
+			// Use custom fixed interval
+			refreshInterval = time.Duration(feed.RefreshInterval) * time.Minute
+		} else if feed.RefreshInterval == -1 {
+			// Use intelligent interval
+			refreshInterval = calculator.CalculateInterval(feed)
 		}
 
 		// Check if feed needs refresh based on last_updated time
-		timeSinceUpdate := time.Since(currentFeed.LastUpdated)
+		timeSinceUpdate := time.Since(feed.LastUpdated)
 		if timeSinceUpdate >= refreshInterval {
-			// Apply staggered delay to avoid thundering herd
-			staggerDelay := h.Fetcher.GetStaggeredDelay(currentFeed.ID, len(feeds))
+			// Apply staggered delay
+			staggerDelay := h.Fetcher.GetStaggeredDelay(feed.ID, len(feeds))
 
-			// Schedule feed refresh with stagger
-			// All feeds go to queue tail in intelligent mode
+			// Schedule feed refresh
+			feedCopy := feed
 			go func(f models.Feed, delay time.Duration, interval time.Duration) {
 				time.Sleep(delay)
 				select {
 				case <-ctx.Done():
 					return
 				default:
-					log.Printf("Intelligently refreshing feed %s (interval: %v)", f.Title, interval)
-					// Scheduled refresh = add to queue tail
+					log.Printf("Auto-refreshing feed %s (custom interval: %v)", f.Title, interval)
 					h.Fetcher.FetchSingleFeed(ctx, f, false)
 				}
-			}(currentFeed, staggerDelay, refreshInterval)
-		}
-
-		// Small delay between checking feeds to avoid CPU spikes
-		if i < len(feeds)-1 {
-			time.Sleep(100 * time.Millisecond)
-		}
-	}
-}
-
-// runCleanup runs the cleanup routine if enabled
-func (h *Handler) runCleanup() {
-	autoCleanup, _ := h.DB.GetSetting("auto_cleanup_enabled")
-	if autoCleanup == "true" {
-		count, err := h.DB.CleanupOldArticles()
-		if err != nil {
-			log.Printf("Error during automatic cleanup: %v", err)
-		} else if count > 0 {
-			log.Printf("Automatic cleanup: removed %d old articles", count)
+			}(feedCopy, staggerDelay, refreshInterval)
 		}
 	}
 }

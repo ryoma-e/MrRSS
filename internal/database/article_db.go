@@ -441,7 +441,8 @@ func (db *DB) UpdateArticleSummary(id int64, summary string) error {
 }
 
 // GetArticleIDByUniqueID retrieves an article's ID by its unique identifier.
-// This is the preferred method for looking up articles as it uses the title+feed_id+published_at based deduplication.
+// This is the preferred method for looking up articles as it uses the title+feed_id+published_date based deduplication.
+// Note: Uses date only (YYYY-MM-DD) rather than full timestamp for better deduplication.
 func (db *DB) GetArticleIDByUniqueID(title string, feedID int64, publishedAt time.Time) (int64, error) {
 	db.WaitForReady()
 	uniqueID := utils.GenerateArticleUniqueID(title, feedID, publishedAt)

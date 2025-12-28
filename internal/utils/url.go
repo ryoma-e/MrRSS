@@ -233,12 +233,15 @@ func containsMeaningfulWords(key string) bool {
 	return false
 }
 
-// GenerateArticleUniqueID generates a unique identifier for an article based on title + feed_id + published_at.
+// GenerateArticleUniqueID generates a unique identifier for an article based on title + feed_id + published_date.
 // This provides better deduplication than URL-based approaches, especially when feeds use tracking parameters
 // or when the same article appears in multiple feeds with different URLs.
+// Note: Uses date only (not full timestamp) to group articles published on the same day.
 func GenerateArticleUniqueID(title string, feedID int64, publishedAt time.Time) string {
-	// Format: title|feed_id|published_at (RFC3339 format includes timezone for consistency)
-	data := fmt.Sprintf("%s|%d|%s", title, feedID, publishedAt.Format(time.RFC3339))
+	// Format: title|feed_id|published_date (YYYY-MM-DD format)
+	// Using date only instead of full timestamp to allow articles published on the same day
+	// with minor time differences to be treated as duplicates
+	data := fmt.Sprintf("%s|%d|%s", title, feedID, publishedAt.Format("2006-01-02"))
 
 	// Generate MD5 hash and convert to lowercase hex string
 	hash := md5.Sum([]byte(data))

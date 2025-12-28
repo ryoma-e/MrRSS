@@ -298,6 +298,13 @@ func (f *Fetcher) fetchFeedWithContext(ctx context.Context, feed models.Feed) er
 		return err
 	}
 
+	// Check context after parsing
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	// Clear any previous error on successful fetch
 	f.db.UpdateFeedError(feed.ID, "")
 
@@ -309,6 +316,13 @@ func (f *Fetcher) fetchFeedWithContext(ctx context.Context, feed models.Feed) er
 	// Update Feed Link if available and not set
 	if feed.Link == "" && parsedFeed.Link != "" {
 		f.db.UpdateFeedLink(feed.ID, parsedFeed.Link)
+	}
+
+	// Check context before processing articles
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
 	}
 
 	// Process articles
@@ -332,12 +346,23 @@ func (f *Fetcher) fetchFeedWithContext(ctx context.Context, feed models.Feed) er
 			return err
 		}
 
-		// Cache article content from RSS feed
-		f.cacheArticleContents(articlesWithContent)
+		// Post-processing operations (content caching and rule application)
+		// These are non-critical and run asynchronously to avoid blocking the feed refresh
+		// Even if they fail or are slow, the feed has already been successfully saved
+		go func() {
+			// Cache article content from RSS feed
+			f.cacheArticleContents(articlesWithContent)
 
-		// Apply rules to newly saved articles
-		savedArticles, err := f.db.GetArticles("", feed.ID, "", false, len(articlesToSave), 0)
-		if err == nil && len(savedArticles) > 0 {
+			// Apply rules to newly saved articles
+			savedArticles, err := f.db.GetArticles("", feed.ID, "", false, len(articlesToSave), 0)
+			if err != nil {
+				log.Printf("Error getting articles for rule application: %v", err)
+				return
+			}
+			if len(savedArticles) == 0 {
+				return
+			}
+
 			engine := rules.NewEngine(f.db)
 			affected, err := engine.ApplyRulesToArticles(savedArticles)
 			if err != nil {
@@ -345,7 +370,7 @@ func (f *Fetcher) fetchFeedWithContext(ctx context.Context, feed models.Feed) er
 			} else if affected > 0 {
 				utils.DebugLog("Applied rules to %d articles in feed %s", affected, feed.Title)
 			}
-		}
+		}()
 	}
 
 	utils.DebugLog("Updated feed: %s", feed.Title)

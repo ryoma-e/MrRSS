@@ -130,12 +130,21 @@ func GetDBPath() (string, error) {
 }
 
 // GetLogPath returns the full path to the debug log file
+// The log file is placed in a "logs" subdirectory within the data directory
 func GetLogPath() (string, error) {
 	dataDir, err := GetDataDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(dataDir, "debug.log"), nil
+
+	// Create logs directory
+	logsDir := filepath.Join(dataDir, "logs")
+	err = os.MkdirAll(logsDir, 0755)
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(logsDir, "debug.log"), nil
 }
 
 // GetMediaCacheDir returns the full path to the media cache directory

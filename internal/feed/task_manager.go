@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
@@ -294,13 +295,24 @@ func (tm *TaskManager) AddGlobalRefresh(ctx context.Context, feeds []models.Feed
 		return
 	}
 
-	// Mark progress as running
+	// Shuffle feeds to randomize refresh order
+	rand.Shuffle(len(feeds), func(i, j int) {
+		feeds[i], feeds[j] = feeds[j], feeds[i]
+	})
+
+	// Mark progress as running and clear previous errors
 	tm.progressMutex.Lock()
 	if !tm.progress.IsRunning {
 		tm.progress.IsRunning = true
-		tm.progress.Errors = make(map[int64]string)
 	}
+	// Clear previous errors on new global refresh
+	tm.progress.Errors = make(map[int64]string)
 	tm.progressMutex.Unlock()
+
+	// Clear all feed error marks in database
+	if err := tm.fetcher.db.ClearAllFeedErrors(); err != nil {
+		log.Printf("Failed to clear all feed errors: %v", err)
+	}
 
 	// Add feeds to queue tail with deduplication
 	tm.queueMutex.Lock()
@@ -443,6 +455,7 @@ func (tm *TaskManager) ExecuteImmediately(ctx context.Context, feed models.Feed)
 		if err != nil {
 			log.Printf("Failed to fetch feed %s (immediate): %v", task.Feed.Title, err)
 			tm.fetcher.db.UpdateFeedError(task.Feed.ID, err.Error())
+			tm.fetcher.db.UpdateFeedLastUpdated(task.Feed.ID)
 
 			tm.progressMutex.Lock()
 			if tm.progress.Errors == nil {
@@ -452,6 +465,7 @@ func (tm *TaskManager) ExecuteImmediately(ctx context.Context, feed models.Feed)
 			tm.progressMutex.Unlock()
 		} else {
 			tm.fetcher.db.UpdateFeedError(task.Feed.ID, "")
+			tm.fetcher.db.UpdateFeedLastUpdated(task.Feed.ID)
 		}
 	}()
 
@@ -507,7 +521,11 @@ func (tm *TaskManager) processQueue(ctx context.Context) {
 			CreatedAt: time.Now(),
 		}
 
-		// Add to pool
+		// Acquire semaphore FIRST (this will block if pool is at capacity)
+		// This prevents tasks from being added to pool without a worker
+		tm.poolSem <- struct{}{}
+
+		// Add to pool AFTER acquiring semaphore
 		tm.poolMutex.Lock()
 		tm.pool[feedID] = task
 		tm.poolMutex.Unlock()
@@ -517,9 +535,6 @@ func (tm *TaskManager) processQueue(ctx context.Context) {
 
 		// Update stats
 		tm.updateStats()
-
-		// Acquire semaphore (this will block if pool is at capacity)
-		tm.poolSem <- struct{}{}
 
 		// Start worker goroutine
 		tm.wg.Add(1)
@@ -588,8 +603,9 @@ func (tm *TaskManager) processTask(ctx context.Context, task *RefreshTask) {
 		log.Printf("Failed to fetch feed %s after retry: %v", task.Feed.Title, err)
 		tm.logOperation("FL", task.Feed.Title)
 
-		// Update feed error in database
+		// Update feed error and last_updated in database
 		tm.fetcher.db.UpdateFeedError(task.Feed.ID, err.Error())
+		tm.fetcher.db.UpdateFeedLastUpdated(task.Feed.ID)
 
 		// Add to progress errors
 		tm.progressMutex.Lock()
@@ -600,8 +616,9 @@ func (tm *TaskManager) processTask(ctx context.Context, task *RefreshTask) {
 		tm.progressMutex.Unlock()
 	} else {
 		tm.logOperation("SC", task.Feed.Title)
-		// Clear error on success
+		// Clear error on success and update last_updated
 		tm.fetcher.db.UpdateFeedError(task.Feed.ID, "")
+		tm.fetcher.db.UpdateFeedLastUpdated(task.Feed.ID)
 	}
 }
 
@@ -889,9 +906,9 @@ func (tm *TaskManager) initTaskLog() {
 		return
 	}
 
-	// Open log file
+	// Open log file with truncate flag to clear previous logs
 	logPath := filepath.Join(logDir, "tasks.log")
-	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		log.Printf("Failed to open task log file: %v", err)
 		return

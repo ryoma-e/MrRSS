@@ -292,6 +292,10 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function pollProgress(): void {
+    // Track previous pool/queue counts to detect task completion
+    let previousPoolCount = 0;
+    let previousQueueCount = 0;
+
     const interval = setInterval(async () => {
       try {
         const res = await fetch('/api/progress');
@@ -310,23 +314,30 @@ export const useAppStore = defineStore('app', () => {
           await fetchTaskDetails();
         }
 
+        // Detect task completion and update unread counts immediately
+        const currentPoolCount = data.pool_task_count ?? 0;
+        const currentQueueCount = data.queue_task_count ?? 0;
+        const totalTasks = currentPoolCount + currentQueueCount;
+        const previousTotal = previousPoolCount + previousQueueCount;
+
+        // If task count decreased, tasks completed - update unread counts
+        if (totalTasks < previousTotal && previousTotal > 0) {
+          fetchUnreadCounts();
+          fetchFeeds(); // Also update feeds to refresh error marks
+        }
+
+        // Update previous counts
+        previousPoolCount = currentPoolCount;
+        previousQueueCount = currentQueueCount;
+
         if (!data.is_running) {
           clearInterval(interval);
           fetchFeeds();
           fetchArticles();
           fetchUnreadCounts();
 
-          // Show error toasts for any feed errors
-          if (data.errors && Object.keys(data.errors).length > 0) {
-            Object.entries(data.errors).forEach(([feedId, errorMsg]) => {
-              const feed = feeds.value.find((f) => f.id === parseInt(feedId));
-              const feedTitle = feed ? feed.title : `Feed ${feedId}`;
-              window.showToast(
-                `${t('feedRefreshError', { feed: feedTitle })}: ${errorMsg}`,
-                'error'
-              );
-            });
-          }
+          // Note: We no longer show error toasts for failed feeds
+          // Users can see error status in the feed list sidebar
 
           // Check for app updates after initial refresh completes
           checkForAppUpdates();
