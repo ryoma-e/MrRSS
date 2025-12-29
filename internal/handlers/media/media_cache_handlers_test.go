@@ -40,7 +40,7 @@ func TestHandleMediaCacheInfoAndCleanup(t *testing.T) {
 	}
 
 	// Get the cache directory
-	cacheDir := filepath.Join(tmp, "mrrss", "media_cache")
+	cacheDir := filepath.Join(tmp, "MrRSS", "media_cache")
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
 		t.Fatalf("Failed to create cache dir: %v", err)
 	}
