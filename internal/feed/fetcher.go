@@ -28,6 +28,7 @@ type Fetcher struct {
 	highPriorityFp    FeedParser // High priority parser for content fetching
 	translator        translation.Translator
 	scriptExecutor    *ScriptExecutor
+	emailFetcher      *EmailFetcher
 	progress          Progress
 	mu                sync.Mutex
 	refreshCalculator *IntelligentRefreshCalculator
@@ -64,11 +65,12 @@ func NewFetcher(db *database.DB, translator translation.Translator) *Fetcher {
 		highPriorityFp:    highPriorityParser,
 		translator:        translator,
 		scriptExecutor:    executor,
+		emailFetcher:      NewEmailFetcher(db),
 		refreshCalculator: NewIntelligentRefreshCalculator(db),
 	}
 
-	// Initialize task manager with default capacity
-	fetcher.taskManager = NewTaskManager(fetcher, 5)
+	// Initialize task manager with default capacity (increased from 5 to 10)
+	fetcher.taskManager = NewTaskManager(fetcher, 10)
 	fetcher.taskManager.Start()
 
 	// Initialize cleanup manager
@@ -104,21 +106,21 @@ func (f *Fetcher) getDataDir() (string, error) {
 }
 
 // getConcurrencyLimit returns the maximum number of concurrent feed refreshes
-// based on network detection or defaults to 5 if not configured
+// based on network detection or defaults to 10 if not configured
 func (f *Fetcher) getConcurrencyLimit(feedCount int) int {
 	concurrencyStr, err := f.db.GetSetting("max_concurrent_refreshes")
 	if err != nil || concurrencyStr == "" {
-		return 5 // Default concurrency if network detection failed or not run
+		return 10 // Default concurrency increased from 5 to 10
 	}
 
 	concurrency, err := strconv.Atoi(concurrencyStr)
 	if err != nil || concurrency < 1 {
-		return 5 // Default on parse error or invalid value
+		return 10 // Default on parse error or invalid value
 	}
 
-	// Cap at reasonable limits (increased from 20 to 30 for faster networks)
-	if concurrency > 30 {
-		concurrency = 30
+	// Cap at reasonable limits (increased to 50 for faster networks)
+	if concurrency > 50 {
+		concurrency = 50
 	}
 
 	return concurrency

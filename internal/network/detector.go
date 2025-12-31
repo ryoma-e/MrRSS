@@ -57,7 +57,7 @@ func NewDetector(httpClient *http.Client) *Detector {
 func (d *Detector) DetectSpeed(ctx context.Context) DetectionResult {
 	result := DetectionResult{
 		SpeedLevel:     SpeedMedium, // Default fallback
-		MaxConcurrency: 5,           // Default fallback
+		MaxConcurrency: 10,          // Default fallback
 	}
 
 	// Test latency first
@@ -172,24 +172,24 @@ func (d *Detector) testBandwidth(ctx context.Context) (float64, error) {
 
 // calculateSpeedLevel determines the speed level and appropriate concurrency
 func (d *Detector) calculateSpeedLevel(latencyMs int64, bandwidthMbps float64) (SpeedLevel, int) {
-	// Define thresholds
-	// Slow: latency > 200ms OR bandwidth < 1 Mbps
-	// Medium: latency 100-200ms OR bandwidth 1-10 Mbps
-	// Fast: latency < 100ms AND bandwidth > 10 Mbps
+	// Define thresholds with updated concurrency values
+	// Slow: latency > 300ms OR bandwidth < 2 Mbps -> 8 concurrent
+	// Medium: latency 100-300ms OR bandwidth 2-20 Mbps -> 12 concurrent
+	// Fast: latency < 100ms AND bandwidth > 20 Mbps -> 20 concurrent
 
 	var speedLevel SpeedLevel
 	var maxConcurrency int
 
 	// Determine speed level based on both latency and bandwidth
-	if latencyMs > 200 || bandwidthMbps < 1.0 {
+	if latencyMs > 300 || bandwidthMbps < 2.0 {
 		speedLevel = SpeedSlow
-		maxConcurrency = 5
-	} else if latencyMs > 100 || bandwidthMbps < 10.0 {
-		speedLevel = SpeedMedium
 		maxConcurrency = 8
+	} else if latencyMs > 100 || bandwidthMbps < 20.0 {
+		speedLevel = SpeedMedium
+		maxConcurrency = 12
 	} else {
 		speedLevel = SpeedFast
-		maxConcurrency = 15
+		maxConcurrency = 20
 	}
 
 	return speedLevel, maxConcurrency

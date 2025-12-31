@@ -443,8 +443,8 @@ func (tm *TaskManager) ExecuteImmediately(ctx context.Context, feed models.Feed)
 		var err error
 		var success bool
 
-		// First attempt: 5 second timeout
-		ctx1, cancel1 := context.WithTimeout(ctx, 5*time.Second)
+		// First attempt: 10 second timeout
+		ctx1, cancel1 := context.WithTimeout(ctx, 10*time.Second)
 		defer cancel1()
 
 		err = tm.fetcher.fetchFeedWithContext(ctx1, task.Feed)
@@ -453,11 +453,11 @@ func (tm *TaskManager) ExecuteImmediately(ctx context.Context, feed models.Feed)
 			log.Printf("Successfully fetched feed: %s (immediate, first attempt)", task.Feed.Title)
 		}
 
-		// Second attempt: 10 second timeout if first attempt failed
+		// Second attempt: 30 second timeout if first attempt failed
 		if !success && err != nil {
-			log.Printf("First attempt failed for %s: %v, retrying with 10s timeout", task.Feed.Title, err)
+			log.Printf("First attempt failed for %s: %v, retrying with 30s timeout", task.Feed.Title, err)
 
-			ctx2, cancel2 := context.WithTimeout(ctx, 10*time.Second)
+			ctx2, cancel2 := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel2()
 
 			err = tm.fetcher.fetchFeedWithContext(ctx2, task.Feed)
@@ -589,8 +589,8 @@ func (tm *TaskManager) processTask(ctx context.Context, task *RefreshTask) {
 	var err error
 	var success bool
 
-	// First attempt: 5 second timeout
-	ctx1, cancel1 := context.WithTimeout(ctx, 5*time.Second)
+	// First attempt: 10 second timeout
+	ctx1, cancel1 := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel1()
 
 	err = tm.fetcher.fetchFeedWithContext(ctx1, task.Feed)
@@ -599,12 +599,12 @@ func (tm *TaskManager) processTask(ctx context.Context, task *RefreshTask) {
 		log.Printf("Successfully fetched feed: %s (first attempt)", task.Feed.Title)
 	}
 
-	// Second attempt: 10 second timeout if first attempt failed
+	// Second attempt: 30 second timeout if first attempt failed
 	if !success && err != nil {
-		log.Printf("First attempt failed for %s: %v, retrying with 10s timeout", task.Feed.Title, err)
+		log.Printf("First attempt failed for %s: %v, retrying with 30s timeout", task.Feed.Title, err)
 		tm.logOperation("RT", task.Feed.Title)
 
-		ctx2, cancel2 := context.WithTimeout(ctx, 10*time.Second)
+		ctx2, cancel2 := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel2()
 
 		err = tm.fetcher.fetchFeedWithContext(ctx2, task.Feed)
