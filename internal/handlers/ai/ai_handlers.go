@@ -81,10 +81,10 @@ func HandleTestAIConfig(h *core.Handler, w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Allow HTTP for local endpoints only
-	if parsedURL.Scheme != "https" && !isLocalEndpoint(parsedURL.Host) {
+	// Both HTTP and HTTPS are allowed
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 		result.ConfigValid = false
-		result.ErrorMessage = "API endpoint must use HTTPS for security (HTTP allowed only for localhost)"
+		result.ErrorMessage = "API endpoint must use HTTP or HTTPS"
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 		return

@@ -3,7 +3,6 @@ package window
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"MrRSS/internal/handlers/core"
@@ -68,33 +67,25 @@ func HandleSaveWindowState(h *core.Handler, w http.ResponseWriter, r *http.Reque
 
 	// Convert to strings for database storage and check for errors
 	if err := h.DB.SetSetting("window_x", fmt.Sprintf("%d", state.X)); err != nil {
-		log.Printf("Failed to save window_x: %v", err)
 		http.Error(w, "Failed to save window state", http.StatusInternalServerError)
 		return
 	}
 	if err := h.DB.SetSetting("window_y", fmt.Sprintf("%d", state.Y)); err != nil {
-		log.Printf("Failed to save window_y: %v", err)
 		http.Error(w, "Failed to save window state", http.StatusInternalServerError)
 		return
 	}
 	if err := h.DB.SetSetting("window_width", fmt.Sprintf("%d", state.Width)); err != nil {
-		log.Printf("Failed to save window_width: %v", err)
 		http.Error(w, "Failed to save window state", http.StatusInternalServerError)
 		return
 	}
 	if err := h.DB.SetSetting("window_height", fmt.Sprintf("%d", state.Height)); err != nil {
-		log.Printf("Failed to save window_height: %v", err)
 		http.Error(w, "Failed to save window state", http.StatusInternalServerError)
 		return
 	}
 	if err := h.DB.SetSetting("window_maximized", fmt.Sprintf("%t", state.Maximized)); err != nil {
-		log.Printf("Failed to save window_maximized: %v", err)
 		http.Error(w, "Failed to save window state", http.StatusInternalServerError)
 		return
 	}
-
-	log.Printf("Window state saved: x=%d, y=%d, width=%d, height=%d, maximized=%t",
-		state.X, state.Y, state.Width, state.Height, state.Maximized)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

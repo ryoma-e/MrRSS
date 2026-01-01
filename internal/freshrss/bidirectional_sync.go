@@ -326,11 +326,59 @@ func (s *BidirectionalSyncService) createFeedsFromSubscriptions(ctx context.Cont
 	}
 
 	// Create a map of feed URLs to existing feeds
-	feedURLMap := make(map[string]*models.Feed)
+	// Since we now allow same URL from different sources, use composite key: url + is_freshrss_source
+	type feedKey struct {
+		URL              string
+		IsFreshRSSSource bool
+	}
+	feedMap := make(map[feedKey]*models.Feed)
 	titleMap := make(map[string]int64)
+	// Track categories to check if they contain non-FreshRSS feeds
+	categoryMap := make(map[string][]*models.Feed) // category -> feeds in this category
 	for i := range existingFeeds {
-		feedURLMap[existingFeeds[i].URL] = &existingFeeds[i]
+		key := feedKey{
+			URL:              existingFeeds[i].URL,
+			IsFreshRSSSource: existingFeeds[i].IsFreshRSSSource,
+		}
+		feedMap[key] = &existingFeeds[i]
 		titleMap[existingFeeds[i].Title] = existingFeeds[i].ID
+		category := existingFeeds[i].Category
+		if category != "" {
+			categoryMap[category] = append(categoryMap[category], &existingFeeds[i])
+		}
+	}
+
+	// Helper function to generate unique category name for FreshRSS
+	generateFreshRSSCategoryName := func(originalCategory string) string {
+		// If category doesn't exist or has only FreshRSS feeds, use as-is
+		feeds := categoryMap[originalCategory]
+		if len(feeds) == 0 {
+			return originalCategory
+		}
+		allFreshRSS := true
+		for _, feed := range feeds {
+			if !feed.IsFreshRSSSource {
+				allFreshRSS = false
+				break
+			}
+		}
+		if allFreshRSS {
+			return originalCategory
+		}
+
+		// Category has mixed or non-FreshRSS feeds, need to rename
+		newCategory := originalCategory + " (FreshRSS)"
+		counter := 1
+		for {
+			if _, exists := categoryMap[newCategory]; !exists {
+				break
+			}
+			newCategory = fmt.Sprintf("%s (FreshRSS %d)", originalCategory, counter)
+			counter++
+		}
+		log.Printf("[Category Conflict] Renaming FreshRSS category '%s' to '%s' to avoid mixing with local feeds",
+			originalCategory, newCategory)
+		return newCategory
 	}
 
 	for _, sub := range subscriptions {
@@ -341,24 +389,40 @@ func (s *BidirectionalSyncService) createFeedsFromSubscriptions(ctx context.Cont
 		if len(sub.Categories) > 0 {
 			for _, cat := range sub.Categories {
 				if strings.HasPrefix(cat.ID, "user/-/label/") {
-					category = cat.Label
+					originalCategory := cat.Label
+					// Check if this category would conflict with local feeds
+					category = generateFreshRSSCategoryName(originalCategory)
 					break
 				}
 			}
 		}
 
-		// Adjust title if there's a conflict with an existing non-FreshRSS feed
+		// Adjust title if there's a conflict with an existing feed with same title but different URL
 		feedTitle := sub.Title
 		if existingID, exists := titleMap[feedTitle]; exists {
-			if existingFeed, ok := feedURLMap[feedURL]; !ok || existingFeed.ID != existingID {
+			// Check if there's a feed with this title but different URL (not the same feed)
+			titleConflict := true
+			for _, feed := range existingFeeds {
+				if feed.ID == existingID && feed.URL == feedURL {
+					// Same title and same URL - this is actually the same feed (possibly different source)
+					titleConflict = false
+					break
+				}
+			}
+			if titleConflict {
 				feedTitle = feedTitle + " (FreshRSS)"
 				log.Printf("Title conflict detected for '%s', using adjusted title '%s'", sub.Title, feedTitle)
 			}
 		}
 
-		// Check if feed already exists
-		if existingFeed, exists := feedURLMap[feedURL]; exists {
-			// Feed exists, check if we need to update it
+		// Check if feed already exists (by URL + FreshRSS source combination)
+		key := feedKey{
+			URL:              feedURL,
+			IsFreshRSSSource: true, // We're syncing FreshRSS feeds
+		}
+
+		if existingFeed, exists := feedMap[key]; exists {
+			// Feed exists with same URL and same source type, check if we need to update it
 			needsUpdate := false
 
 			if existingFeed.Title != feedTitle {
@@ -414,6 +478,17 @@ func (s *BidirectionalSyncService) createFeedsFromSubscriptions(ctx context.Cont
 				}
 			}
 			continue
+		}
+
+		// Check if there's a local feed with the same URL
+		localKey := feedKey{
+			URL:              feedURL,
+			IsFreshRSSSource: false,
+		}
+		if _, exists := feedMap[localKey]; exists {
+			log.Printf("[URL Conflict] Local feed with URL '%s' already exists, creating separate FreshRSS feed with title '%s'", feedURL, feedTitle)
+			// The title should already have been adjusted by the title conflict logic above
+			// Just continue to create the new feed below
 		}
 
 		// Create new feed
@@ -542,42 +617,56 @@ func (s *BidirectionalSyncService) saveArticlesFromServer(ctx context.Context, a
 		existingArticle, err := s.db.GetArticleByURL(article.URL)
 
 		if err == nil && existingArticle != nil {
-			// Article already exists, update read/starred status and FreshRSS Item ID if needed
+			// Article already exists - this is the deduplication logic
+			// Update the article with FreshRSS data, preserving FreshRSS ID
 			updated := false
 
-			// Update FreshRSS Item ID if missing
-			if existingArticle.FreshRSSItemID == "" && article.ID != "" {
+			// ALWAYS update FreshRSS Item ID if provided by FreshRSS
+			// This ensures that even if the article came from a non-FreshRSS source,
+			// it will be linked to FreshRSS for future sync operations
+			if article.ID != "" && existingArticle.FreshRSSItemID != article.ID {
 				err := s.db.UpdateFreshRSSItemID(existingArticle.ID, article.ID)
 				if err != nil {
 					log.Printf("Warning: Failed to update FreshRSS Item ID for article %s: %v", article.URL, err)
 				} else {
-					log.Printf("Updated FreshRSS Item ID for existing article %s: %s", article.URL, article.ID)
+					log.Printf("Updated FreshRSS Item ID for existing article %s: %s (was: %s)",
+						article.URL, article.ID, existingArticle.FreshRSSItemID)
 					updated = true
 				}
 			}
 
-			// Update read status
-			if isRead && !existingArticle.IsRead {
-				err := s.db.MarkArticleRead(existingArticle.ID, true)
+			// Update read status from FreshRSS (server is authoritative)
+			// Only update if status differs to avoid unnecessary writes
+			if isRead != existingArticle.IsRead {
+				err := s.db.MarkArticleRead(existingArticle.ID, isRead)
 				if err != nil {
-					log.Printf("Warning: Failed to mark article as read: %v", err)
+					log.Printf("Warning: Failed to update read status for article %s: %v", article.URL, err)
 				} else {
+					log.Printf("Updated read status for article %s: %v (from FreshRSS)", article.URL, isRead)
 					updated = true
 				}
 			}
 
-			// Update favorite status
-			if isStarred && !existingArticle.IsFavorite {
-				err := s.db.SetArticleFavorite(existingArticle.ID, true)
+			// Update favorite status from FreshRSS (server is authoritative)
+			if isStarred != existingArticle.IsFavorite {
+				err := s.db.SetArticleFavorite(existingArticle.ID, isStarred)
 				if err != nil {
-					log.Printf("Warning: Failed to mark article as favorite: %v", err)
+					log.Printf("Warning: Failed to update favorite status for article %s: %v", article.URL, err)
 				} else {
+					log.Printf("Updated favorite status for article %s: %v (from FreshRSS)", article.URL, isStarred)
 					updated = true
 				}
+			}
+
+			// If the existing article is NOT from FreshRSS but we just updated it,
+			// we should mark it as coming from FreshRSS if it's in a FreshRSS feed
+			if existingArticle.FreshRSSItemID == "" && article.ID != "" {
+				// This article now has a FreshRSS ID
+				updated = true
 			}
 
 			if updated {
-				log.Printf("Updated existing article from FreshRSS: %s", article.URL)
+				log.Printf("Merged FreshRSS data into existing article: %s", article.URL)
 			}
 			continue
 		}

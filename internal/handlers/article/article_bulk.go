@@ -90,25 +90,36 @@ func HandleRefresh(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleCleanupArticles triggers manual cleanup of articles.
-// This clears all article content (as per user requirement for manual cleanup).
+// This clears ALL articles and article contents, but keeps feeds and settings.
 func HandleCleanupArticles(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Manual cleanup: clear all article contents
-	count, err := h.DB.CleanupAllArticleContents()
+	// Manual cleanup: clear ALL articles and article contents, but keep feeds
+	// Step 1: Delete all article contents
+	contentCount, err := h.DB.CleanupAllArticleContents()
 	if err != nil {
 		log.Printf("Error cleaning up article contents: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Manual cleanup: cleared %d article contents", count)
+	// Step 2: Delete all articles (but keep feeds and settings)
+	articleCount, err := h.DB.DeleteAllArticles()
+	if err != nil {
+		log.Printf("Error deleting all articles: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Manual cleanup: cleared %d article contents and %d articles", contentCount, articleCount)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"deleted": count,
-		"type":    "contents",
+		"deleted":  contentCount + articleCount,
+		"articles": articleCount,
+		"contents": contentCount,
+		"type":     "all",
 	})
 }
 

@@ -71,6 +71,7 @@ type Defaults struct {
 	ProxyType                string `json:"proxy_type"`
 	ProxyUsername            string `json:"proxy_username"`
 	RefreshMode              string `json:"refresh_mode"`
+	RetryTimeoutSeconds      int    `json:"retry_timeout_seconds"`
 	Rules                    string `json:"rules"`
 	Shortcuts                string `json:"shortcuts"`
 	ShortcutsEnabled         bool   `json:"shortcuts_enabled"`
@@ -215,6 +216,8 @@ func GetString(key string) string {
 		return defaults.ProxyUsername
 	case "refresh_mode":
 		return defaults.RefreshMode
+	case "retry_timeout_seconds":
+		return strconv.Itoa(defaults.RetryTimeoutSeconds)
 	case "rules":
 		return defaults.Rules
 	case "shortcuts":

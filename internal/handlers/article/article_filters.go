@@ -2,6 +2,7 @@ package article
 
 import (
 	"log"
+	"regexp"
 	"strings"
 	"time"
 
@@ -36,16 +37,16 @@ type FilterResponse struct {
 }
 
 // evaluateArticleConditions evaluates all filter conditions for an article
-func evaluateArticleConditions(article models.Article, conditions []FilterCondition, feedCategories map[int64]string) bool {
+func evaluateArticleConditions(article models.Article, conditions []FilterCondition, feedCategories map[int64]string, feedTypes map[int64]string, feedIsImageMode map[int64]bool, feedIsFreshRSS map[int64]bool) bool {
 	if len(conditions) == 0 {
 		return true
 	}
 
-	result := evaluateSingleCondition(article, conditions[0], feedCategories)
+	result := evaluateSingleCondition(article, conditions[0], feedCategories, feedTypes, feedIsImageMode, feedIsFreshRSS)
 
 	for i := 1; i < len(conditions); i++ {
 		condition := conditions[i]
-		conditionResult := evaluateSingleCondition(article, condition, feedCategories)
+		conditionResult := evaluateSingleCondition(article, condition, feedCategories, feedTypes, feedIsImageMode, feedIsFreshRSS)
 
 		switch condition.Logic {
 		case "and":
@@ -75,7 +76,7 @@ func matchMultiSelectContains(fieldValue string, values []string, singleValue st
 }
 
 // evaluateSingleCondition evaluates a single filter condition for an article
-func evaluateSingleCondition(article models.Article, condition FilterCondition, feedCategories map[int64]string) bool {
+func evaluateSingleCondition(article models.Article, condition FilterCondition, feedCategories map[int64]string, feedTypes map[int64]string, feedIsImageMode map[int64]bool, feedIsFreshRSS map[int64]bool) bool {
 	var result bool
 
 	switch condition.Field {
@@ -94,9 +95,37 @@ func evaluateSingleCondition(article models.Article, condition FilterCondition, 
 			lowerTitle := strings.ToLower(article.Title)
 			if condition.Operator == "exact" {
 				result = lowerTitle == lowerValue
+			} else if condition.Operator == "regex" {
+				matched, err := regexp.MatchString(condition.Value, article.Title)
+				if err != nil {
+					log.Printf("Invalid regex pattern: %v", err)
+					result = false
+				} else {
+					result = matched
+				}
 			} else {
 				result = strings.Contains(lowerTitle, lowerValue)
 			}
+		}
+
+	case "feed_type":
+		feedType := feedTypes[article.FeedID]
+		result = matchMultiSelectContains(feedType, condition.Values, condition.Value)
+
+	case "is_freshrss_feed":
+		if condition.Value == "" {
+			result = true
+		} else {
+			wantFreshRSS := condition.Value == "true"
+			result = feedIsFreshRSS[article.FeedID] == wantFreshRSS
+		}
+
+	case "is_image_mode_feed":
+		if condition.Value == "" {
+			result = true
+		} else {
+			wantImageMode := condition.Value == "true"
+			result = feedIsImageMode[article.FeedID] == wantImageMode
 		}
 
 	case "published_after":

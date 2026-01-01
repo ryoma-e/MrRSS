@@ -303,22 +303,6 @@ onBeforeUnmount(() => {
   @apply flex items-center justify-center w-7 h-7 rounded hover:bg-bg-tertiary text-text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors;
 }
 
-/* Global styles for search highlights */
-:deep(.search-highlight) {
-  background-color: var(--accent-color);
-  color: white;
-  padding: 0.125em 0.25em;
-  border-radius: 0.125em;
-  transition: background-color 0.15s ease;
-}
-
-:deep(.search-highlight-active) {
-  background-color: #f59e0b; /* Amber-500 */
-  color: white;
-  outline: 2px solid #f59e0b;
-  outline-offset: 1px;
-}
-
 @media (max-width: 640px) {
   .find-in-page-bar {
     @apply right-2 left-2 max-w-none;

@@ -67,6 +67,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		proxyType, _ := h.DB.GetSetting("proxy_type")
 		proxyUsername, _ := h.DB.GetEncryptedSetting("proxy_username")
 		refreshMode, _ := h.DB.GetSetting("refresh_mode")
+		retryTimeoutSeconds, _ := h.DB.GetSetting("retry_timeout_seconds")
 		rules, _ := h.DB.GetSetting("rules")
 		shortcuts, _ := h.DB.GetSetting("shortcuts")
 		shortcutsEnabled, _ := h.DB.GetSetting("shortcuts_enabled")
@@ -141,6 +142,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			"proxy_type":                  proxyType,
 			"proxy_username":              proxyUsername,
 			"refresh_mode":                refreshMode,
+			"retry_timeout_seconds":       retryTimeoutSeconds,
 			"rules":                       rules,
 			"shortcuts":                   shortcuts,
 			"shortcuts_enabled":           shortcutsEnabled,
@@ -217,6 +219,7 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			ProxyType                string `json:"proxy_type"`
 			ProxyUsername            string `json:"proxy_username"`
 			RefreshMode              string `json:"refresh_mode"`
+			RetryTimeoutSeconds      string `json:"retry_timeout_seconds"`
 			Rules                    string `json:"rules"`
 			Shortcuts                string `json:"shortcuts"`
 			ShortcutsEnabled         string `json:"shortcuts_enabled"`
@@ -464,6 +467,10 @@ func HandleSettings(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 
 		if req.RefreshMode != "" {
 			h.DB.SetSetting("refresh_mode", req.RefreshMode)
+		}
+
+		if req.RetryTimeoutSeconds != "" {
+			h.DB.SetSetting("retry_timeout_seconds", req.RetryTimeoutSeconds)
 		}
 
 		if req.Rules != "" {

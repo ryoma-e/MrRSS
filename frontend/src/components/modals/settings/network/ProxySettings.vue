@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { PhWall, PhGlobe, PhPlug, PhUsb, PhUser, PhKey, PhLink, PhInfo } from '@phosphor-icons/vue';
+import {
+  PhWall,
+  PhGlobe,
+  PhPlug,
+  PhUsb,
+  PhUser,
+  PhKey,
+  PhLink,
+  PhInfo,
+  PhArrowClockwise,
+  PhTimer,
+} from '@phosphor-icons/vue';
 import type { SettingsData } from '@/types/settings';
 
 const { t } = useI18n();
@@ -211,6 +222,48 @@ const emit = defineEmits<{
               })
           "
         />
+      </div>
+    </div>
+
+    <!-- Retry Timeout Setting -->
+    <div class="setting-group mt-4 sm:mt-6">
+      <label
+        class="font-semibold mb-2 sm:mb-3 text-text-secondary uppercase text-xs tracking-wider flex items-center gap-2"
+      >
+        <PhArrowClockwise :size="14" class="sm:w-4 sm:h-4" />
+        {{ t('feedRefreshSettings') }}
+      </label>
+
+      <div class="setting-item">
+        <div class="flex-1 flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">
+          <PhTimer :size="20" class="text-text-secondary mt-0.5 shrink-0 sm:w-6 sm:h-6" />
+          <div class="flex-1 min-w-0">
+            <div class="font-medium mb-0 sm:mb-1 text-sm sm:text-base">
+              {{ t('retryTimeout') }}
+            </div>
+            <div class="text-xs text-text-secondary hidden sm:block">
+              {{ t('retryTimeoutDesc') }}
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-1 sm:gap-2 shrink-0">
+          <input
+            :value="props.settings.retry_timeout_seconds"
+            type="number"
+            min="10"
+            max="600"
+            step="10"
+            class="input-field w-20 sm:w-24 text-center text-xs sm:text-sm"
+            @input="
+              (e) =>
+                emit('update:settings', {
+                  ...props.settings,
+                  retry_timeout_seconds: parseInt((e.target as HTMLInputElement).value) || 60,
+                })
+            "
+          />
+          <span class="text-xs sm:text-sm text-text-secondary">{{ t('seconds') }}</span>
+        </div>
       </div>
     </div>
   </div>

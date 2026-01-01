@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced support for FreshRSS synchronization with more options. (#333, #376)
 - Supported building and publishing multi-architecture Docker images to GHCR. (#349) (@czyt)
 - Supported email newsletter feeds via IMAP. (#313)
+- Supported more filter conditions including title regex, is FreshRSS feed, is image gallery, feed mode. (#372)
 
 ### Changed
 
@@ -25,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed the issue where some links in article content rendering mode cannot be opened in default browser. (#330)
 - Fixed the issue where some images in article content rendering mode cannot be displayed correctly. (#327)
 - Fixed the issue where translations are not applied correctly in nested structures.
+- Fixed the style of the results highlight in article content search. (#361)
+
+### Removed
+
+- Removed the limitation of HTTPS for feed URLs and API endpoints. (#251)
 
 ## [1.3.12] - 2025-12-29
 

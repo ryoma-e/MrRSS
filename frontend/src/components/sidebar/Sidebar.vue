@@ -128,6 +128,9 @@ async function handleDrop(categoryName: string, feeds: any[]) {
     draggingFeedId: draggingFeedId.value,
   });
 
+  // Get the dragged feed
+  const draggedFeed = store.feeds?.find((f) => f.id === draggingFeedId.value);
+
   // Prevent dropping into FreshRSS categories
   // Check if any feed in the target category is a FreshRSS feed
   const targetCategoryFeeds = feeds.filter(
@@ -135,23 +138,24 @@ async function handleDrop(categoryName: string, feeds: any[]) {
   );
   const hasFreshRSSFeedInTarget = targetCategoryFeeds.some((f) => f.is_freshrss_source);
 
-  if (hasFreshRSSFeedInTarget) {
-    console.log('[handleDrop] Blocked drop into FreshRSS category:', categoryName);
-    window.showToast(t('freshRSSFeedLocked'), 'info');
-    isDragging.value = false;
-    return;
+  // Also check if category name indicates it's a FreshRSS category (ends with " (FreshRSS)")
+  const isFreshRSSCategoryByName =
+    categoryName.endsWith(' (FreshRSS)') || categoryName.match(/ \(FreshRSS \d+\)$/);
+
+  // Block dropping non-FreshRSS feeds into FreshRSS categories
+  if (draggedFeed && !draggedFeed.is_freshrss_source) {
+    if (hasFreshRSSFeedInTarget || isFreshRSSCategoryByName) {
+      console.log('[handleDrop] Blocked drop into FreshRSS category:', categoryName);
+      window.showToast(t('freshRSSFeedLocked'), 'info');
+      isDragging.value = false;
+      return;
+    }
   }
 
-  // Also check if the dragged feed is being dropped into a category that contains FreshRSS feeds
-  const draggedFeed = store.feeds?.find((f) => f.id === draggingFeedId.value);
-  if (draggedFeed && !draggedFeed.is_freshrss_source) {
-    // Check all feeds to see if target category has any FreshRSS feeds
-    const allFeedsInCategory =
-      store.feeds?.filter(
-        (f) => f.category === categoryName || (categoryName === 'uncategorized' && !f.category)
-      ) || [];
-    if (allFeedsInCategory.some((f) => f.is_freshrss_source)) {
-      console.log('[handleDrop] Cannot drop non-FreshRSS feed into FreshRSS category');
+  // Block dropping FreshRSS feeds into local categories
+  if (draggedFeed && draggedFeed.is_freshrss_source) {
+    if (!hasFreshRSSFeedInTarget && !isFreshRSSCategoryByName && targetCategoryFeeds.length > 0) {
+      console.log('[handleDrop] Cannot drop FreshRSS feed into local category');
       window.showToast(t('freshRSSFeedLocked'), 'info');
       isDragging.value = false;
       return;

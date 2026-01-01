@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -193,6 +194,115 @@ func (db *DB) Init() error {
 				_, _ = db.Exec(`CREATE INDEX IF NOT EXISTS idx_articles_read_published ON articles(is_read, published_at DESC)`)
 				_, _ = db.Exec(`CREATE INDEX IF NOT EXISTS idx_articles_fav_published ON articles(is_favorite, published_at DESC)`)
 				_, _ = db.Exec(`CREATE INDEX IF NOT EXISTS idx_articles_readlater_published ON articles(is_read_later, published_at DESC)`)
+			}
+		}
+
+		// Migration: Drop the UNIQUE constraint on feeds.url column to allow FreshRSS and local feeds with same URL
+		var feedsTableInfo string
+		_ = db.QueryRow("SELECT sql FROM sqlite_master WHERE type='table' AND name='feeds'").Scan(&feedsTableInfo)
+		if strings.Contains(feedsTableInfo, "url TEXT UNIQUE") {
+			log.Printf("Migration: Dropping UNIQUE constraint on feeds.url to allow FreshRSS and local feeds to coexist")
+			_, err = db.Exec(`
+				CREATE TABLE feeds_new (
+					id INTEGER PRIMARY KEY AUTOINCREMENT,
+					title TEXT,
+					url TEXT,
+					link TEXT DEFAULT '',
+					description TEXT,
+					category TEXT DEFAULT '',
+					image_url TEXT DEFAULT '',
+					position INTEGER DEFAULT 0,
+					last_updated DATETIME,
+					last_error TEXT DEFAULT '',
+					discovery_completed BOOLEAN DEFAULT 0,
+					script_path TEXT DEFAULT '',
+					hide_from_timeline BOOLEAN DEFAULT 0,
+					proxy_url TEXT DEFAULT '',
+					proxy_enabled BOOLEAN DEFAULT 0,
+					refresh_interval INTEGER DEFAULT 0,
+					is_image_mode BOOLEAN DEFAULT 0,
+					type TEXT DEFAULT '',
+					xpath_item TEXT DEFAULT '',
+					xpath_item_title TEXT DEFAULT '',
+					xpath_item_content TEXT DEFAULT '',
+					xpath_item_uri TEXT DEFAULT '',
+					xpath_item_author TEXT DEFAULT '',
+					xpath_item_timestamp TEXT DEFAULT '',
+					xpath_item_time_format TEXT DEFAULT '',
+					xpath_item_thumbnail TEXT DEFAULT '',
+					xpath_item_categories TEXT DEFAULT '',
+					xpath_item_uid TEXT DEFAULT '',
+					article_view_mode TEXT DEFAULT '',
+					auto_expand_content TEXT DEFAULT '',
+					email_address TEXT DEFAULT '',
+					email_imap_server TEXT DEFAULT '',
+					email_imap_port INTEGER DEFAULT 993,
+					email_username TEXT DEFAULT '',
+					email_password TEXT DEFAULT '',
+					email_folder TEXT DEFAULT 'INBOX',
+					email_last_uid INTEGER DEFAULT 0,
+					is_freshrss_source BOOLEAN DEFAULT 0,
+					freshrss_stream_id TEXT DEFAULT ''
+				)
+			`)
+			if err == nil {
+				// Copy data from old table to new table
+				_, err = db.Exec(`
+					INSERT INTO feeds_new (
+						id, title, url, link, description, category, image_url, position, last_updated, last_error,
+						discovery_completed, script_path, hide_from_timeline, proxy_url, proxy_enabled, refresh_interval,
+						is_image_mode, type, xpath_item, xpath_item_title, xpath_item_content, xpath_item_uri,
+						xpath_item_author, xpath_item_timestamp, xpath_item_time_format, xpath_item_thumbnail,
+						xpath_item_categories, xpath_item_uid, article_view_mode, auto_expand_content,
+						email_address, email_imap_server, email_imap_port, email_username, email_password,
+						email_folder, email_last_uid, is_freshrss_source, freshrss_stream_id
+					)
+					SELECT
+						id, title, url, link, description, category, image_url,
+						COALESCE(position, 0) as position,
+						last_updated, COALESCE(last_error, '') as last_error,
+						COALESCE(discovery_completed, 0) as discovery_completed,
+						COALESCE(script_path, '') as script_path,
+						COALESCE(hide_from_timeline, 0) as hide_from_timeline,
+						COALESCE(proxy_url, '') as proxy_url,
+						COALESCE(proxy_enabled, 0) as proxy_enabled,
+						COALESCE(refresh_interval, 0) as refresh_interval,
+						COALESCE(is_image_mode, 0) as is_image_mode,
+						COALESCE(type, '') as type,
+						COALESCE(xpath_item, '') as xpath_item,
+						COALESCE(xpath_item_title, '') as xpath_item_title,
+						COALESCE(xpath_item_content, '') as xpath_item_content,
+						COALESCE(xpath_item_uri, '') as xpath_item_uri,
+						COALESCE(xpath_item_author, '') as xpath_item_author,
+						COALESCE(xpath_item_timestamp, '') as xpath_item_timestamp,
+						COALESCE(xpath_item_time_format, '') as xpath_item_time_format,
+						COALESCE(xpath_item_thumbnail, '') as xpath_item_thumbnail,
+						COALESCE(xpath_item_categories, '') as xpath_item_categories,
+						COALESCE(xpath_item_uid, '') as xpath_item_uid,
+						COALESCE(article_view_mode, '') as article_view_mode,
+						COALESCE(auto_expand_content, '') as auto_expand_content,
+						COALESCE(email_address, '') as email_address,
+						COALESCE(email_imap_server, '') as email_imap_server,
+						COALESCE(email_imap_port, 993) as email_imap_port,
+						COALESCE(email_username, '') as email_username,
+						COALESCE(email_password, '') as email_password,
+						COALESCE(email_folder, 'INBOX') as email_folder,
+						COALESCE(email_last_uid, 0) as email_last_uid,
+						COALESCE(is_freshrss_source, 0) as is_freshrss_source,
+						COALESCE(freshrss_stream_id, '') as freshrss_stream_id
+					FROM feeds
+				`)
+				if err != nil {
+					log.Printf("Error copying feeds data: %v", err)
+				}
+				// Drop old table and rename new table
+				_, _ = db.Exec(`DROP TABLE feeds`)
+				_, _ = db.Exec(`ALTER TABLE feeds_new RENAME TO feeds`)
+				// Recreate indexes
+				_, _ = db.Exec(`CREATE INDEX IF NOT EXISTS idx_feeds_category ON feeds(category)`)
+				log.Printf("Migration completed: UNIQUE constraint dropped from feeds.url")
+			} else {
+				log.Printf("Error creating feeds_new table: %v", err)
 			}
 		}
 	})

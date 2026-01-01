@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhLink, PhUser, PhKey, PhArrowClockwise, PhCloudCheck } from '@phosphor-icons/vue';
 import type { SettingsData } from '@/types/settings';
@@ -16,6 +16,7 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
   'update:settings': [settings: SettingsData];
+  'settings-changed': [];
 }>();
 
 const isSyncing = ref(false);
@@ -44,7 +45,7 @@ async function fetchSyncStatus() {
   }
 }
 
-// Start polling for status updates
+// Start polling for status updates (only for UI display in settings)
 function startStatusPolling() {
   fetchSyncStatus();
   statusPollInterval = setInterval(fetchSyncStatus, 5000); // Poll every 5 seconds
@@ -81,16 +82,8 @@ async function syncNow() {
     });
 
     if (response.ok) {
-      window.showToast(t('freshrssSyncCompleted'), 'success');
-
-      // Refresh feeds and articles after sync completes
-      // Wait a bit for the backend sync to complete (it runs in background)
-      setTimeout(async () => {
-        await appStore.fetchFeeds();
-        await appStore.fetchArticles();
-        await appStore.fetchUnreadCounts();
-        fetchSyncStatus();
-      }, 2000); // Wait 2 seconds for sync to complete
+      window.showToast(t('freshrssSyncStarted'), 'success');
+      // Sync status polling will detect completion and refresh data automatically
     } else {
       throw new Error(t('freshrssSyncFailed'));
     }
@@ -100,6 +93,56 @@ async function syncNow() {
     isSyncing.value = false;
   }
 }
+
+// Watch for FreshRSS enabled changes and refresh data accordingly
+watch(
+  () => props.settings.freshrss_enabled,
+  async (newVal, oldVal) => {
+    // Convert string values to boolean for comparison
+    const oldBool = oldVal === 'true' || oldVal === true;
+    const newBool = newVal === 'true' || newVal === true;
+
+    // When FreshRSS is disabled, refresh feeds and unread counts
+    if (oldBool && !newBool) {
+      // FreshRSS was just disabled, cleanup will happen on backend
+      // Stop global polling
+      appStore.stopFreshRSSStatusPolling();
+      // Wait a bit for cleanup to complete, then refresh
+      setTimeout(async () => {
+        await appStore.fetchFeeds();
+        await appStore.fetchArticles();
+        await appStore.fetchUnreadCounts();
+        stopStatusPolling();
+      }, 1000);
+    } else if (!oldBool && newBool) {
+      // FreshRSS was just enabled, start global polling
+      await appStore.startFreshRSSStatusPolling();
+      startStatusPolling(); // Also start local polling for UI display
+      emit('settings-changed');
+    }
+  }
+);
+
+// Watch for FreshRSS connection settings changes
+watch(
+  () => [
+    props.settings.freshrss_server_url,
+    props.settings.freshrss_username,
+    props.settings.freshrss_api_password,
+  ],
+  async () => {
+    if (props.settings.freshrss_enabled) {
+      // Settings changed while FreshRSS is enabled
+      // Backend will handle cleanup and resync
+      // Wait for cleanup and resync to complete, then refresh
+      setTimeout(async () => {
+        await appStore.fetchFeeds();
+        await appStore.fetchArticles();
+        await appStore.fetchUnreadCounts();
+      }, 3000); // Wait longer for cleanup + resync
+    }
+  }
+);
 
 // Format sync time
 function formatSyncTime(timeStr: string | null): string {

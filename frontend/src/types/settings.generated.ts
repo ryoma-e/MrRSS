@@ -58,6 +58,7 @@ export interface SettingsData {
   proxy_type: string;
   proxy_username: string;
   refresh_mode: string;
+  retry_timeout_seconds: number;
   rules: string;
   shortcuts: string;
   shortcuts_enabled: boolean;

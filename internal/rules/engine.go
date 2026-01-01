@@ -3,6 +3,7 @@ package rules
 import (
 	"encoding/json"
 	"log"
+	"regexp"
 	"strings"
 	"time"
 
@@ -62,12 +63,19 @@ func (e *Engine) ApplyRulesToArticles(articles []models.Article) (int, error) {
 		return 0, err
 	}
 
-	// Create maps of feed ID to category and title
+	// Create maps of feed ID to feed data
 	feedCategories := make(map[int64]string)
 	feedTitles := make(map[int64]string)
+	feedTypes := make(map[int64]string)
+	feedIsImageMode := make(map[int64]bool)
+	feedIsFreshRSS := make(map[int64]bool)
+
 	for _, feed := range feeds {
 		feedCategories[feed.ID] = feed.Category
 		feedTitles[feed.ID] = feed.Title
+		feedTypes[feed.ID] = feed.Type
+		feedIsImageMode[feed.ID] = feed.IsImageMode
+		feedIsFreshRSS[feed.ID] = feed.IsFreshRSSSource
 	}
 
 	affected := 0
@@ -78,7 +86,7 @@ func (e *Engine) ApplyRulesToArticles(articles []models.Article) (int, error) {
 			}
 
 			// Check if article matches conditions
-			if matchesConditions(article, rule.Conditions, feedCategories, feedTitles) {
+			if matchesConditions(article, rule.Conditions, feedCategories, feedTitles, feedTypes, feedIsImageMode, feedIsFreshRSS) {
 				// Apply actions
 				for _, action := range rule.Actions {
 					if err := e.applyAction(article.ID, action); err != nil {
@@ -111,17 +119,24 @@ func (e *Engine) ApplyRule(rule Rule) (int, error) {
 		return 0, err
 	}
 
-	// Create maps of feed ID to category and title
+	// Create maps of feed ID to feed data
 	feedCategories := make(map[int64]string)
 	feedTitles := make(map[int64]string)
+	feedTypes := make(map[int64]string)
+	feedIsImageMode := make(map[int64]bool)
+	feedIsFreshRSS := make(map[int64]bool)
+
 	for _, feed := range feeds {
 		feedCategories[feed.ID] = feed.Category
 		feedTitles[feed.ID] = feed.Title
+		feedTypes[feed.ID] = feed.Type
+		feedIsImageMode[feed.ID] = feed.IsImageMode
+		feedIsFreshRSS[feed.ID] = feed.IsFreshRSSSource
 	}
 
 	affected := 0
 	for _, article := range articles {
-		if matchesConditions(article, rule.Conditions, feedCategories, feedTitles) {
+		if matchesConditions(article, rule.Conditions, feedCategories, feedTitles, feedTypes, feedIsImageMode, feedIsFreshRSS) {
 			for _, action := range rule.Actions {
 				if err := e.applyAction(article.ID, action); err != nil {
 					log.Printf("Error applying action %s to article %d: %v", action, article.ID, err)
@@ -136,17 +151,17 @@ func (e *Engine) ApplyRule(rule Rule) (int, error) {
 }
 
 // matchesConditions checks if an article matches the rule conditions
-func matchesConditions(article models.Article, conditions []Condition, feedCategories map[int64]string, feedTitles map[int64]string) bool {
+func matchesConditions(article models.Article, conditions []Condition, feedCategories map[int64]string, feedTitles map[int64]string, feedTypes map[int64]string, feedIsImageMode map[int64]bool, feedIsFreshRSS map[int64]bool) bool {
 	// If no conditions, apply to all articles
 	if len(conditions) == 0 {
 		return true
 	}
 
-	result := evaluateCondition(article, conditions[0], feedCategories, feedTitles)
+	result := evaluateCondition(article, conditions[0], feedCategories, feedTitles, feedTypes, feedIsImageMode, feedIsFreshRSS)
 
 	for i := 1; i < len(conditions); i++ {
 		condition := conditions[i]
-		conditionResult := evaluateCondition(article, condition, feedCategories, feedTitles)
+		conditionResult := evaluateCondition(article, condition, feedCategories, feedTitles, feedTypes, feedIsImageMode, feedIsFreshRSS)
 
 		switch condition.Logic {
 		case "and":
@@ -160,7 +175,7 @@ func matchesConditions(article models.Article, conditions []Condition, feedCateg
 }
 
 // evaluateCondition evaluates a single rule condition
-func evaluateCondition(article models.Article, condition Condition, feedCategories map[int64]string, feedTitles map[int64]string) bool {
+func evaluateCondition(article models.Article, condition Condition, feedCategories map[int64]string, feedTitles map[int64]string, feedTypes map[int64]string, feedIsImageMode map[int64]bool, feedIsFreshRSS map[int64]bool) bool {
 	var result bool
 
 	switch condition.Field {
@@ -183,9 +198,37 @@ func evaluateCondition(article models.Article, condition Condition, feedCategori
 			lowerTitle := strings.ToLower(article.Title)
 			if condition.Operator == "exact" {
 				result = lowerTitle == lowerValue
+			} else if condition.Operator == "regex" {
+				matched, err := regexp.MatchString(condition.Value, article.Title)
+				if err != nil {
+					log.Printf("Invalid regex pattern: %v", err)
+					result = false
+				} else {
+					result = matched
+				}
 			} else {
 				result = strings.Contains(lowerTitle, lowerValue)
 			}
+		}
+
+	case "feed_type":
+		feedType := feedTypes[article.FeedID]
+		result = matchMultiSelect(feedType, condition.Values, condition.Value)
+
+	case "is_freshrss_feed":
+		if condition.Value == "" {
+			result = true
+		} else {
+			wantFreshRSS := condition.Value == "true"
+			result = feedIsFreshRSS[article.FeedID] == wantFreshRSS
+		}
+
+	case "is_image_mode_feed":
+		if condition.Value == "" {
+			result = true
+		} else {
+			wantImageMode := condition.Value == "true"
+			result = feedIsImageMode[article.FeedID] == wantImageMode
 		}
 
 	case "published_after":

@@ -353,7 +353,6 @@ func main() {
 								y = 100
 							}
 
-							log.Printf("Restoring window state: x=%d, y=%d, width=%d, height=%d", x, y, width, height)
 							mainWindow.SetSize(width, height)
 							mainWindow.SetPosition(x, y)
 						}
@@ -391,7 +390,6 @@ func main() {
 									// Validate values
 									if widthInt >= 400 && heightInt >= 300 && widthInt <= 4000 && heightInt <= 3000 {
 										if xInt > -1000 && xInt < 3000 && yInt > -1000 && yInt < 3000 {
-											log.Printf("Found window state from database: x=%d, y=%d, width=%d, height=%d", xInt, yInt, widthInt, heightInt)
 											windowWidth = widthInt
 											windowHeight = heightInt
 											windowX = xInt
@@ -437,7 +435,6 @@ func main() {
 	mainWindow = app.Window.NewWithOptions(windowOptions)
 
 	if !restoredFromDB {
-		log.Println("No saved window state found, centering window")
 		mainWindow.Center()
 	}
 
@@ -458,12 +455,7 @@ func main() {
 				lastWindowState.x = x
 				lastWindowState.y = y
 				lastWindowState.valid.Store(true)
-				log.Printf("Stored window state: x=%d, y=%d, width=%d, height=%d", x, y, w, h)
-			} else {
-				log.Printf("Window position invalid (x=%d, y=%d), not storing", x, y)
 			}
-		} else {
-			log.Printf("Window size invalid (width=%d, height=%d), not storing", w, h)
 		}
 	}
 
@@ -521,7 +513,6 @@ func main() {
 						y = 100
 					}
 
-					log.Printf("Restoring window state: x=%d, y=%d, width=%d, height=%d", x, y, width, height)
 					mainWindow.SetSize(width, height)
 					mainWindow.SetPosition(x, y)
 				}

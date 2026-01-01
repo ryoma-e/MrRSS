@@ -31,13 +31,9 @@ export function useWindowState() {
       }
 
       const data = await response.json();
-      if (data.width && data.height) {
-        console.log('Window state loaded from database:', data);
-      } else {
-        console.log('No saved window state found');
-      }
     } catch (error) {
-      console.error('Error loading window state:', error);
+      // Log fetch errors during state restoration for debugging
+      console.debug('Failed to restore window state:', error);
     } finally {
       // Wait a bit before allowing saves
       setTimeout(() => {
@@ -79,11 +75,10 @@ export function useWindowState() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(state),
         });
-
-        console.log('Window state saved:', state);
       }
     } catch (error) {
-      console.error('Error saving window state:', error);
+      // Log save errors for debugging (non-critical functionality)
+      console.debug('Failed to save window state:', error);
     }
   }
 
@@ -141,8 +136,6 @@ export function useWindowState() {
     let cleanup: (() => void) | null = null;
 
     onMounted(async () => {
-      console.log('Window state management initialized');
-
       // Load state for logging
       await restoreWindowState();
 

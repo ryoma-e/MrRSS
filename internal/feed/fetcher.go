@@ -215,12 +215,33 @@ func (f *Fetcher) FetchAll(ctx context.Context) {
 		return
 	}
 
+	// Filter out FreshRSS feeds - they are refreshed via sync, not standard refresh
+	filteredFeeds := make([]models.Feed, 0, len(feeds))
+	freshRSSCount := 0
+	for _, feed := range feeds {
+		if feed.IsFreshRSSSource {
+			freshRSSCount++
+		} else {
+			filteredFeeds = append(filteredFeeds, feed)
+		}
+	}
+
+	// If all feeds are FreshRSS feeds, no standard refresh needed
+	if len(filteredFeeds) == 0 {
+		log.Printf("All %d feeds are FreshRSS sources (refreshed via sync only), skipping standard refresh", freshRSSCount)
+		// Mark progress as completed since there's nothing to do
+		f.taskManager.MarkCompleted()
+		return
+	}
+
+	log.Printf("Standard refresh: %d feeds (skipped %d FreshRSS feeds)", len(filteredFeeds), freshRSSCount)
+
 	// Update task manager capacity based on network
-	concurrency := f.getConcurrencyLimit(len(feeds))
+	concurrency := f.getConcurrencyLimit(len(filteredFeeds))
 	f.taskManager.SetPoolCapacity(concurrency)
 
 	// Use task manager for global refresh (all feeds go to queue tail)
-	f.taskManager.AddGlobalRefresh(ctx, feeds)
+	f.taskManager.AddGlobalRefresh(ctx, filteredFeeds)
 }
 
 func (f *Fetcher) FetchFeed(ctx context.Context, feed models.Feed) {

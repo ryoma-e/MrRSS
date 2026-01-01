@@ -52,6 +52,7 @@
   "proxy_type": "https",
   "proxy_username": "",
   "refresh_mode": "fixed",
+  "retry_timeout_seconds": 60,
   "rules": "",
   "shortcuts": "",
   "shortcuts_enabled": true,

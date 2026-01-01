@@ -26,6 +26,7 @@ interface Props {
   fieldOptions: FieldOption[];
   feedNames: string[];
   feedCategories: string[];
+  feedTypes: string[];
   textOperatorOptions: Array<{ value: string; labelKey: string }>;
   booleanOptions: Array<{ value: string; labelKey: string }>;
 }
@@ -48,11 +49,18 @@ function isDateField(field: string): boolean {
 }
 
 function isMultiSelectField(field: string): boolean {
-  return field === 'feed_name' || field === 'feed_category';
+  return field === 'feed_name' || field === 'feed_category' || field === 'feed_type';
 }
 
 function isBooleanField(field: string): boolean {
-  return field === 'is_read' || field === 'is_favorite' || field === 'is_hidden';
+  return (
+    field === 'is_read' ||
+    field === 'is_favorite' ||
+    field === 'is_hidden' ||
+    field === 'is_read_later' ||
+    field === 'is_freshrss_feed' ||
+    field === 'is_image_mode_feed'
+  );
 }
 
 function needsOperator(field: string): boolean {
@@ -64,6 +72,8 @@ function getMultiSelectOptions(): string[] {
     return props.feedNames;
   } else if (props.condition.field === 'feed_category') {
     return props.feedCategories;
+  } else if (props.condition.field === 'feed_type') {
+    return props.feedTypes;
   }
   return [];
 }

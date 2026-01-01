@@ -11,7 +11,7 @@ import {
 
 const { t } = useI18n();
 
-const { fieldOptions, textOperatorOptions, booleanOptions, feedNames, feedCategories } =
+const { fieldOptions, textOperatorOptions, booleanOptions, feedNames, feedCategories, feedTypes } =
   useRuleOptions();
 
 interface Props {
@@ -204,6 +204,40 @@ function getMultiSelectDisplayText(): string {
               v-if="feedCategories.length === 0"
               class="text-text-secondary text-xs sm:text-sm p-2"
             >
+              {{ t('noArticles') }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-select dropdown for feed type -->
+        <div v-else-if="condition.field === 'feed_type'" class="dropdown-container">
+          <button
+            type="button"
+            class="dropdown-trigger text-xs sm:text-sm"
+            @click="emit('toggle-dropdown')"
+          >
+            <span class="dropdown-text truncate">{{ getMultiSelectDisplayText() }}</span>
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          <div v-if="isDropdownOpen" class="dropdown-menu dropdown-down">
+            <div
+              v-for="type in feedTypes"
+              :key="type"
+              :class="[
+                'dropdown-option text-xs sm:text-sm',
+                condition.values.includes(type as string) ? 'selected' : '',
+              ]"
+              @click.stop="handleToggleMultiSelectValue(type as string)"
+            >
+              <input
+                type="checkbox"
+                :checked="condition.values.includes(type as string)"
+                class="checkbox-input"
+                tabindex="-1"
+              />
+              <span class="truncate">{{ type || t('rssFeed') }}</span>
+            </div>
+            <div v-if="feedTypes.length === 0" class="text-text-secondary text-xs sm:text-sm p-2">
               {{ t('noArticles') }}
             </div>
           </div>

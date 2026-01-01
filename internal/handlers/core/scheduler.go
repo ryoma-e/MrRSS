@@ -124,16 +124,6 @@ func (h *Handler) startScheduler(ctx context.Context, intelligentMode bool) {
 // In intelligent mode, this calculates intervals per feed
 // In fixed mode, all feeds refresh together at the global interval
 func (h *Handler) triggerGlobalRefresh(ctx context.Context, intelligentMode bool, lastGlobalRefresh *time.Time) {
-	// Update in-memory timestamp and database setting
-	*lastGlobalRefresh = time.Now()
-	log.Printf("Global refresh triggered at %v", *lastGlobalRefresh)
-
-	// Save to settings for persistence across restarts
-	lastGlobalRefreshStr := lastGlobalRefresh.Format(time.RFC3339)
-	if err := h.DB.SetSetting("last_global_refresh", lastGlobalRefreshStr); err != nil {
-		log.Printf("Failed to save last_global_refresh to settings: %v", err)
-	}
-
 	feeds, err := h.DB.GetFeeds()
 	if err != nil {
 		log.Printf("Error getting feeds for global refresh: %v", err)
@@ -148,18 +138,40 @@ func (h *Handler) triggerGlobalRefresh(ctx context.Context, intelligentMode bool
 		}
 	}
 
-	if len(globalFeeds) == 0 {
+	// Check if there are any refreshable feeds (excluding FreshRSS feeds)
+	refreshableFeeds := make([]models.Feed, 0)
+	for _, feed := range globalFeeds {
+		if !feed.IsFreshRSSSource {
+			refreshableFeeds = append(refreshableFeeds, feed)
+		}
+	}
+
+	// If no refreshable feeds, skip updating last_global_refresh
+	// This allows the next refresh to be triggered when feeds are added
+	if len(refreshableFeeds) == 0 {
+		log.Printf("No refreshable feeds found (all %d feeds are FreshRSS sources), skipping global refresh", len(globalFeeds))
 		return
 	}
 
-	log.Printf("Triggering global refresh for %d feeds (intelligent mode: %v)", len(globalFeeds), intelligentMode)
+	// Update in-memory timestamp and database setting
+	*lastGlobalRefresh = time.Now()
+	log.Printf("Global refresh triggered at %v", *lastGlobalRefresh)
+
+	// Save to settings for persistence across restarts
+	lastGlobalRefreshStr := lastGlobalRefresh.Format(time.RFC3339)
+	if err := h.DB.SetSetting("last_global_refresh", lastGlobalRefreshStr); err != nil {
+		log.Printf("Failed to save last_global_refresh to settings: %v", err)
+	}
+
+	log.Printf("Triggering global refresh for %d refreshable feeds (skipped %d FreshRSS feeds, intelligent mode: %v)",
+		len(refreshableFeeds), len(globalFeeds)-len(refreshableFeeds), intelligentMode)
 
 	if intelligentMode {
 		// In intelligent mode, schedule each feed individually with calculated intervals
 		calculator := h.Fetcher.GetIntelligentRefreshCalculator()
-		for _, feed := range globalFeeds {
+		for _, feed := range refreshableFeeds {
 			interval := calculator.CalculateInterval(feed)
-			staggerDelay := h.Fetcher.GetStaggeredDelay(feed.ID, len(globalFeeds))
+			staggerDelay := h.Fetcher.GetStaggeredDelay(feed.ID, len(refreshableFeeds))
 
 			go func(f models.Feed, delay time.Duration, calculatedInterval time.Duration) {
 				time.Sleep(delay)
@@ -198,6 +210,11 @@ func (h *Handler) scheduleIndividualFeeds(ctx context.Context, intelligentMode b
 	for _, feed := range feeds {
 		// Skip feeds using global setting (RefreshInterval == 0)
 		if feed.RefreshInterval == 0 {
+			continue
+		}
+
+		// Skip FreshRSS feeds - they are refreshed via sync, not standard refresh
+		if feed.IsFreshRSSSource {
 			continue
 		}
 

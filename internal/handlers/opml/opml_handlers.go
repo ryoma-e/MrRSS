@@ -115,7 +115,18 @@ func HandleOPMLExport(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err := opml.Generate(feeds)
+	// Filter out FreshRSS feeds - only export local feeds
+	localFeeds := make([]models.Feed, 0)
+	for _, feed := range feeds {
+		if !feed.IsFreshRSSSource {
+			localFeeds = append(localFeeds, feed)
+		}
+	}
+
+	log.Printf("[OPML Export] Exporting %d local feeds (excluded %d FreshRSS feeds)",
+		len(localFeeds), len(feeds)-len(localFeeds))
+
+	data, err := opml.Generate(localFeeds)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -290,6 +301,17 @@ func HandleOPMLExportDialog(h *core.Handler, w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Filter out FreshRSS feeds - only export local feeds
+	localFeeds := make([]models.Feed, 0)
+	for _, feed := range feeds {
+		if !feed.IsFreshRSSSource {
+			localFeeds = append(localFeeds, feed)
+		}
+	}
+
+	log.Printf("[OPML Export Dialog] Exporting %d local feeds (excluded %d FreshRSS feeds)",
+		len(localFeeds), len(feeds)-len(localFeeds))
+
 	// Type assert to *application.App to access Dialog
 	app, ok := h.App.(*application.App)
 	if !ok {
@@ -349,10 +371,10 @@ func HandleOPMLExportDialog(h *core.Handler, w http.ResponseWriter, r *http.Requ
 	var data []byte
 	if isJSON {
 		log.Printf("HandleOPMLExportDialog: Generating JSON format")
-		data, err = jsonimport.Generate(feeds)
+		data, err = jsonimport.Generate(localFeeds)
 	} else {
 		log.Printf("HandleOPMLExportDialog: Generating OPML format (extension: %s)", ext)
-		data, err = opml.Generate(feeds)
+		data, err = opml.Generate(localFeeds)
 	}
 
 	if err != nil {

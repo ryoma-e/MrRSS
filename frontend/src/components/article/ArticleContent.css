@@ -336,7 +336,7 @@
   margin: 0;
 }
 
-.prose blockquote p + p {
+.prose blockquote p+p {
   margin-top: 0.75em;
 }
 
@@ -380,19 +380,19 @@
   margin-bottom: 0.5em;
 }
 
-.prose li > *:first-child {
+.prose li>*:first-child {
   margin-top: 0;
 }
 
-.prose li > *:last-child {
+.prose li>*:last-child {
   margin-bottom: 0;
 }
 
-.prose ul > li::marker {
+.prose ul>li::marker {
   color: var(--text-secondary);
 }
 
-.prose ol > li::marker {
+.prose ol>li::marker {
   color: var(--text-secondary);
   font-weight: 600;
 }
@@ -423,7 +423,7 @@
 }
 
 /* Paragraph translation - inherit font size */
-.prose p + .translation-text {
+.prose p+.translation-text {
   font-size: 1em;
 }
 
@@ -443,7 +443,7 @@
 }
 
 /* Heading translations - same size and weight, different color */
-.prose h1 + .translation-text {
+.prose h1+.translation-text {
   font-size: 2.25em;
   font-weight: 700;
   line-height: 1.3;
@@ -451,7 +451,7 @@
   margin-bottom: 0.5em;
 }
 
-.prose h2 + .translation-text {
+.prose h2+.translation-text {
   font-size: 1.875em;
   font-weight: 700;
   line-height: 1.3333333;
@@ -459,7 +459,7 @@
   margin-bottom: 0.75em;
 }
 
-.prose h3 + .translation-text {
+.prose h3+.translation-text {
   font-size: 1.5em;
   font-weight: 600;
   line-height: 1.4;
@@ -467,21 +467,21 @@
   margin-bottom: 0.5em;
 }
 
-.prose h4 + .translation-text {
+.prose h4+.translation-text {
   font-size: 1.25em;
   font-weight: 600;
   line-height: 1.5;
   margin-bottom: 0.4em;
 }
 
-.prose h5 + .translation-text {
+.prose h5+.translation-text {
   font-size: 1.125em;
   font-weight: 600;
   line-height: 1.5555556;
   margin-bottom: 0.4em;
 }
 
-.prose h6 + .translation-text {
+.prose h6+.translation-text {
   font-size: 1em;
   font-weight: 600;
   line-height: 1.6;
@@ -506,7 +506,7 @@
 }
 
 /* Figcaption translation */
-.prose figcaption + .translation-text {
+.prose figcaption+.translation-text {
   font-size: 0.875em;
   font-style: italic;
   text-align: center;
@@ -722,7 +722,7 @@
   margin: 2em 0;
 }
 
-.prose figure > * {
+.prose figure>* {
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -866,8 +866,13 @@
 .prose mark {
   background-color: var(--mark-bg-color);
   color: var(--text-primary);
-  padding: 0.125em 0.25em;
-  border-radius: 0.125rem;
+  padding: 0;
+  border-radius: 0;
+}
+
+.prose mark.search-highlight-active {
+  background-color: var(--accent-color);
+  color: var(--bg-primary);
 }
 
 /* Abbreviation styling */
@@ -1047,15 +1052,15 @@
     margin-top: 0.15em;
   }
 
-  .prose h1 + .translation-text {
+  .prose h1+.translation-text {
     font-size: 1.875em;
   }
 
-  .prose h2 + .translation-text {
+  .prose h2+.translation-text {
     font-size: 1.5em;
   }
 
-  .prose h3 + .translation-text {
+  .prose h3+.translation-text {
     font-size: 1.25em;
   }
 }
@@ -1077,7 +1082,7 @@
   }
 
   .prose a[href]::after {
-    content: ' (' attr(href) ')';
+    content: ' ('attr(href) ')';
     font-size: 0.875em;
     color: var(--text-secondary);
   }
@@ -1195,8 +1200,8 @@
 }
 
 /* Image caption styling (when image is followed by em/italic text) */
-.prose img + em,
-.prose figure img + figcaption {
+.prose img+em,
+.prose figure img+figcaption {
   display: block;
   text-align: center;
   font-size: 0.875em;
@@ -1213,7 +1218,7 @@
   background-color: var(--bg-tertiary);
 }
 
-.prose details[open] > *:not(summary) {
+.prose details[open]>*:not(summary) {
   animation: fadeIn 0.2s ease-out;
 }
 

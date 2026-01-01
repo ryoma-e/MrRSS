@@ -31,6 +31,19 @@ export function useRuleOptions() {
     { value: 'feed_name', labelKey: 'feedName', multiSelect: true },
     { value: 'feed_category', labelKey: 'feedCategory', multiSelect: true },
     { value: 'article_title', labelKey: 'articleTitle', multiSelect: false },
+    { value: 'feed_type', labelKey: 'feedType', multiSelect: true },
+    {
+      value: 'is_freshrss_feed',
+      labelKey: 'isFreshRSSFeed',
+      multiSelect: false,
+      booleanField: true,
+    },
+    {
+      value: 'is_image_mode_feed',
+      labelKey: 'isImageModeFeed',
+      multiSelect: false,
+      booleanField: true,
+    },
     { value: 'published_after', labelKey: 'publishedAfter', multiSelect: false },
     { value: 'published_before', labelKey: 'publishedBefore', multiSelect: false },
     { value: 'is_read', labelKey: 'readStatus', multiSelect: false, booleanField: true },
@@ -43,6 +56,7 @@ export function useRuleOptions() {
   const textOperatorOptions: Array<{ value: string; labelKey: string }> = [
     { value: 'contains', labelKey: 'contains' },
     { value: 'exact', labelKey: 'exactMatch' },
+    { value: 'regex', labelKey: 'regex' },
   ];
 
   // Boolean value options
@@ -79,6 +93,21 @@ export function useRuleOptions() {
     return Array.from(categories);
   });
 
+  // Feed types for multi-select
+  const feedTypes: ComputedRef<string[]> = computed(() => {
+    const types = new Set<string>();
+    store.feeds.forEach((f) => {
+      // Map frontend type to backend type
+      if (f.type) {
+        types.add(f.type);
+      } else {
+        // Empty type means regular RSS/Atom feed
+        types.add('');
+      }
+    });
+    return Array.from(types);
+  });
+
   return {
     fieldOptions,
     textOperatorOptions,
@@ -86,6 +115,7 @@ export function useRuleOptions() {
     actionOptions,
     feedNames,
     feedCategories,
+    feedTypes,
   };
 }
 
@@ -95,7 +125,7 @@ export function isDateField(field: string): boolean {
 }
 
 export function isMultiSelectField(field: string): boolean {
-  return field === 'feed_name' || field === 'feed_category';
+  return field === 'feed_name' || field === 'feed_category' || field === 'feed_type';
 }
 
 export function isBooleanField(field: string): boolean {
@@ -103,7 +133,9 @@ export function isBooleanField(field: string): boolean {
     field === 'is_read' ||
     field === 'is_favorite' ||
     field === 'is_hidden' ||
-    field === 'is_read_later'
+    field === 'is_read_later' ||
+    field === 'is_freshrss_feed' ||
+    field === 'is_image_mode_feed'
   );
 }
 

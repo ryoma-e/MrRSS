@@ -4,6 +4,7 @@ import PhosphorIcons from '@phosphor-icons/vue';
 import i18n, { locale } from './i18n';
 import './style.css';
 import App from './App.vue';
+import { useAppStore } from './stores/app';
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -19,6 +20,12 @@ async function initializeApp() {
     const data = await res.json();
     if (data.language) {
       locale.value = data.language;
+    }
+
+    // Start FreshRSS status polling if enabled
+    if (data.freshrss_enabled === 'true') {
+      const appStore = useAppStore();
+      await appStore.startFreshRSSStatusPolling();
     }
   } catch (e) {
     console.error('Error loading language setting:', e);

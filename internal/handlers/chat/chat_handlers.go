@@ -354,9 +354,9 @@ func sendChatRequest(endpoint, apiKey string, jsonBody []byte, h *core.Handler) 
 		return nil, fmt.Errorf("invalid API endpoint URL: %w", err)
 	}
 
-	// Allow HTTP for local endpoints
-	if parsedURL.Scheme != "https" && !isLocalEndpoint(parsedURL.Host) {
-		return nil, fmt.Errorf("API endpoint must use HTTPS for security (HTTP allowed only for localhost)")
+	// Both HTTP and HTTPS are allowed
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return nil, fmt.Errorf("API endpoint must use HTTP or HTTPS")
 	}
 
 	// Create HTTP client with proxy support if configured

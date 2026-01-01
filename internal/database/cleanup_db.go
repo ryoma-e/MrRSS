@@ -67,6 +67,17 @@ func (db *DB) CleanupAllArticleContents() (int64, error) {
 	return result.RowsAffected()
 }
 
+// DeleteAllArticles removes ALL articles from the database
+// This keeps feeds, settings, and other metadata intact
+func (db *DB) DeleteAllArticles() (int64, error) {
+	db.WaitForReady()
+	result, err := db.Exec(`DELETE FROM articles`)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
+}
+
 // CleanupUnimportantArticles removes all articles except read, favorited, and read later ones.
 func (db *DB) CleanupUnimportantArticles() (int64, error) {
 	db.WaitForReady()

@@ -289,9 +289,9 @@ func (s *AISummarizer) sendRequest(jsonBody []byte) (*http.Response, error) {
 		return nil, fmt.Errorf("invalid API endpoint URL: %w", err)
 	}
 
-	// Allow HTTP for local endpoints (localhost, 127.0.0.1, etc.) for local LLM support (e.g., Ollama)
-	if parsedURL.Scheme != "https" && !isLocalEndpoint(parsedURL.Host) {
-		return nil, fmt.Errorf("API endpoint must use HTTPS for security (HTTP allowed only for localhost)")
+	// Both HTTP and HTTPS are allowed
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return nil, fmt.Errorf("API endpoint must use HTTP or HTTPS")
 	}
 
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(jsonBody))
