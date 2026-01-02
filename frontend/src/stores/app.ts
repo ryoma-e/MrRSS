@@ -283,7 +283,7 @@ export const useAppStore = defineStore('app', () => {
     refreshProgress.value.isRunning = true;
     try {
       // First, trigger standard refresh
-      const standardRefreshResponse = await fetch('/api/refresh', { method: 'POST' });
+      await fetch('/api/refresh', { method: 'POST' });
 
       // Also trigger FreshRSS sync if enabled
       try {

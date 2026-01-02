@@ -20,7 +20,7 @@ const emit = defineEmits<{
 }>();
 
 // Constants
-const ITEMS_PER_PAGE = 50;
+const ITEMS_PER_PAGE = 30;
 const SCROLL_THRESHOLD_PX = 500; // Start loading more items when user is 500px from bottom
 
 const articles = ref<Article[]>([]);
@@ -53,9 +53,19 @@ async function fetchImages(loadMore = false) {
       url += `&feed_id=${feedId.value}`;
     }
 
+    console.log('Fetching images from:', url);
     const res = await fetch(url);
     if (res.ok) {
-      const newArticles = await res.json();
+      const data = await res.json();
+      console.log('Response data:', data);
+
+      // Validate that data is an array
+      if (!Array.isArray(data)) {
+        console.error('API response is not an array:', data);
+        return;
+      }
+
+      const newArticles = data;
 
       if (loadMore) {
         articles.value = [...articles.value, ...newArticles];
@@ -64,6 +74,16 @@ async function fetchImages(loadMore = false) {
       }
 
       hasMore.value = newArticles.length >= ITEMS_PER_PAGE;
+      console.log(
+        'Loaded articles:',
+        newArticles.length,
+        'Total:',
+        articles.value.length,
+        'Has more:',
+        hasMore.value
+      );
+    } else {
+      console.error('API request failed:', res.status, res.statusText);
     }
   } catch (e) {
     console.error('Failed to load images:', e);
@@ -118,16 +138,32 @@ function arrangeColumns() {
 
 // Handle scroll for infinite loading
 function handleScroll() {
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-  const windowHeight = window.innerHeight;
-  const documentHeight = document.documentElement.scrollHeight;
+  if (!containerRef.value) return;
+
+  const scrollTop = containerRef.value.scrollTop;
+  const containerHeight = containerRef.value.clientHeight;
+  const scrollHeight = containerRef.value.scrollHeight;
+
+  console.log('Scroll:', {
+    scrollTop,
+    containerHeight,
+    scrollHeight,
+    threshold: scrollHeight - SCROLL_THRESHOLD_PX,
+    isLoading: isLoading.value,
+    hasMore: hasMore.value,
+    shouldLoad: scrollTop + containerHeight >= scrollHeight - SCROLL_THRESHOLD_PX,
+  });
 
   if (
-    scrollTop + windowHeight >= documentHeight - SCROLL_THRESHOLD_PX &&
+    scrollTop + containerHeight >= scrollHeight - SCROLL_THRESHOLD_PX &&
     !isLoading.value &&
     hasMore.value
   ) {
-    page.value++;
+    console.log('Loading more images, current page:', page.value, 'next page:', page.value + 1);
+
+    // Increment page before fetching
+    const nextPage = page.value + 1;
+    page.value = nextPage;
     fetchImages(true);
   }
 }
@@ -258,7 +294,12 @@ watch(feedId, () => {
 
 onMounted(() => {
   fetchImages();
-  window.addEventListener('scroll', handleScroll);
+  if (containerRef.value) {
+    console.log('Adding scroll listener to container:', containerRef.value);
+    containerRef.value.addEventListener('scroll', handleScroll);
+  } else {
+    console.error('containerRef is null in onMounted!');
+  }
   window.addEventListener('resize', calculateColumns);
   window.addEventListener('click', closeContextMenu);
 
@@ -268,14 +309,16 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
+  if (containerRef.value) {
+    containerRef.value.removeEventListener('scroll', handleScroll);
+  }
   window.removeEventListener('resize', calculateColumns);
   window.removeEventListener('click', closeContextMenu);
 });
 </script>
 
 <template>
-  <div class="image-gallery-container">
+  <div ref="containerRef" class="image-gallery-container">
     <!-- Header -->
     <div class="gallery-header">
       <button class="menu-btn md:hidden" :title="t('toggleSidebar')" @click="emit('toggleSidebar')">
@@ -288,7 +331,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Masonry Grid -->
-    <div v-if="articles.length > 0" ref="containerRef" class="masonry-container">
+    <div v-if="articles.length > 0" class="masonry-container">
       <div v-for="(column, colIndex) in columns" :key="colIndex" class="masonry-column">
         <div
           v-for="article in column"
@@ -384,7 +427,7 @@ onUnmounted(() => {
 
 <style scoped>
 .image-gallery-container {
-  @apply flex flex-col h-full overflow-y-auto bg-bg-primary;
+  @apply flex flex-col h-full overflow-y-auto bg-bg-primary scroll-smooth;
 }
 
 .gallery-header {

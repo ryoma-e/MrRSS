@@ -709,7 +709,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex-1 overflow-y-auto bg-bg-primary p-3 sm:p-6" @click="handleContainerClick">
+  <div
+    class="flex-1 overflow-y-auto bg-bg-primary p-3 sm:p-6 scroll-smooth"
+    @click="handleContainerClick"
+  >
     <div
       class="max-w-3xl mx-auto bg-bg-primary"
       :class="{ 'hide-translations': !showTranslations }"

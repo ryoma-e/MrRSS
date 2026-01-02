@@ -278,7 +278,7 @@ const emitShowSettings = () => window.dispatchEvent(new CustomEvent('show-settin
       </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-1.5 sm:p-2">
+    <div class="flex-1 overflow-y-scroll p-1.5 sm:p-2">
       <!-- Categories -->
       <SidebarCategory
         v-for="(data, name) in tree.tree"

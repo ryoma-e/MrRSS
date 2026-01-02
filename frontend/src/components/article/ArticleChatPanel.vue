@@ -394,7 +394,7 @@ const currentSessionTitle = computed(() => {
         <Transition name="slide-in">
           <div
             v-if="showSessions"
-            class="absolute top-12 left-0 right-0 bottom-12 bg-bg-secondary border-b border-border rounded-b-xl overflow-y-auto"
+            class="absolute top-12 left-0 right-0 bottom-12 bg-bg-secondary border-b border-border rounded-b-xl overflow-y-auto scroll-smooth"
           >
             <div class="p-2 space-y-1">
               <div
@@ -447,7 +447,7 @@ const currentSessionTitle = computed(() => {
         </Transition>
 
         <!-- Messages -->
-        <div ref="chatContainer" class="flex-1 overflow-y-auto p-3 space-y-3">
+        <div ref="chatContainer" class="flex-1 overflow-y-auto p-3 space-y-3 scroll-smooth">
           <div
             v-if="messages.length === 0"
             class="flex items-center justify-center h-full text-text-secondary text-sm"

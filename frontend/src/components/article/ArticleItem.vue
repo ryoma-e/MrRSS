@@ -202,7 +202,7 @@ onUnmounted(() => {
 @reference "../../style.css";
 
 .article-card {
-  @apply p-2 sm:p-3 border-b border-border cursor-pointer transition-colors flex gap-2 sm:gap-3 relative;
+  @apply p-2 sm:p-3 border-b border-border cursor-pointer transition-colors flex gap-2 sm:gap-3 relative border-l-2 sm:border-l-[3px] border-l-transparent;
 }
 
 .article-card:hover {
@@ -210,7 +210,7 @@ onUnmounted(() => {
 }
 
 .article-card.active {
-  @apply bg-bg-tertiary border-l-2 sm:border-l-[3px] border-l-accent;
+  @apply bg-bg-tertiary border-l-accent;
 }
 
 .article-card.read h4 {

@@ -280,7 +280,7 @@ function updateOperator(operator: string): void {
 }
 
 .dropdown-list {
-  @apply max-h-40 overflow-y-auto z-50 shadow-lg;
+  @apply max-h-40 overflow-y-auto z-50 shadow-lg scroll-smooth;
 }
 
 .dropdown-item {

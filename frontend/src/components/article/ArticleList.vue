@@ -542,7 +542,7 @@ function handleHoverMarkAsRead(articleId: number): void {
       </div>
     </div>
 
-    <div ref="listRef" class="flex-1 overflow-y-auto" @scroll="handleScroll">
+    <div ref="listRef" class="flex-1 overflow-y-scroll" @scroll="handleScroll">
       <div
         v-if="filteredArticles.length === 0 && !store.isLoading && !isFilterLoading"
         class="p-4 sm:p-5 text-center text-text-secondary text-sm sm:text-base"

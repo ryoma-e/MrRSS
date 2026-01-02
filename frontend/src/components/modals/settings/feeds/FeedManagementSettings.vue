@@ -306,7 +306,7 @@ async function openScriptsFolder() {
       </div>
 
       <!-- Scrollable Content -->
-      <div class="overflow-y-auto max-h-64 sm:max-h-96 lg:max-h-[32rem]">
+      <div class="overflow-y-auto max-h-64 sm:max-h-96 lg:max-h-[32rem] scroll-smooth">
         <!-- Feed Rows -->
         <div
           v-for="feed in sortedFeeds"

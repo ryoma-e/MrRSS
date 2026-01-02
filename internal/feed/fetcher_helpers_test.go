@@ -3,6 +3,7 @@ package feed
 import (
 	"MrRSS/internal/database"
 	"MrRSS/internal/models"
+	"MrRSS/internal/utils"
 	"context"
 	"net/http"
 	"net/url"
@@ -40,12 +41,20 @@ func TestGetHTTPClientProxyPrecedence(t *testing.T) {
 	db := setupDBForFeedTests(t)
 	f := NewFetcher(db, nil)
 
+	// Helper function to get the underlying http.Transport
+	getTransport := func(client *http.Client) *http.Transport {
+		if uat, ok := client.Transport.(*utils.UserAgentTransport); ok {
+			return uat.Original.(*http.Transport)
+		}
+		return client.Transport.(*http.Transport)
+	}
+
 	feed := models.Feed{ProxyEnabled: true, ProxyURL: "http://10.0.0.1:3128"}
 	client, err := f.getHTTPClient(feed)
 	if err != nil {
 		t.Fatalf("getHTTPClient error: %v", err)
 	}
-	tr := client.Transport.(*http.Transport)
+	tr := getTransport(client)
 	if tr.Proxy == nil {
 		t.Fatalf("expected proxy function for feed-level proxy")
 	}
@@ -66,7 +75,7 @@ func TestGetHTTPClientProxyPrecedence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getHTTPClient error: %v", err)
 	}
-	tr2 := client2.Transport.(*http.Transport)
+	tr2 := getTransport(client2)
 	if tr2.Proxy == nil {
 		t.Fatalf("expected proxy function for global proxy")
 	}
@@ -80,7 +89,7 @@ func TestGetHTTPClientProxyPrecedence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("getHTTPClient error: %v", err)
 	}
-	tr3 := client3.Transport.(*http.Transport)
+	tr3 := getTransport(client3)
 	if tr3.Proxy != nil {
 		if pu3, _ := tr3.Proxy(&http.Request{URL: &url.URL{Scheme: "http", Host: "example.com"}}); pu3 != nil {
 			t.Fatalf("expected no proxy when disabled, got %v", pu3)

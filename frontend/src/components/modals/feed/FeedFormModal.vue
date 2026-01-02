@@ -227,7 +227,7 @@ async function submit() {
           >&times;</span
         >
       </div>
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
         <div class="mb-3 sm:mb-4">
           <label
             class="block mb-1 sm:mb-1.5 font-semibold text-xs sm:text-sm text-text-secondary"

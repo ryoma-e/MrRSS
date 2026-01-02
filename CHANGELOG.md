@@ -7,38 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-**BREAKING**: The FreshRSS synchronization feature has been significantly enhanced with more options and better reliability. You may need to remove and re-synchronize your FreshRSS feeds after upgrading.
+**BREAKING**: The FreshRSS synchronization feature has been significantly enhanced, offering more options and improved reliability. You may need to remove and re-add your FreshRSS feeds after upgrading.
 
 ### Added
 
-- Enhanced support for FreshRSS synchronization with more options. (#333, #376)
-- Supported building and publishing multi-architecture Docker images to GHCR. (#349) (@czyt)
-- Supported email newsletter feeds via IMAP. (#313)
-- Supported more filter conditions including title regex, is FreshRSS feed, is image gallery, feed mode. (#372)
-- Supported displaying and sorting by last updated time, refresh status and update frequency in feed list. (#374)
-- Supported controlling play speed and sound volume for audio in article content rendering mode. (#354)
+- Enhanced FreshRSS synchronization with additional configuration options. (#333, #376)
+- Added support for building and publishing multi-architecture Docker images to GHCR. (#349) (@czyt)
+- Added support for email newsletter feeds via IMAP. (#313)
+- Added more filter conditions, including title regex, FreshRSS feed status, image gallery status, and feed mode. (#372)
+- Added display and sorting by last updated time, refresh status, and update frequency in the feed list. (#374)
+- Added playback speed and volume controls for audio in article content rendering mode. (#354)
 
 ### Changed
 
-- Incresed default max concurrency and timeout settings for feed fetching based on network speed detection. (#375)
-- Disabled auto exit when clicking the background of popup windows to prevent accidental closures. (#355)
-- Optimized the display of publish time of articles in article list. (#373)
+- Increased default concurrency and timeout settings for feed fetching based on network speed detection. (#375)
+- Disabled auto-close when clicking the background of popup windows to prevent accidental closures. (#355)
+- Optimized the display of article publish times in the article list. (#373)
+- Applied consistent scrollbar styling across all scrollable areas. (#389)
 
 ### Fixed
 
-- Fixed the issue where python command not found error occurs. (#364)
-- Fixed the issue where some links in article content rendering mode cannot be opened in default browser. (#330)
-- Fixed the issue where some images in article content rendering mode cannot be displayed correctly. (#327)
-- Fixed the issue where translations are not applied correctly in nested structures.
-- Fixed the style of the results highlight in article content search. (#361)
+- Fixed "python command not found" error. (#364)
+- Fixed broken links in article content rendering mode that failed to open in the default browser. (#330)
+- Fixed incorrect rendering of some images in article content rendering mode. (#327)
+- Fixed incorrect translation application in nested structures.
+- Fixed search result highlight styling in article content. (#361)
 - Fixed incorrect application name display (`{{.info.ProductName}}`) on Windows. (#351)
 - Fixed repeated macOS privacy permission dialogs when opening articles. (#337)
-- Fixed the issue where window will flash white when opening or closing. (#384)
+- Fixed white screen flash when opening or closing windows. (#384)
+- Fixed visual glitches caused by scrollbar thumb and article item borders. (#387, #388)
+- Fixed inconsistent height in date input fields. (#391)
+- Fixed image gallery not loading more images correctly on scroll. (#385)
 
 ### Removed
 
-- Removed the limitation of HTTPS for feed URLs and API endpoints. (#251)
-- Articles will not be translated automatically while refreshing feeds.
+- Removed HTTPS requirement for feed URLs and API endpoints. (#251)
+- Removed automatic article translation during feed refresh.
+- Disabled hiding of image feeds in the "All Articles" view. (#386)
 
 ## [1.3.12] - 2025-12-29
 

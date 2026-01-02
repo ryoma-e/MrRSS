@@ -113,7 +113,7 @@ function handleDiscoverAll() {
 
       <div
         ref="tabsContainer"
-        class="flex border-b border-border bg-bg-secondary shrink-0 overflow-x-auto scrollbar-hide"
+        class="flex border-b border-border bg-bg-secondary shrink-0 overflow-x-auto scrollbar-hide scroll-smooth"
       >
         <button
           :class="['tab-btn', activeTab === 'general' ? 'active' : '']"
@@ -168,7 +168,7 @@ function handleDiscoverAll() {
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-3 sm:p-6 min-h-0">
+      <div class="flex-1 overflow-y-auto p-3 sm:p-6 min-h-0 scroll-smooth">
         <GeneralTab
           v-if="activeTab === 'general'"
           :settings="settings"

@@ -95,20 +95,18 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 	switch filter {
 	case "unread":
 		whereClauses = append(whereClauses, "a.is_read = 0")
-		// Exclude feeds marked as hide_from_timeline or is_image_mode when viewing unread (unless specific feed/category selected)
+		// Exclude feeds marked as hide_from_timeline when viewing unread (unless specific feed/category selected)
 		if feedID <= 0 && category == "" {
 			whereClauses = append(whereClauses, "COALESCE(f.hide_from_timeline, 0) = 0")
-			whereClauses = append(whereClauses, "COALESCE(f.is_image_mode, 0) = 0")
 		}
 	case "favorites":
 		whereClauses = append(whereClauses, "a.is_favorite = 1")
 	case "readLater":
 		whereClauses = append(whereClauses, "a.is_read_later = 1")
 	case "all":
-		// Exclude feeds marked as hide_from_timeline or is_image_mode when viewing all articles (unless specific feed/category selected)
+		// Exclude feeds marked as hide_from_timeline when viewing all articles (unless specific feed/category selected)
 		if feedID <= 0 && category == "" {
 			whereClauses = append(whereClauses, "COALESCE(f.hide_from_timeline, 0) = 0")
-			whereClauses = append(whereClauses, "COALESCE(f.is_image_mode, 0) = 0")
 		}
 	}
 
@@ -121,8 +119,6 @@ func (db *DB) GetArticles(filter string, feedID int64, category string, showHidd
 		// Simple prefix match for category hierarchy
 		whereClauses = append(whereClauses, "(f.category = ? OR f.category LIKE ?)")
 		args = append(args, category, category+"/%")
-		// Exclude image mode feeds when viewing category
-		whereClauses = append(whereClauses, "COALESCE(f.is_image_mode, 0) = 0")
 	}
 
 	query := baseQuery
@@ -498,7 +494,7 @@ func (db *DB) GetImageGalleryArticles(feedID int64, showHidden bool, limit, offs
 	}
 	defer rows.Close()
 
-	var articles []models.Article
+	articles := make([]models.Article, 0)
 	for rows.Next() {
 		var a models.Article
 		var imageURL, audioURL, videoURL, translatedTitle, summary sql.NullString

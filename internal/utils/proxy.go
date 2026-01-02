@@ -71,6 +71,25 @@ func (rt RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return rt(req)
 }
 
+// UserAgentTransport wraps an http.RoundTripper to add User-Agent headers
+type UserAgentTransport struct {
+	Original  http.RoundTripper
+	userAgent string
+}
+
+// RoundTrip implements http.RoundTripper
+func (t *UserAgentTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Set User-Agent if not already set
+	if req.Header.Get("User-Agent") == "" {
+		req.Header.Set("User-Agent", t.userAgent)
+	}
+	// Set Accept header for RSS feeds
+	if req.Header.Get("Accept") == "" {
+		req.Header.Set("Accept", "application/rss+xml, application/xml, text/xml, */*")
+	}
+	return t.Original.RoundTrip(req)
+}
+
 // CreateHTTPClientWithUserAgent creates an HTTP client with a custom User-Agent
 // This is important because some RSS servers block requests without a proper User-Agent
 func CreateHTTPClientWithUserAgent(proxyURL string, timeout time.Duration, userAgent string) (*http.Client, error) {
@@ -80,18 +99,10 @@ func CreateHTTPClientWithUserAgent(proxyURL string, timeout time.Duration, userA
 	}
 
 	// Wrap the transport to add User-Agent to all requests
-	originalTransport := baseClient.Transport
-	baseClient.Transport = RoundTripFunc(func(req *http.Request) (*http.Response, error) {
-		// Set User-Agent if not already set
-		if req.Header.Get("User-Agent") == "" {
-			req.Header.Set("User-Agent", userAgent)
-		}
-		// Set Accept header for RSS feeds
-		if req.Header.Get("Accept") == "" {
-			req.Header.Set("Accept", "application/rss+xml, application/xml, text/xml, */*")
-		}
-		return originalTransport.RoundTrip(req)
-	})
+	baseClient.Transport = &UserAgentTransport{
+		Original:  baseClient.Transport,
+		userAgent: userAgent,
+	}
 
 	return baseClient, nil
 }

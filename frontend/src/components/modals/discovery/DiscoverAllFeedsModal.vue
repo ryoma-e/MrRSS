@@ -92,7 +92,7 @@ watch(
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6">
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
         <!-- Loading State -->
         <DiscoveryProgress
           v-if="isDiscovering"
