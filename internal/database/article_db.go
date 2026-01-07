@@ -27,6 +27,13 @@ func (db *DB) SaveArticle(article *models.Article) error {
 func (db *DB) SaveArticles(ctx context.Context, articles []*models.Article) error {
 	db.WaitForReady()
 
+	// Track feed refresh when articles are saved (only if we have articles to save)
+	if len(articles) > 0 {
+		// Track one feed refresh event regardless of how many articles are saved
+		// This tracks the refresh action, not the article count
+		_ = db.IncrementStat("feed_refresh")
+	}
+
 	// Progressive cleanup: check if we need to clean up before saving
 	if len(articles) > 10 {
 		// Only check for larger batches to avoid overhead

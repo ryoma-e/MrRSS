@@ -49,6 +49,9 @@ func HandleGetArticleContent(h *core.Handler, w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Track article view
+	_ = h.DB.IncrementStat("article_view")
+
 	// Get feed URL to use as referer for image proxying
 	feed, err := h.DB.GetFeedByID(article.FeedID)
 	var feedURL string

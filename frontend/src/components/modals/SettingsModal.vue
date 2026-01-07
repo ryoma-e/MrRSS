@@ -10,6 +10,7 @@ import NetworkTab from './settings/network/NetworkTab.vue';
 import PluginsTab from './settings/plugins/PluginsTab.vue';
 import ShortcutsTab from './settings/shortcuts/ShortcutsTab.vue';
 import RulesTab from './settings/rules/RulesTab.vue';
+import StatisticsTab from './settings/statistics/StatisticsTab.vue';
 import AboutTab from './settings/about/AboutTab.vue';
 import DiscoverAllFeedsModal from './discovery/DiscoverAllFeedsModal.vue';
 import { PhGear } from '@phosphor-icons/vue';
@@ -161,6 +162,12 @@ function handleDiscoverAll() {
           {{ t('shortcuts') }}
         </button>
         <button
+          :class="['tab-btn', activeTab === 'statistics' ? 'active' : '']"
+          @click="activeTab = 'statistics'"
+        >
+          {{ t('statistics') }}
+        </button>
+        <button
           :class="['tab-btn', activeTab === 'about' ? 'active' : '']"
           @click="activeTab = 'about'"
         >
@@ -225,6 +232,8 @@ function handleDiscoverAll() {
           :settings="settings"
           @update:settings="settings = $event"
         />
+
+        <StatisticsTab v-if="activeTab === 'statistics'" />
 
         <AboutTab
           v-if="activeTab === 'about'"

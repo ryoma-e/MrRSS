@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Supported RSSHub feed type for better integration with RSSHub instances. (#176, #302) (@cry0404)
+- Supported statistics tab in settings modal to view usage statistics over time.
+- Supported manually sorting rules for advanced users. (#398)
 
 ### Fixed
 

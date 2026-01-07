@@ -43,6 +43,7 @@ interface Rule {
   enabled: boolean;
   conditions: Condition[];
   actions: string[];
+  position?: number;
 }
 
 interface Props {

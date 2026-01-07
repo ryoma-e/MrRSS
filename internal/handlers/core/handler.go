@@ -17,6 +17,7 @@ import (
 	"MrRSS/internal/discovery"
 	"MrRSS/internal/feed"
 	"MrRSS/internal/models"
+	"MrRSS/internal/statistics"
 	"MrRSS/internal/translation"
 	"MrRSS/internal/utils"
 
@@ -51,6 +52,7 @@ type Handler struct {
 	DiscoveryService *discovery.Service
 	App              interface{}         // Wails app instance for browser integration (interface{} to avoid import in server mode)
 	ContentCache     *cache.ContentCache // Cache for article content
+	Stats            *statistics.Service // Statistics tracking service
 
 	// Discovery state tracking for polling-based progress
 	DiscoveryMu          sync.RWMutex
@@ -67,6 +69,7 @@ func NewHandler(db *database.DB, fetcher *feed.Fetcher, translator translation.T
 		AITracker:        aiusage.NewTracker(db),
 		DiscoveryService: discovery.NewService(),
 		ContentCache:     cache.NewContentCache(100, 30*time.Minute), // Cache up to 100 articles for 30 minutes
+		Stats:            statistics.NewService(db),
 	}
 
 	return h
@@ -89,6 +92,11 @@ func (h *Handler) CallAppMethod(method string, args ...interface{}) error {
 // This is called after app initialization in main.go.
 func (h *Handler) SetApp(app interface{}) {
 	h.App = app
+}
+
+// Statistics returns the statistics service
+func (h *Handler) Statistics() *statistics.Service {
+	return h.Stats
 }
 
 // GetArticleContent fetches article content with caching

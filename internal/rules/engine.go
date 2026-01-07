@@ -61,7 +61,8 @@ type Rule struct {
 	Name       string      `json:"name"`
 	Enabled    bool        `json:"enabled"`
 	Conditions []Condition `json:"conditions"`
-	Actions    []string    `json:"actions"` // "favorite", "unfavorite", "hide", "unhide", "mark_read", "mark_unread"
+	Actions    []string    `json:"actions"`  // "favorite", "unfavorite", "hide", "unhide", "mark_read", "mark_unread"
+	Position   int         `json:"position"` // Execution order (0 = first)
 }
 
 // Engine handles rule application
@@ -89,6 +90,10 @@ func (e *Engine) ApplyRulesToArticles(articles []models.Article) (int, error) {
 		log.Printf("Error parsing rules: %v", err)
 		return 0, err
 	}
+
+	// Sort rules by position (ascending) to ensure execution order
+	// Rules without a position field (backward compatibility) are treated as position 0
+	sortRulesByPosition(rules)
 
 	// Get feeds for category and title lookup
 	feeds, err := e.db.GetFeeds()
@@ -371,5 +376,21 @@ func (e *Engine) applyAction(articleID int64, action string) error {
 	default:
 		log.Printf("Unknown action: %s", action)
 		return nil
+	}
+}
+
+// sortRulesByPosition sorts rules by their position field in ascending order
+func sortRulesByPosition(rules []Rule) {
+	// Use the built-in sort package with a custom comparator
+	for i := 0; i < len(rules); i++ {
+		for j := i + 1; j < len(rules); j++ {
+			// Compare positions, defaulting to 0 for backward compatibility
+			posI := rules[i].Position
+			posJ := rules[j].Position
+			if posI > posJ {
+				// Swap
+				rules[i], rules[j] = rules[j], rules[i]
+			}
+		}
 	}
 }

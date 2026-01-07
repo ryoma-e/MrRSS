@@ -136,6 +136,9 @@ func HandleAIChat(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 			log.Printf("Warning: failed to track AI usage: %v", err)
 		}
 
+		// Track statistics
+		_ = h.DB.IncrementStat("ai_chat")
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(ChatResponse{Response: response, HTML: htmlResponse})
 		return
@@ -153,6 +156,9 @@ func HandleAIChat(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 		if err := h.AITracker.AddUsage(estimatedTokens); err != nil {
 			log.Printf("Warning: failed to track AI usage: %v", err)
 		}
+
+		// Track statistics
+		_ = h.DB.IncrementStat("ai_chat")
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(ChatResponse{Response: response, HTML: htmlResponse})

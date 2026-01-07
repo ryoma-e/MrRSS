@@ -143,6 +143,8 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 				result = aiResult
 				// Track AI usage only on success
 				h.AITracker.TrackSummary(content, result.Summary)
+				// Track statistics
+				_ = h.DB.IncrementStat("ai_summary")
 			}
 		}
 	} else {
