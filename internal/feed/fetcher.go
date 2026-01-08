@@ -115,7 +115,7 @@ func (f *Fetcher) transformRSSHubURL(url string) (string, error) {
 	}
 
 	// Check if RSSHub is enabled
-	enabledStr, _ := f.db.GetSetting("rsshub_enabled")
+	enabledStr, err := f.db.GetSetting("rsshub_enabled")
 	if enabledStr != "true" {
 		return "", fmt.Errorf("RSSHub integration is disabled. Please enable it in settings")
 	}
@@ -128,6 +128,8 @@ func (f *Fetcher) transformRSSHubURL(url string) (string, error) {
 
 	route := rsshub.ExtractRoute(url)
 	client := rsshub.NewClient(endpoint, apiKey)
+
+
 	return client.BuildURL(route), nil
 }
 

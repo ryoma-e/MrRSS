@@ -44,12 +44,6 @@ func (c *Client) ValidateRoute(route string) error {
 	req.Header.Set("Accept", "application/rss+xml, application/xml, text/xml, application/atom+xml;q=0.9,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7")
 
-	if c.APIKey != "" {
-		q := req.URL.Query()
-		q.Add("key", c.APIKey)
-		req.URL.RawQuery = q.Encode()
-	}
-
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to connect to RSSHub: %w", err)

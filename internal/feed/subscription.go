@@ -639,7 +639,7 @@ func (f *Fetcher) parseFeedWithFeedInternal(ctx context.Context, feed *models.Fe
 
 		if shouldTryJS {
 			// If standard parsing fails with parsing errors, try executing JavaScript in browser
-			utils.DebugLog("parseFeedWithFeedInternal: Attempting JavaScript execution for %s", feed.URL)
+			utils.DebugLog("parseFeedWithFeedInternal: Attempting JavaScript execution for %s", actualURL)
 			jsCtx := ctx
 			if priority {
 				var cancel context.CancelFunc
@@ -647,7 +647,7 @@ func (f *Fetcher) parseFeedWithFeedInternal(ctx context.Context, feed *models.Fe
 				defer cancel()
 			}
 
-			parsedFeed, err = f.parseFeedWithJavaScript(jsCtx, feed.URL, priority)
+			parsedFeed, err = f.parseFeedWithJavaScript(jsCtx, actualURL, priority)
 			if err != nil {
 				utils.DebugLog("parseFeedWithFeedInternal: JavaScript execution also failed: %v", err)
 				return nil, fmt.Errorf("both standard parsing and JavaScript execution failed: %w", err)

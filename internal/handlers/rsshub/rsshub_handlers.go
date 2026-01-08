@@ -164,3 +164,68 @@ func HandleValidateRoute(h *core.Handler, w http.ResponseWriter, r *http.Request
 		"message": "Route is valid",
 	})
 }
+
+// HandleTransformURL transforms a rsshub:// URL to full RSSHub URL
+//
+//	@Summary		Transform RSSHub URL
+//	@Description	Transforms a rsshub:// protocol URL to full RSSHub URL with endpoint and API key
+//	@Tags			rsshub
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		object{url=string}	true	"RSSHub URL to transform (rsshub:// protocol)"
+//	@Success		200		{object}	object{url=string}	"Transformed URL"
+//	@Failure		400		{object}	object{error=string}	"Invalid request or URL"
+//	@Router			/api/rsshub/transform-url [post]
+func HandleTransformURL(h *core.Handler, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		URL string `json:"url"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.URL == "" {
+		http.Error(w, "URL is required", http.StatusBadRequest)
+		return
+	}
+
+	// Check if it's a RSSHub URL
+	if !rsshub.IsRSSHubURL(req.URL) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"url": req.URL,
+		})
+		return
+	}
+
+	// Check if RSSHub is enabled
+	enabledStr, _ := h.DB.GetSetting("rsshub_enabled")
+	if enabledStr != "true" {
+		http.Error(w, "RSSHub integration is disabled. Please enable it in settings", http.StatusBadRequest)
+		return
+	}
+
+	// Get RSSHub settings
+	endpoint, _ := h.DB.GetSetting("rsshub_endpoint")
+	if endpoint == "" {
+		endpoint = "https://rsshub.app"
+	}
+	apiKey, _ := h.DB.GetEncryptedSetting("rsshub_api_key")
+
+	// Extract route and build URL
+	route := rsshub.ExtractRoute(req.URL)
+	client := rsshub.NewClient(endpoint, apiKey)
+	transformedURL := client.BuildURL(route)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"url": transformedURL,
+	})
+}
