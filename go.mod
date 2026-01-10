@@ -8,6 +8,7 @@ require (
 	codeberg.org/readeck/go-readability/v2 v2.1.0
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/PuerkitoBio/goquery v1.11.0
+	github.com/abadojack/whatlanggo v1.0.1
 	github.com/antchfx/htmlquery v1.3.5
 	github.com/antchfx/xmlquery v1.5.0
 	github.com/chromedp/chromedp v0.14.2
@@ -15,7 +16,6 @@ require (
 	github.com/go-ego/gse v1.0.0
 	github.com/gomarkdown/markdown v0.0.0-20250810172220-2e2c11897d1a
 	github.com/mmcdole/gofeed v1.3.0
-	github.com/pemistahl/lingua-go v1.4.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.48
 	golang.org/x/crypto v0.46.0
@@ -83,7 +83,6 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/samber/lo v1.52.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
-	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
@@ -99,7 +98,6 @@ require (
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/tools v0.40.0 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	modernc.org/libc v1.67.1 // indirect

@@ -4,13 +4,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pemistahl/lingua-go"
+	"github.com/abadojack/whatlanggo"
 )
 
-// LanguageDetector handles language detection using Lingua
+// LanguageDetector handles language detection using whatlanggo
+// whatlanggo is a pure Go implementation with minimal binary size impact
 type LanguageDetector struct {
-	detector lingua.LanguageDetector
-	once     sync.Once
+	once sync.Once
 }
 
 // languageDetectorInstance is the singleton instance
@@ -19,39 +19,10 @@ var (
 	languageDetectorOnce     sync.Once
 )
 
-// Supported languages for detection
-var supportedLanguages = []lingua.Language{
-	lingua.English,
-	lingua.Chinese,
-	lingua.Japanese,
-	lingua.Korean,
-	lingua.Spanish,
-	lingua.French,
-	lingua.German,
-	lingua.Portuguese,
-	lingua.Russian,
-	lingua.Italian,
-	lingua.Arabic,
-	lingua.Dutch,
-	lingua.Polish,
-	lingua.Turkish,
-	lingua.Vietnamese,
-	lingua.Thai,
-	lingua.Indonesian,
-	lingua.Hindi,
-}
-
 // GetLanguageDetector returns the singleton language detector instance
 func GetLanguageDetector() *LanguageDetector {
 	languageDetectorOnce.Do(func() {
 		languageDetectorInstance = &LanguageDetector{}
-		languageDetectorInstance.once.Do(func() {
-			// Build detector with low accuracy mode for better performance on short texts
-			languageDetectorInstance.detector = lingua.NewLanguageDetectorBuilder().
-				FromLanguages(supportedLanguages...).
-				WithLowAccuracyMode().
-				Build()
-		})
 	})
 	return languageDetectorInstance
 }
@@ -79,13 +50,27 @@ func (ld *LanguageDetector) DetectLanguage(text string) string {
 		textForDetection = cleanText
 	}
 
-	// Detect language
-	language, exists := ld.detector.DetectLanguageOf(textForDetection)
-	if !exists {
+	// Detect language with options
+	// Use whitelist to only detect languages we support
+	supportedLangs := supportedLanguages()
+	whitelist := make(map[whatlanggo.Lang]bool)
+	for _, lang := range supportedLangs {
+		whitelist[lang] = true
+	}
+
+	options := whatlanggo.Options{
+		Whitelist: whitelist,
+	}
+
+	info := whatlanggo.DetectWithOptions(textForDetection, options)
+
+	// Check confidence level - only accept high confidence detections
+	if info.Confidence < 0.5 {
 		return ""
 	}
 
-	detectedCode := linguaToISOCode(language)
+	// Convert whatlanggo Lang to ISO 639-1 code
+	detectedCode := whatlangToISOCode(info.Lang)
 	return detectedCode
 }
 
@@ -110,30 +95,52 @@ func (ld *LanguageDetector) ShouldTranslate(text, targetLang string) bool {
 	return detectedLang != targetLang
 }
 
-// linguaToISOCode converts Lingua Language enum to ISO 639-1 code
-func linguaToISOCode(language lingua.Language) string {
-	langMap := map[lingua.Language]string{
-		lingua.English:    "en",
-		lingua.Chinese:    "zh",
-		lingua.Japanese:   "ja",
-		lingua.Korean:     "ko",
-		lingua.Spanish:    "es",
-		lingua.French:     "fr",
-		lingua.German:     "de",
-		lingua.Portuguese: "pt",
-		lingua.Russian:    "ru",
-		lingua.Italian:    "it",
-		lingua.Arabic:     "ar",
-		lingua.Dutch:      "nl",
-		lingua.Polish:     "pl",
-		lingua.Turkish:    "tr",
-		lingua.Vietnamese: "vi",
-		lingua.Thai:       "th",
-		lingua.Indonesian: "id",
-		lingua.Hindi:      "hi",
+// supportedLanguages returns the list of languages we want to detect
+func supportedLanguages() []whatlanggo.Lang {
+	return []whatlanggo.Lang{
+		whatlanggo.Eng,
+		whatlanggo.Cmn, // Chinese (Mandarin)
+		whatlanggo.Jpn,
+		whatlanggo.Kor,
+		whatlanggo.Spa,
+		whatlanggo.Fra,
+		whatlanggo.Deu,
+		whatlanggo.Por,
+		whatlanggo.Rus,
+		whatlanggo.Ita,
+		whatlanggo.Nld,
+		whatlanggo.Pol,
+		whatlanggo.Tur,
+		whatlanggo.Vie,
+		whatlanggo.Tha,
+		whatlanggo.Ind,
+		whatlanggo.Hin,
+	}
+}
+
+// whatlangToISOCode converts whatlanggo Lang to ISO 639-1 code
+func whatlangToISOCode(lang whatlanggo.Lang) string {
+	langMap := map[whatlanggo.Lang]string{
+		whatlanggo.Eng: "en",
+		whatlanggo.Cmn: "zh",
+		whatlanggo.Jpn: "ja",
+		whatlanggo.Kor: "ko",
+		whatlanggo.Spa: "es",
+		whatlanggo.Fra: "fr",
+		whatlanggo.Deu: "de",
+		whatlanggo.Por: "pt",
+		whatlanggo.Rus: "ru",
+		whatlanggo.Ita: "it",
+		whatlanggo.Nld: "nl",
+		whatlanggo.Pol: "pl",
+		whatlanggo.Tur: "tr",
+		whatlanggo.Vie: "vi",
+		whatlanggo.Tha: "th",
+		whatlanggo.Ind: "id",
+		whatlanggo.Hin: "hi",
 	}
 
-	if code, ok := langMap[language]; ok {
+	if code, ok := langMap[lang]; ok {
 		return code
 	}
 	return ""
@@ -151,7 +158,7 @@ func normalizeLangCode(code string) string {
 // removeHTMLTags removes HTML tags from text for better language detection
 func removeHTMLTags(text string) string {
 	// Simple HTML tag removal
-	result := ""
+	var result strings.Builder
 	inTag := false
 	for _, r := range text {
 		if r == '<' {
@@ -159,8 +166,8 @@ func removeHTMLTags(text string) string {
 		} else if r == '>' {
 			inTag = false
 		} else if !inTag {
-			result += string(r)
+			result.WriteRune(r)
 		}
 	}
-	return strings.TrimSpace(result)
+	return strings.TrimSpace(result.String())
 }
