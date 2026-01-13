@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactored
 
-- Refactored sidebar and summary component for better maintainability and performance. (#461, #466)
+- Refactored sidebar, settings and summary component for better maintainability and performance. (#461, #466)
 
 ## [1.3.15] - 2026-01-11
 
