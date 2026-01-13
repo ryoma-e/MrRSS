@@ -48,6 +48,7 @@ export function useArticleDetail() {
       const prevArticle = store.articles[currentArticleIndex.value - 1];
       store.currentArticleId = prevArticle.id;
       markAsReadIfNeeded(prevArticle);
+      scrollArticleIntoView(prevArticle.id);
     }
   }
 
@@ -57,7 +58,18 @@ export function useArticleDetail() {
       const nextArticle = store.articles[currentArticleIndex.value + 1];
       store.currentArticleId = nextArticle.id;
       markAsReadIfNeeded(nextArticle);
+      scrollArticleIntoView(nextArticle.id);
     }
+  }
+
+  // Scroll article into view in the article list
+  function scrollArticleIntoView(articleId: number) {
+    setTimeout(() => {
+      const articleEl = document.querySelector(`[data-article-id="${articleId}"]`);
+      if (articleEl) {
+        articleEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 50);
   }
 
   // Mark article as read if it's not already read
@@ -102,6 +114,8 @@ export function useArticleDetail() {
   const userPreferredMode = ref<ViewMode | null>(null); // Remember user's manual choice
   const imageViewerSrc = ref<string | null>(null);
   const imageViewerAlt = ref('');
+  const imageViewerImages = ref<string[]>([]);
+  const imageViewerInitialIndex = ref(0);
 
   // Watch for article changes and apply view mode
   watch(
@@ -111,6 +125,8 @@ export function useArticleDetail() {
         // Close image viewer when switching articles
         imageViewerSrc.value = null;
         imageViewerAlt.value = '';
+        imageViewerImages.value = [];
+        imageViewerInitialIndex.value = 0;
 
         // Reset content when switching articles
         articleContent.value = '';
@@ -145,6 +161,8 @@ export function useArticleDetail() {
       // Close image viewer when switching feeds, filters, or categories
       imageViewerSrc.value = null;
       imageViewerAlt.value = '';
+      imageViewerImages.value = [];
+      imageViewerInitialIndex.value = 0;
     }
   );
 
@@ -343,7 +361,7 @@ export function useArticleDetail() {
           newImg.style.cursor = 'pointer';
           newImg.style.pointerEvents = 'auto';
 
-          // Left click - open image viewer
+          // Left click - open image viewer with all images from article
           newImg.addEventListener(
             'click',
             (e: Event) => {
@@ -355,8 +373,24 @@ export function useArticleDetail() {
                 return;
               }
 
+              // Collect all images from the article content
+              const allImages = Array.from(
+                document.querySelectorAll<HTMLImageElement>('.prose-content img, .prose img')
+              )
+                .filter((img) => {
+                  // Filter out small icons
+                  return !(img.height <= 24 && img.height > 0);
+                })
+                .map((img) => img.src);
+
+              // Find the index of the clicked image
+              const clickedIndex = allImages.findIndex((src) => src === newImg.src);
+
+              // Set up image viewer with all images
               imageViewerSrc.value = newImg.src;
               imageViewerAlt.value = newImg.alt || '';
+              imageViewerImages.value = allImages;
+              imageViewerInitialIndex.value = clickedIndex >= 0 ? clickedIndex : 0;
             },
             { capture: true }
           ); // Use capture phase to ensure we get the event first
@@ -498,6 +532,8 @@ export function useArticleDetail() {
   function closeImageViewer() {
     imageViewerSrc.value = null;
     imageViewerAlt.value = '';
+    imageViewerImages.value = [];
+    imageViewerInitialIndex.value = 0;
   }
 
   // Download image from URL
@@ -653,6 +689,8 @@ export function useArticleDetail() {
     isLoadingContent,
     imageViewerSrc,
     imageViewerAlt,
+    imageViewerImages,
+    imageViewerInitialIndex,
     locale,
     hasPreviousArticle,
     hasNextArticle,

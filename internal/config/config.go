@@ -33,10 +33,13 @@ type Defaults struct {
 	BaiduAppId               string `json:"baidu_app_id"`
 	BaiduSecretKey           string `json:"baidu_secret_key"`
 	CloseToTray              bool   `json:"close_to_tray"`
+	CompactMode              bool   `json:"compact_mode"`
 	CustomCssFile            string `json:"custom_css_file"`
 	DeeplAPIKey              string `json:"deepl_api_key"`
 	DeeplEndpoint            string `json:"deepl_endpoint"`
 	DefaultViewMode          string `json:"default_view_mode"`
+	FeedDrawerExpanded       bool   `json:"feed_drawer_expanded"`
+	FeedDrawerPinned         bool   `json:"feed_drawer_pinned"`
 	FreshRSSAPIPassword      string `json:"freshrss_api_password"`
 	FreshRSSAutoSyncInterval int    `json:"freshrss_auto_sync_interval"`
 	FreshRSSEnabled          bool   `json:"freshrss_enabled"`
@@ -143,6 +146,8 @@ func GetString(key string) string {
 		return defaults.BaiduSecretKey
 	case "close_to_tray":
 		return strconv.FormatBool(defaults.CloseToTray)
+	case "compact_mode":
+		return strconv.FormatBool(defaults.CompactMode)
 	case "custom_css_file":
 		return defaults.CustomCssFile
 	case "deepl_api_key":
@@ -151,6 +156,10 @@ func GetString(key string) string {
 		return defaults.DeeplEndpoint
 	case "default_view_mode":
 		return defaults.DefaultViewMode
+	case "feed_drawer_expanded":
+		return strconv.FormatBool(defaults.FeedDrawerExpanded)
+	case "feed_drawer_pinned":
+		return strconv.FormatBool(defaults.FeedDrawerPinned)
 	case "freshrss_api_password":
 		return defaults.FreshRSSAPIPassword
 	case "freshrss_auto_sync_interval":

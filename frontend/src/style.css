@@ -127,3 +127,8 @@ textarea,
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
 }
+
+/* Fixed line height utility */
+.line-height-fixed-32 {
+  line-height: 32px !important;
+}

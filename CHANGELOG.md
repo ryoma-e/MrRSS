@@ -5,6 +5,29 @@ All notable changes to MrRSS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Supported compact mode for article list to reduce visual clutter. (#403)
+- Enhanced image gallery with support for multi-image articles and better navigation. (#457)
+
+### Changed
+
+- All the documents will now be opened in the default browser, and multi-language support has been added. (#458)
+
+### Fixed
+
+- Fixed an issue where left arrow and right arrow keyboard shortcuts will conflict with input fields. (#454)
+- Fixed an issue where article list will not scroll automatically when switching articles. (#451)
+- Fixed some minor style issues. (#452, #456, #453)
+- Fixed an issue where the future publish time of some articles can not be displayed correctly.
+- Fixed an issue where the summary can not be generated according to the language setting. (#480)
+
+### Refactored
+
+- Refactored sidebar component for better maintainability and performance. (#466)
+
 ## [1.3.15] - 2026-01-11
 
 ### Changed

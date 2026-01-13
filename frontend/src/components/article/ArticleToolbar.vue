@@ -51,7 +51,7 @@ defineEmits<{
 
 <template>
   <div
-    class="h-[44px] sm:h-[50px] px-3 sm:px-5 border-b border-border flex justify-between items-center bg-bg-primary shrink-0"
+    class="p-2 sm:p-4 border-b border-border flex justify-between items-center bg-bg-primary shrink-0"
   >
     <button
       class="md:hidden flex items-center gap-1.5 sm:gap-2 text-text-secondary hover:text-text-primary text-sm sm:text-base"

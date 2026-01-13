@@ -378,7 +378,7 @@ async function openScriptsFolder() {
                   class="inline-flex items-center gap-1"
                   :title="t('latest')"
                 >
-                  {{ formatRelativeTime(feed.latest_article_time, locale.value, t) }}
+                  {{ formatRelativeTime(feed.latest_article_time, locale, t) }}
                 </span>
                 <span v-else class="text-text-tertiary" :title="t('latest')">-</span>
 
