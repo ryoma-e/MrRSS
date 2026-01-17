@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Fixed minor styling issues. (#492, #503)
+- Fixed minor styling issues. (#492, #493, #503)
 
 ## [1.3.16] - 2026-01-15
 
