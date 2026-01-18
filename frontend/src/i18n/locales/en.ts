@@ -16,6 +16,8 @@ const en: TranslationMessages = {
   addFeed: 'Add Feed',
   addFeedShortcut: 'Add Feed',
   adding: 'Adding...',
+  expandFeedList: 'Expand Feed List',
+  collapseFeedList: 'Collapse Feed List',
   addNewFeed: 'Add New Feed',
   addRule: 'Add Rule',
   addSubscription: 'Add Subscription',

@@ -16,6 +16,8 @@ const zh: TranslationMessages = {
   addFeed: '添加订阅',
   addFeedShortcut: '添加订阅',
   adding: '添加中...',
+  expandFeedList: '展开订阅源列表',
+  collapseFeedList: '折叠订阅源列表',
   addNewFeed: '添加新订阅',
   addRule: '添加规则',
   addSubscription: '添加订阅',
