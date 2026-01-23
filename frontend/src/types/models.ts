@@ -17,6 +17,7 @@ export interface Article {
   is_favorite: boolean;
   is_hidden: boolean;
   is_read_later: boolean;
+  author?: string; // Article author
   summary?: string; // Cached AI-generated summary
   freshrss_item_id?: string; // FreshRSS/Google Reader item ID
 }

@@ -66,6 +66,7 @@ type Article struct {
 	IsHidden              bool      `json:"is_hidden"`
 	IsReadLater           bool      `json:"is_read_later"`
 	FeedTitle             string    `json:"feed_title,omitempty"` // Joined field
+	Author                string    `json:"author,omitempty"`     // Article author
 	TranslatedTitle       string    `json:"translated_title"`
 	Summary               string    `json:"summary"`          // Cached AI-generated summary
 	UniqueID              string    `json:"unique_id"`        // Unique identifier for deduplication (title+feed_id+published_date)

@@ -198,6 +198,8 @@ func (f *Fetcher) AddSubscription(url string, category string, customTitle strin
 		parsedFeed, parseErr := parser.ParseString(cleanedXML)
 		if parseErr == nil {
 			utils.DebugLog("AddSubscription: Successfully parsed sanitized feed for URL: %s", url)
+			// Fix Atom authors for feeds that use simple text format
+			fixFeedAuthors(parsedFeed, cleanedXML)
 			title := parsedFeed.Title
 			if customTitle != "" {
 				title = customTitle
@@ -603,6 +605,8 @@ func (f *Fetcher) parseFeedWithFeedInternal(ctx context.Context, feed *models.Fe
 		if err == nil {
 			debugTimer.Stage("Successfully parsed sanitized feed")
 			utils.DebugLog("parseFeedWithFeedInternal: Successfully parsed sanitized feed for %s", actualURL)
+			// Fix Atom authors for feeds that use simple text format
+			fixFeedAuthors(parsedFeed, cleanedXML)
 			return parsedFeed, nil
 		}
 		utils.DebugLog("parseFeedWithFeedInternal: Parsing sanitized feed failed: %v", err)
@@ -1286,6 +1290,9 @@ func (f *Fetcher) parseFeedWithJavaScript(ctx context.Context, feedURL string, p
 		}
 		return nil, fmt.Errorf("failed to parse content after JavaScript execution: %w", err)
 	}
+
+	// Fix Atom authors for feeds that use simple text format
+	fixFeedAuthors(feed, pageContent)
 
 	utils.DebugLog("parseFeedWithJavaScript: RSS/Atom parsing succeeded, feed title: %s, items count: %d", feed.Title, len(feed.Items))
 	return feed, nil

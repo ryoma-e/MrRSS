@@ -83,6 +83,12 @@ func (f *Fetcher) processArticles(feed models.Feed, items []*gofeed.Item) []*Art
 		// Doing it here for all articles during refresh causes massive performance issues
 		translatedTitle := "" // Always empty - translation happens on-demand in frontend
 
+		// Extract author information
+		author := ""
+		if item.Author != nil {
+			author = item.Author.Name
+		}
+
 		article := &models.Article{
 			FeedID:                feed.ID,
 			Title:                 title,
@@ -93,6 +99,7 @@ func (f *Fetcher) processArticles(feed models.Feed, items []*gofeed.Item) []*Art
 			PublishedAt:           published,
 			HasValidPublishedTime: hasValidPublishedTime,
 			TranslatedTitle:       translatedTitle,
+			Author:                author,
 		}
 
 		articlesWithContent = append(articlesWithContent, &ArticleWithContent{

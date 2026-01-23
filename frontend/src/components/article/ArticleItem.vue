@@ -383,8 +383,14 @@ onUnmounted(() => {
           'mt-0': compactMode,
         }"
       >
-        <span class="font-medium text-accent truncate flex-1 min-w-0 mr-2">
-          {{ article.feed_title }}
+        <span class="flex items-center gap-1.5 truncate flex-1 min-w-0 mr-2">
+          <span class="font-medium text-accent">{{ article.feed_title }}</span>
+          <template v-if="article.author && article.author !== article.feed_title">
+            <span
+              class="text-[10px] sm:text-[11px] text-text-secondary opacity-75 truncate max-w-[120px]"
+              >{{ article.author }}</span
+            >
+          </template>
         </span>
         <div class="flex items-center gap-1 sm:gap-2 shrink-0 min-h-[14px] sm:min-h-[18px]">
           <!-- Icons only shown in normal mode -->

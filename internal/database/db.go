@@ -531,6 +531,9 @@ func runMigrations(db *sql.DB) error {
 	_, _ = db.Exec(`ALTER TABLE feeds ADD COLUMN freshrss_stream_id TEXT DEFAULT ''`)
 	_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN freshrss_item_id TEXT DEFAULT ''`)
 
+	// Migration: Add author field to articles table
+	_, _ = db.Exec(`ALTER TABLE articles ADD COLUMN author TEXT DEFAULT ''`)
+
 	return nil
 }
 
