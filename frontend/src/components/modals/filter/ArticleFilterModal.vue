@@ -161,8 +161,6 @@ function close() {
           label: t('modal.filter.applyFilters'),
           onClick: applyFilters,
         }"
-        @secondary-click="clearFilters"
-        @primary-click="applyFilters"
       />
     </template>
   </BaseModal>

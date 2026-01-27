@@ -65,8 +65,6 @@ function handleClose() {
           type: isDanger ? 'danger' : 'primary',
           onClick: handleConfirm,
         }"
-        @secondary-click="handleCancel"
-        @primary-click="handleConfirm"
       />
     </template>
   </BaseModal>

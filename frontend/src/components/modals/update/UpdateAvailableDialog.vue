@@ -122,8 +122,6 @@ const updateButtonText = computed(() => {
               }
             : undefined
         "
-        @secondary-click="handleClose"
-        @primary-click="handleUpdate"
       >
         <template v-if="props.updateInfo.download_url" #right>
           <button

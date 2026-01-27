@@ -340,8 +340,6 @@ async function handleClose(checkUnsaved = false): Promise<void> {
           disabled: !isValid,
           onClick: handleSave,
         }"
-        @secondary-click="() => handleClose(true)"
-        @primary-click="handleSave"
       />
     </template>
   </BaseModal>

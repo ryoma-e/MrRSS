@@ -158,8 +158,6 @@ watch(
           loading: isSubscribing,
           onClick: subscribeSelected,
         }"
-        @secondary-click="close"
-        @primary-click="subscribeSelected"
       >
         <template #right>
           <button

@@ -193,7 +193,6 @@ function close() {
           label: t('modal.tag.addNew'),
           onClick: openAddForm,
         }"
-        @primary-click="openAddForm"
       />
     </template>
 

@@ -168,8 +168,6 @@ const saveButtonText = computed(() => {
           label: saveButtonText,
           onClick: saveTag,
         }"
-        @secondary-click="closeForm"
-        @primary-click="saveTag"
       />
     </template>
   </BaseModal>

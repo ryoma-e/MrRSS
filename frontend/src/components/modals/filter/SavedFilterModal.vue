@@ -229,8 +229,6 @@ function save() {
           label: saveButtonText,
           onClick: save,
         }"
-        @secondary-click="close"
-        @primary-click="save"
       />
     </template>
   </BaseModal>

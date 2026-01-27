@@ -653,8 +653,6 @@ const submitButtonText = computed(() => {
           loading: isSubmitting,
           onClick: submit,
         }"
-        @secondary-click="close"
-        @primary-click="submit"
       />
     </template>
   </BaseModal>

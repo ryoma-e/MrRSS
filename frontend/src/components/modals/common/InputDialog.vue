@@ -102,8 +102,6 @@ function handleKeyDown(e: KeyboardEvent) {
           label: getConfirmText(confirmText),
           onClick: handleConfirm,
         }"
-        @secondary-click="handleCancel"
-        @primary-click="handleConfirm"
       />
     </template>
   </BaseModal>
