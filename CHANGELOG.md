@@ -28,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed the style of image gallery view. (#571, #581)
 - Fixed multiple minor styling issues. (#579)
 - Fixed the issue where list width will change after opening the settings page. (#575)
-- Fixed the issue where some headers may be stopped by Ccloudflare. (#620)
+- Fixed the issue where some headers may be stopped by Cloudflare. (#620)
+- Fixed the issue where some images in article content rendering mode cannot be displayed correctly due to wrong referer. (#597)
 
 ## [1.3.17] - 2026-01-24
 
