@@ -36,8 +36,8 @@ export function useSettingsAutoSave(settings: Ref<SettingsData> | (() => Setting
     showHiddenArticles: settingsDefaults.show_hidden_articles,
   });
 
-  // Track previous compact mode setting to prevent unnecessary width resets
-  const prevCompactMode: Ref<boolean> = ref(settingsDefaults.compact_mode);
+  // Track previous layout mode setting to prevent unnecessary width resets
+  const prevLayoutMode: Ref<string> = ref(settingsDefaults.layout_mode);
 
   // Track previous summary settings
   const prevSummarySettings: Ref<{
@@ -65,7 +65,7 @@ export function useSettingsAutoSave(settings: Ref<SettingsData> | (() => Setting
       prevArticleDisplaySettings.value = {
         showHiddenArticles: settingsRef.value.show_hidden_articles,
       };
-      prevCompactMode.value = settingsRef.value.compact_mode;
+      prevLayoutMode.value = settingsRef.value.layout_mode;
       prevSummarySettings.value = {
         enabled: settingsRef.value.summary_enabled,
         provider: settingsRef.value.summary_provider,
@@ -182,17 +182,17 @@ export function useSettingsAutoSave(settings: Ref<SettingsData> | (() => Setting
         })
       );
 
-      // Notify about compact_mode change only if it actually changed
-      if (settingsRef.value.compact_mode !== prevCompactMode.value) {
+      // Notify about layout_mode change only if it actually changed
+      if (settingsRef.value.layout_mode !== prevLayoutMode.value) {
         window.dispatchEvent(
-          new CustomEvent('compact-mode-changed', {
+          new CustomEvent('layout-mode-changed', {
             detail: {
-              enabled: settingsRef.value.compact_mode,
+              mode: settingsRef.value.layout_mode,
             },
           })
         );
         // Update tracking
-        prevCompactMode.value = settingsRef.value.compact_mode;
+        prevLayoutMode.value = settingsRef.value.layout_mode;
       }
 
       // Check if summary settings changed

@@ -4,6 +4,7 @@ import { useSettings } from '@/composables/core/useSettings';
 import { onMounted } from 'vue';
 import {
   PhArrowLeft,
+  PhX,
   PhGlobe,
   PhArticle,
   PhEnvelopeOpen,
@@ -30,10 +31,12 @@ interface Props {
   article: Article;
   showContent: boolean;
   showTranslations?: boolean;
+  isModal?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
   showTranslations: true,
+  isModal: false,
 });
 
 defineEmits<{
@@ -52,7 +55,18 @@ defineEmits<{
   <div
     class="p-2 sm:p-4 border-b border-border flex justify-between items-center bg-bg-primary shrink-0"
   >
+    <!-- Modal mode: X button always visible -->
     <button
+      v-if="isModal"
+      class="flex items-center gap-1.5 sm:gap-2 text-text-secondary hover:text-text-primary text-sm sm:text-base"
+      :title="t('common.close')"
+      @click="$emit('close')"
+    >
+      <PhX :size="20" class="sm:w-5 sm:h-5" />
+    </button>
+    <!-- Normal mode: Back button on mobile -->
+    <button
+      v-else
       class="md:hidden flex items-center gap-1.5 sm:gap-2 text-text-secondary hover:text-text-primary text-sm sm:text-base"
       @click="$emit('close')"
     >
@@ -143,7 +157,7 @@ defineEmits<{
       >
         <img
           src="/assets/plugin_icons/obsidian.svg"
-          class="w-4.5 h-4.5 sm:w-5 sm:h-5"
+          class="w-[18px] h-[18px] sm:w-5 sm:h-5"
           alt="Obsidian"
         />
       </button>

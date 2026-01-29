@@ -688,8 +688,11 @@ const zh: TranslationMessages = {
       selectScriptPlaceholder: '选择一个脚本...',
     },
     typography: {
-      compactMode: '紧凑模式',
-      compactModeDesc: '在文章列表中使用紧凑布局',
+      layoutMode: '文章列表布局',
+      layoutModeDesc: '选择文章列表的布局样式',
+      layoutModeNormal: '普通',
+      layoutModeCompact: '紧凑',
+      layoutModeCard: '卡片',
       contentFontFamily: '正文字体',
       contentFontFamilyDesc: '文章内容的字体系列',
       contentFontSize: '正文字号',

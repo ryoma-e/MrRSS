@@ -679,8 +679,11 @@ const en: TranslationMessages = {
       },
     },
     typography: {
-      compactMode: 'Compact Mode',
-      compactModeDesc: 'Use compact layout in article list',
+      layoutMode: 'Article List Layout',
+      layoutModeDesc: 'Choose the layout style for the article list',
+      layoutModeNormal: 'Normal',
+      layoutModeCompact: 'Compact',
+      layoutModeCard: 'Card',
       contentFontFamily: 'Content Font Family',
       contentFontFamilyDesc: 'Font family for article content',
       contentFontSize: 'Content Font Size',

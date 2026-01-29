@@ -613,12 +613,12 @@
       "encrypted": false,
       "frontend_key": "shortcutsEnabled"
     },
-    "compact_mode": {
-      "type": "bool",
-      "default": false,
+    "layout_mode": {
+      "type": "string",
+      "default": "normal",
       "category": "reading",
       "encrypted": false,
-      "frontend_key": "compactMode"
+      "frontend_key": "layoutMode"
     },
     "feed_drawer_pinned": {
       "type": "bool",

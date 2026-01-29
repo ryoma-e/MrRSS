@@ -38,6 +38,9 @@ const isSidebarOpen = ref(true);
 // Check if we're in image gallery mode
 const isImageGalleryMode = computed(() => store.currentFilter === 'imageGallery');
 
+// Check if we're in card mode
+const isCardMode = ref(false);
+
 // Use composables
 const {
   confirmDialog,
@@ -97,11 +100,13 @@ onMounted(async () => {
     const res = await fetch('/api/settings');
     const data = await res.json();
 
-    // Set initial article list width based on compact mode setting
-    const isCompactMode = data.compact_mode === true || data.compact_mode === 'true';
+    // Set initial article list width based on layout mode setting
+    const layoutMode = data.layout_mode || 'normal';
+    const isCompactModeLayout = layoutMode === 'compact';
+    isCardMode.value = layoutMode === 'card';
     // First set the compact mode, then set the width (order matters)
-    setCompactMode(isCompactMode);
-    setArticleListWidth(isCompactMode ? 500 : 350);
+    setCompactMode(isCompactModeLayout);
+    setArticleListWidth(isCompactModeLayout ? 500 : 350);
 
     // Notify all components that settings have been loaded
     window.dispatchEvent(new CustomEvent('settings-loaded'));
@@ -220,11 +225,15 @@ window.addEventListener('show-discover-blogs', (e) => {
 });
 
 // Listen for compact mode changes to update article list width
-window.addEventListener('compact-mode-changed', (e) => {
-  const customEvent = e as CustomEvent<{ enabled: boolean }>;
-  const enabled = customEvent.detail.enabled;
-  setCompactMode(enabled);
-  setArticleListWidth(enabled ? 600 : 400); // Always update width when user changes setting
+window.addEventListener('layout-mode-changed', (e) => {
+  const customEvent = e as CustomEvent<{ mode: string }>;
+  const mode = customEvent.detail.mode;
+  const isCompactModeLayout = mode === 'compact';
+  isCardMode.value = mode === 'card';
+  setCompactMode(isCompactModeLayout);
+  if (!isCardMode.value) {
+    setArticleListWidth(isCompactModeLayout ? 600 : 400);
+  }
 });
 
 // Global Context Menu Event Listener
@@ -286,9 +295,12 @@ function onFeedUpdated(): void {
     <template v-else>
       <ArticleList :is-sidebar-open="isSidebarOpen" @toggle-sidebar="toggleSidebar" />
 
-      <div class="resizer hidden md:block" @mousedown="startResizeArticleList"></div>
+      <!-- Hide resizer and ArticleDetail when in card mode -->
+      <template v-if="!isCardMode">
+        <div class="resizer hidden md:block" @mousedown="startResizeArticleList"></div>
 
-      <ArticleDetail />
+        <ArticleDetail />
+      </template>
     </template>
 
     <AddFeedModal v-if="showAddFeed" @close="showAddFeed = false" @added="onFeedAdded" />

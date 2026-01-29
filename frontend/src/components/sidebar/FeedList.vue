@@ -121,9 +121,9 @@ const showEditFilterModal = ref(false);
 const editingFilter = ref<SavedFilter | null>(null);
 const draggingFilterId = ref<number | null>(null);
 
-// Compact mode setting
+// Compact mode setting (layout_mode === 'compact')
 const compactMode = computed(() => {
-  return settings.value.compact_mode === true;
+  return settings.value.layout_mode === 'compact';
 });
 
 // Initialize settings on mount
@@ -135,19 +135,19 @@ onMounted(async () => {
     console.error('Error loading settings in FeedList:', e);
   }
 
-  // Listen for compact mode changes
-  window.addEventListener('compact-mode-changed', handleCompactModeChange);
+  // Listen for layout mode changes
+  window.addEventListener('layout-mode-changed', handleLayoutModeChange);
 });
 
-// Handle compact mode changes
-function handleCompactModeChange() {
+// Handle layout mode changes
+function handleLayoutModeChange() {
   fetchSettings().catch((e) => {
-    console.error('Error re-fetching settings after compact mode change:', e);
+    console.error('Error re-fetching settings after layout mode change:', e);
   });
 }
 
 onUnmounted(() => {
-  window.removeEventListener('compact-mode-changed', handleCompactModeChange);
+  window.removeEventListener('layout-mode-changed', handleLayoutModeChange);
 });
 
 // Edit mode for drag reordering

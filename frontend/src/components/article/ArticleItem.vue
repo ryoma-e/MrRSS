@@ -29,22 +29,22 @@ const { showPreviewImages } = useShowPreviewImages();
 const { settings } = useSettings();
 const store = useAppStore();
 
-// Compact mode setting
+// Compact mode setting (layout_mode === 'compact')
 const compactMode = computed(() => {
-  return settings.value.compact_mode === true;
+  return settings.value.layout_mode === 'compact';
 });
 
-// Listen for compact mode changes and initial settings load
-let handleCompactModeChange: (() => void) | null = null;
+// Listen for layout mode changes and initial settings load
+let handleLayoutModeChange: (() => void) | null = null;
 
-// Function to load compact mode settings
-function loadCompactModeSettings() {
+// Function to load layout mode settings
+function loadLayoutModeSettings() {
   fetch('/api/settings')
     .then((res) => res.json())
     .then((data) => {
       settings.value = {
         ...settings.value,
-        compact_mode: data.compact_mode === true || data.compact_mode === 'true',
+        layout_mode: data.layout_mode || 'normal',
       };
     })
     .catch((err) => console.error('Error loading settings in ArticleItem:', err));
@@ -52,19 +52,19 @@ function loadCompactModeSettings() {
 
 onMounted(() => {
   // Load settings immediately when component mounts
-  loadCompactModeSettings();
+  loadLayoutModeSettings();
 
-  // Listen for compact mode changes
-  handleCompactModeChange = () => {
-    loadCompactModeSettings();
+  // Listen for layout mode changes
+  handleLayoutModeChange = () => {
+    loadLayoutModeSettings();
   };
 
-  window.addEventListener('compact-mode-changed', handleCompactModeChange);
+  window.addEventListener('layout-mode-changed', handleLayoutModeChange);
 });
 
 onUnmounted(() => {
-  if (handleCompactModeChange) {
-    window.removeEventListener('compact-mode-changed', handleCompactModeChange);
+  if (handleLayoutModeChange) {
+    window.removeEventListener('layout-mode-changed', handleLayoutModeChange);
   }
 });
 
