@@ -27,7 +27,7 @@ func TestHandleMediaCacheInfoAndCleanup(t *testing.T) {
 		t.Fatalf("db Init failed: %v", err)
 	}
 
-	h := core.NewHandler(db, nil, nil)
+	h := core.NewHandler(db, nil, nil, nil)
 	// Enable media cache and set small thresholds
 	if err := h.DB.SetSetting("media_cache_enabled", "true"); err != nil {
 		t.Fatalf("SetSetting failed: %v", err)

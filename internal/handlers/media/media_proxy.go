@@ -37,8 +37,8 @@ func validateMediaURL(urlStr string) error {
 	return nil
 }
 
-// proxyImagesInHTML replaces image URLs in HTML with proxied versions
-func proxyImagesInHTML(htmlContent, referer string) string {
+// ProxyImagesInHTML replaces image URLs in HTML with proxied versions
+func ProxyImagesInHTML(htmlContent, referer string) string {
 	if htmlContent == "" || referer == "" {
 		return htmlContent
 	}
@@ -1183,9 +1183,10 @@ func rewriteLinkHref(content, baseURL string) string {
 			replacement := fmt.Sprintf(`href=%s%s%s`, quote, proxiedURL, quote)
 			return hrefPattern.ReplaceAllString(match, replacement)
 		} else {
-			// Unquoted value
-			hrefPattern := regexp.MustCompile(`(href)\s*=\s*` + regexp.QuoteMeta(urlValue) + `(?=[\s>])`)
-			replacement := fmt.Sprintf(`href="%s"`, proxiedURL)
+			// Unquoted value - match and capture the trailing delimiter
+			// Go's regexp doesn't support lookahead, so we match and preserve the trailing char
+			hrefPattern := regexp.MustCompile(`(href)\s*=\s*` + regexp.QuoteMeta(urlValue) + `([\s>])`)
+			replacement := fmt.Sprintf(`href="%s"$2`, proxiedURL)
 			return hrefPattern.ReplaceAllString(match, replacement)
 		}
 	})

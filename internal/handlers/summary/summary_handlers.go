@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"MrRSS/internal/ai"
 	"MrRSS/internal/handlers/core"
 	"MrRSS/internal/handlers/response"
 	"MrRSS/internal/summary"
@@ -107,22 +108,35 @@ func HandleSummarizeArticle(h *core.Handler, w http.ResponseWriter, r *http.Requ
 			result = summarizer.Summarize(content, summaryLength)
 			usedFallback = true
 		} else {
-			// Use AI summarization (API key is optional for some providers)
-			apiKey, _ := h.DB.GetEncryptedSetting("ai_api_key")
-			// Some AI providers don't require API keys, so we proceed regardless
-			log.Printf("Using AI summarization (API key: %s)", func() string {
-				if apiKey != "" {
-					return "configured"
-				}
-				return "not configured (using keyless provider)"
-			}())
-
+			// Use AI summarization
 			// Apply rate limiting for AI requests
 			h.AITracker.WaitForRateLimit()
 
-			// Get global AI settings
-			endpoint, _ := h.DB.GetSetting("ai_endpoint")
-			model, _ := h.DB.GetSetting("ai_model")
+			// Try to get AI config from ProfileProvider first
+			var apiKey, endpoint, model string
+			if h.AIProfileProvider != nil {
+				cfg, err := h.AIProfileProvider.GetConfigForFeature(ai.FeatureSummary)
+				if err == nil && cfg != nil {
+					apiKey = cfg.APIKey
+					endpoint = cfg.Endpoint
+					model = cfg.Model
+					log.Printf("Using AI profile for summarization (endpoint: %s, model: %s)", endpoint, model)
+				}
+			}
+
+			// Fallback to global settings if ProfileProvider not available or no profile configured
+			if apiKey == "" && endpoint == "" {
+				apiKey, _ = h.DB.GetEncryptedSetting("ai_api_key")
+				endpoint, _ = h.DB.GetSetting("ai_endpoint")
+				model, _ = h.DB.GetSetting("ai_model")
+				log.Printf("Using global AI settings for summarization (API key: %s)", func() string {
+					if apiKey != "" {
+						return "configured"
+					}
+					return "not configured (using keyless provider)"
+				}())
+			}
+
 			systemPrompt, _ := h.DB.GetSetting("ai_summary_prompt")
 			customHeaders, _ := h.DB.GetSetting("ai_custom_headers")
 			language, _ := h.DB.GetSetting("language")

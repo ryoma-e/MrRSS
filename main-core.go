@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"MrRSS/internal/ai"
 	"MrRSS/internal/database"
 	"MrRSS/internal/feed"
 	handlers "MrRSS/internal/handlers/core"
@@ -141,9 +142,13 @@ func main() {
 	}
 	log.Println("Database initialized successfully")
 
+	// Initialize AI profile provider
+	profileProvider := ai.NewProfileProvider(db)
 	translator := translation.NewDynamicTranslatorWithCache(db, db)
+	translator.SetProfileProvider(profileProvider)
+
 	fetcher := feed.NewFetcher(db)
-	h := handlers.NewHandler(db, fetcher, translator)
+	h := handlers.NewHandler(db, fetcher, translator, profileProvider)
 
 	// API Routes
 	log.Println("Setting up API routes...")

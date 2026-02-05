@@ -20,7 +20,7 @@ func setupHandlerWithDB(t *testing.T) *core.Handler {
 	if err := db.Init(); err != nil {
 		t.Fatalf("db Init error: %v", err)
 	}
-	return core.NewHandler(db, nil, nil)
+	return core.NewHandler(db, nil, nil, nil)
 }
 
 func TestHandleSettings_GET(t *testing.T) {

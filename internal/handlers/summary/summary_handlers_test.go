@@ -86,7 +86,7 @@ func TestHandleSummarizeArticle_Success(t *testing.T) {
 	ptr := reflect.NewAt(fpField.Type(), unsafe.Pointer(fpField.UnsafeAddr())).Elem()
 	ptr.Set(reflect.ValueOf(mock))
 
-	h := core.NewHandler(db, f, nil)
+	h := core.NewHandler(db, f, nil, nil)
 
 	payload := []byte(`{"article_id": ` + fmt.Sprintf("%d", articleID) + `, "length": "short"}`)
 	req := httptest.NewRequest(http.MethodPost, "/summary/article", bytes.NewReader(payload))

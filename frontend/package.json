@@ -21,11 +21,14 @@
     "test:e2e": "cypress run",
     "test:e2e:headed": "cypress open",
     "test:e2e:spec": "cypress run --spec",
-    "test:all": "npm run test:unit && npm run test:e2e"
+    "test:all": "npm run test:unit && npm run test:e2e",
+    "check:unused": "knip",
+    "check:unused:json": "knip --json",
+    "check:unused:fix": "knip --fix"
   },
   "dependencies": {
+    "@eslint/js": "^9.39.2",
     "@phosphor-icons/vue": "^2.2.1",
-    "@phosphor-icons/web": "^2.1.2",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.28",
     "pinia": "^3.0.4",
@@ -36,13 +39,11 @@
   "devDependencies": {
     "@cypress/vite-dev-server": "^7.2.0",
     "@cypress/vue": "^6.0.2",
-    "@types/highlight.js": "^10.1.0",
     "@types/node": "^25.0.10",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/eslint-config-prettier": "^10.2.0",
-    "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/test-utils": "^2.4.6",
     "@wailsio/runtime": "^3.0.0-alpha.79",
     "autoprefixer": "^10.4.23",
@@ -51,14 +52,13 @@
     "eslint-plugin-vue": "^10.7.0",
     "husky": "^9.1.7",
     "jsdom": "^27.4.0",
+    "knip": "^5.83.0",
     "lint-staged": "^16.2.7",
     "postcss": "^8.5.6",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vitest": "^4.0.18",
-    "vue-tsc": "^3.2.4",
-    "vue-unused": "^0.0.5"
+    "vitest": "^4.0.18"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,vue}": [

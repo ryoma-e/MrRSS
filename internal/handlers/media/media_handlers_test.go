@@ -18,7 +18,7 @@ func setupHandler(t *testing.T) *corepkg.Handler {
 	if err := db.Init(); err != nil {
 		t.Fatalf("db Init error: %v", err)
 	}
-	return corepkg.NewHandler(db, nil, nil)
+	return corepkg.NewHandler(db, nil, nil, nil)
 }
 
 func TestHandleMediaProxy_MethodNotAllowed(t *testing.T) {
@@ -157,7 +157,7 @@ func TestProxyImagesInHTML_RelativeURLs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := proxyImagesInHTML(tc.html, referer)
+			result := ProxyImagesInHTML(tc.html, referer)
 
 			if tc.skipProxy {
 				// URL should not be proxied

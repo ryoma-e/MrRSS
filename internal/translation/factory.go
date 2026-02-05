@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+
+	"MrRSS/internal/ai"
 )
 
 // Factory 翻译提供商工厂
@@ -12,6 +14,7 @@ type Factory struct {
 	configs          map[ProviderType]ProviderConfig
 	settingsProvider SettingsProvider
 	cacheProvider    CacheProvider
+	profileProvider  *ai.ProfileProvider
 	mu               sync.RWMutex
 }
 
@@ -45,6 +48,13 @@ func (f *Factory) GetConfig(providerType ProviderType) (ProviderConfig, bool) {
 	defer f.mu.RUnlock()
 	config, ok := f.configs[providerType]
 	return config, ok
+}
+
+// SetProfileProvider 设置AI配置文件提供者
+func (f *Factory) SetProfileProvider(profileProvider *ai.ProfileProvider) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.profileProvider = profileProvider
 }
 
 // Create 创建翻译提供商实例
@@ -162,6 +172,27 @@ func (f *Factory) loadBaiduConfig() (*baiduConfig, error) {
 
 // loadAIConfig 从设置加载 AI 配置
 func (f *Factory) loadAIConfig() (*aiConfig, error) {
+	// Try to use ProfileProvider first if available
+	f.mu.RLock()
+	profileProvider := f.profileProvider
+	f.mu.RUnlock()
+
+	if profileProvider != nil {
+		cfg, err := profileProvider.GetConfigForFeature(ai.FeatureTranslation)
+		if err == nil && cfg != nil {
+			// Get system prompt from settings if not in profile
+			systemPrompt, _ := f.settingsProvider.GetSetting("ai_translation_prompt")
+			return &aiConfig{
+				APIKey:        cfg.APIKey,
+				Endpoint:      cfg.Endpoint,
+				Model:         cfg.Model,
+				SystemPrompt:  systemPrompt,
+				CustomHeaders: cfg.CustomHeaders,
+			}, nil
+		}
+	}
+
+	// Fallback to legacy global settings
 	apiKey, _ := f.settingsProvider.GetEncryptedSetting("ai_api_key")
 	endpoint, _ := f.settingsProvider.GetSetting("ai_endpoint")
 	model, _ := f.settingsProvider.GetSetting("ai_model")

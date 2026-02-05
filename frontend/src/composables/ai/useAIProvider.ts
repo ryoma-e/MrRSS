@@ -75,7 +75,7 @@ const AI_PROVIDERS: Record<
 };
 
 // Detect AI provider from model name
-export function detectAIProvider(modelName: string): string | null {
+function detectAIProvider(modelName: string): string | null {
   const model = modelName.toLowerCase();
 
   // Check for common patterns
@@ -94,29 +94,4 @@ export function detectAIProvider(modelName: string): string | null {
 export function getProviderIconUrl(modelName: string): string | null {
   const provider = detectAIProvider(modelName);
   return provider ? AI_PROVIDERS[provider]?.icon : null;
-}
-
-// Get provider fallback icon component
-export function getProviderFallbackIcon(modelName: string): any {
-  const provider = detectAIProvider(modelName);
-  return provider ? AI_PROVIDERS[provider]?.fallbackIcon : PhRobot;
-}
-
-// Composable for AI provider detection
-export function useAIProvider(modelName: string) {
-  const provider = computed(() => detectAIProvider(modelName));
-  const iconUrl = computed(() => {
-    const p = provider.value;
-    return p ? AI_PROVIDERS[p]?.icon : null;
-  });
-  const fallbackIcon = computed(() => {
-    const p = provider.value;
-    return p ? AI_PROVIDERS[p]?.fallbackIcon : PhRobot;
-  });
-
-  return {
-    provider,
-    iconUrl,
-    fallbackIcon,
-  };
 }

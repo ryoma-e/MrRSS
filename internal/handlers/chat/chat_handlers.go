@@ -85,16 +85,32 @@ func HandleAIChat(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 	// Apply rate limiting for AI requests
 	h.AITracker.WaitForRateLimit()
 
-	// Get AI settings
-	apiKey, _ := h.DB.GetEncryptedSetting("ai_api_key")
-	endpoint, _ := h.DB.GetSetting("ai_endpoint")
-	model, _ := h.DB.GetSetting("ai_model")
-
-	if endpoint == "" {
-		endpoint = "https://api.openai.com/v1/chat/completions"
+	// Get AI settings - try ProfileProvider first
+	var apiKey, endpoint, model string
+	if h.AIProfileProvider != nil {
+		cfg, err := h.AIProfileProvider.GetConfigForFeature(ai.FeatureChat)
+		if err == nil && cfg != nil && (cfg.APIKey != "" || cfg.Endpoint != "") {
+			apiKey = cfg.APIKey
+			endpoint = cfg.Endpoint
+			model = cfg.Model
+			log.Printf("Using AI profile for chat (endpoint: %s, model: %s)", endpoint, model)
+		}
 	}
-	if model == "" {
-		model = "gpt-4o-mini"
+
+	// Fallback to global settings if no profile configured
+	if endpoint == "" {
+		endpoint, _ = h.DB.GetSetting("ai_endpoint")
+		model, _ = h.DB.GetSetting("ai_model")
+		apiKey, _ = h.DB.GetEncryptedSetting("ai_api_key")
+
+		// Set defaults if still empty
+		if endpoint == "" {
+			endpoint = "https://api.openai.com/v1/chat/completions"
+		}
+		if model == "" {
+			model = "gpt-4o-mini"
+		}
+		log.Printf("Using global AI settings for chat (endpoint: %s, model: %s)", endpoint, model)
 	}
 
 	// Optimize context to reduce token usage

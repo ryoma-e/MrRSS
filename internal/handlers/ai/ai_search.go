@@ -43,31 +43,6 @@ func extractSearchTerms(response string) string {
 	return response
 }
 
-// parseSearchTerms parses JSON array of search terms from AI response
-func parseSearchTerms(response string) ([]string, error) {
-	cleaned := extractSearchTerms(response)
-
-	// Try to parse as JSON array
-	var terms []string
-	if err := json.Unmarshal([]byte(cleaned), &terms); err != nil {
-		// Fallback: split by comma or newline
-		cleaned = strings.ReplaceAll(cleaned, "\n", ",")
-		parts := strings.Split(cleaned, ",")
-		for _, part := range parts {
-			term := strings.Trim(strings.TrimSpace(part), `"'[]`)
-			if term != "" {
-				terms = append(terms, term)
-			}
-		}
-	}
-
-	if len(terms) == 0 {
-		return nil, fmt.Errorf("no search terms extracted")
-	}
-
-	return terms, nil
-}
-
 // SearchTerms represents parsed search terms with required and optional categories
 type SearchTerms struct {
 	Required []string `json:"required"` // Must match at least one
@@ -255,18 +230,33 @@ func HandleAISearch(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("[AI Search] User query: %s", req.Query)
 
-	// Get AI settings
-	apiKey, _ := h.DB.GetEncryptedSetting("ai_api_key")
-	endpoint, _ := h.DB.GetSetting("ai_endpoint")
-	model, _ := h.DB.GetSetting("ai_model")
-
-	// Use defaults if not set
-	defaults := config.Get()
-	if endpoint == "" {
-		endpoint = defaults.AIEndpoint
+	// Get AI settings - try ProfileProvider first
+	var apiKey, endpoint, model string
+	if h.AIProfileProvider != nil {
+		cfg, err := h.AIProfileProvider.GetConfigForFeature(ai.FeatureSearch)
+		if err == nil && cfg != nil && (cfg.APIKey != "" || cfg.Endpoint != "") {
+			apiKey = cfg.APIKey
+			endpoint = cfg.Endpoint
+			model = cfg.Model
+			log.Printf("[AI Search] Using AI profile for search (endpoint: %s, model: %s)", endpoint, model)
+		}
 	}
-	if model == "" {
-		model = defaults.AIModel
+
+	// Fallback to global settings if no profile configured
+	if endpoint == "" {
+		apiKey, _ = h.DB.GetEncryptedSetting("ai_api_key")
+		endpoint, _ = h.DB.GetSetting("ai_endpoint")
+		model, _ = h.DB.GetSetting("ai_model")
+
+		// Use defaults if not set
+		defaults := config.Get()
+		if endpoint == "" {
+			endpoint = defaults.AIEndpoint
+		}
+		if model == "" {
+			model = defaults.AIModel
+		}
+		log.Printf("[AI Search] Using global AI settings for search (endpoint: %s, model: %s)", endpoint, model)
 	}
 
 	// Validate AI configuration

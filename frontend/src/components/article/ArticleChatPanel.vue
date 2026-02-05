@@ -290,7 +290,18 @@ async function sendMessage() {
       let errorMessage = t('article.chat.aiChatError');
       try {
         const errorData = JSON.parse(errorText);
-        errorMessage = errorData.error || errorData || t('article.chat.aiChatError');
+        // Extract error message from various possible formats
+        if (typeof errorData.error === 'string') {
+          errorMessage = errorData.error;
+        } else if (errorData.error?.message) {
+          errorMessage = errorData.error.message;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else {
+          errorMessage = t('article.chat.aiChatError');
+        }
       } catch {
         errorMessage = errorText || t('article.chat.aiChatError');
       }

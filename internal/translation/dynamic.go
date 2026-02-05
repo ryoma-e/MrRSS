@@ -3,6 +3,8 @@ package translation
 import (
 	"context"
 	"sync"
+
+	"MrRSS/internal/ai"
 )
 
 // SettingsProvider is an interface for retrieving translation settings.
@@ -148,6 +150,16 @@ func (t *DynamicTranslator) getProviderType() (ProviderType, error) {
 func (t *DynamicTranslator) InvalidateCache() {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	t.cachedProvider = nil
+	t.cachedProviderName = ""
+}
+
+// SetProfileProvider sets the AI profile provider for translation
+func (t *DynamicTranslator) SetProfileProvider(profileProvider *ai.ProfileProvider) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.factory.SetProfileProvider(profileProvider)
+	// Clear cache to force re-creation with new profile
 	t.cachedProvider = nil
 	t.cachedProviderName = ""
 }

@@ -1,5 +1,5 @@
 # Makefile for MrRSS (Wails v3 + Task)
-.PHONY: help dev build package run test test-frontend test-backend lint lint-frontend format format-backend install-deps update-deps check setup clean love swagger swagger-validate swagger-serve
+.PHONY: help dev build package run test test-frontend test-backend lint lint-frontend format format-backend install-deps update-deps check setup clean love swagger swagger-validate swagger-serve static-check
 
 # Detect OS
 ifeq ($(OS),Windows_NT)
@@ -188,3 +188,6 @@ swagger-serve: ## Generate docs and serve Swagger UI
 	swag init -g main-core.go --parseDependency --parseInternal -o docs/SERVER_MODE
 	@echo "🌐 Starting development server..."
 	$(TASK) dev
+
+static-check: ## Run staticcheck for Go code analysis
+	staticcheck ./...

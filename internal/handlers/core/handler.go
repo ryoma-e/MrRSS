@@ -52,14 +52,15 @@ type Handler struct {
 	Services *svc.Registry
 
 	// Direct access to core dependencies (for backward compatibility)
-	DB               *database.DB
-	Fetcher          *feed.Fetcher
-	Translator       translation.Translator
-	AITracker        *ai.UsageTracker
-	DiscoveryService *discovery.Service
-	App              interface{}         // Wails app instance for browser integration (interface{} to avoid import in server mode)
-	ContentCache     *cache.ContentCache // Cache for article content
-	Stats            *statistics.Service // Statistics tracking service
+	DB                *database.DB
+	Fetcher           *feed.Fetcher
+	Translator        translation.Translator
+	AIProfileProvider *ai.ProfileProvider // AI profile provider for feature-specific configurations
+	AITracker         *ai.UsageTracker
+	DiscoveryService  *discovery.Service
+	App               interface{}         // Wails app instance for browser integration (interface{} to avoid import in server mode)
+	ContentCache      *cache.ContentCache // Cache for article content
+	Stats             *statistics.Service // Statistics tracking service
 
 	// Discovery state tracking for polling-based progress
 	DiscoveryMu          sync.RWMutex
@@ -68,19 +69,20 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler with the given dependencies.
-func NewHandler(db *database.DB, fetcher *feed.Fetcher, translator translation.Translator) *Handler {
+func NewHandler(db *database.DB, fetcher *feed.Fetcher, translator translation.Translator, profileProvider *ai.ProfileProvider) *Handler {
 	// Create service registry
 	registry := svc.NewRegistry(db, fetcher, translator)
 
 	h := &Handler{
-		Services:         registry,
-		DB:               db,
-		Fetcher:          fetcher,
-		Translator:       translator,
-		AITracker:        registry.AITracker(),
-		DiscoveryService: registry.DiscoveryService(),
-		ContentCache:     registry.ContentCache(),
-		Stats:            registry.Stats(),
+		Services:          registry,
+		DB:                db,
+		Fetcher:           fetcher,
+		Translator:        translator,
+		AIProfileProvider: profileProvider,
+		AITracker:         registry.AITracker(),
+		DiscoveryService:  registry.DiscoveryService(),
+		ContentCache:      registry.ContentCache(),
+		Stats:             registry.Stats(),
 	}
 
 	return h

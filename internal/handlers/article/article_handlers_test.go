@@ -27,7 +27,7 @@ func setupHandler(t *testing.T) *core.Handler {
 		t.Fatalf("db Init error: %v", err)
 	}
 	f := ff.NewFetcher(db)
-	return core.NewHandler(db, f, nil)
+	return core.NewHandler(db, f, nil, nil)
 }
 
 func TestHandleArticles_ListAndImageGallery(t *testing.T) {

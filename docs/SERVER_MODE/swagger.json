@@ -17,6 +17,436 @@
     "host": "localhost:1234",
     "basePath": "/api",
     "paths": {
+        "/ai/profiles": {
+            "get": {
+                "description": "Get all AI configuration profiles (without API keys for security)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "List AI profiles",
+                "responses": {
+                    "200": {
+                        "description": "List of AI profiles",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.AIProfile"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new AI configuration profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "Create AI profile",
+                "parameters": [
+                    {
+                        "description": "Profile data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created profile",
+                        "schema": {
+                            "$ref": "#/definitions/models.AIProfile"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ai/profiles/test-all": {
+            "post": {
+                "description": "Test all AI profiles' connections and configurations",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "Test all AI profiles",
+                "responses": {
+                    "200": {
+                        "description": "Test results for all profiles",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.ProfileTestResult"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ai/profiles/test-config": {
+            "post": {
+                "description": "Test an AI configuration without creating/saving a profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "Test AI configuration without saving",
+                "parameters": [
+                    {
+                        "description": "Configuration to test",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ProfileTestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Test result",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ProfileTestResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ai/profiles/{id}": {
+            "get": {
+                "description": "Get a specific AI configuration profile by ID (includes API key)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "Get AI profile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Profile ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "AI profile",
+                        "schema": {
+                            "$ref": "#/definitions/models.AIProfile"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid profile ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing AI configuration profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "Update AI profile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Profile ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Profile data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ProfileRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated profile",
+                        "schema": {
+                            "$ref": "#/definitions/models.AIProfile"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete an AI configuration profile",
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "Delete AI profile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Profile ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "400": {
+                        "description": "Invalid profile ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ai/profiles/{id}/default": {
+            "post": {
+                "description": "Set an AI profile as the default",
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "Set default AI profile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Profile ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success message",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid profile ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ai/profiles/{id}/test": {
+            "post": {
+                "description": "Test an AI profile's connection and configuration",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ai-profiles"
+                ],
+                "summary": "Test AI profile",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Profile ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Test result",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ProfileTestResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid profile ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/ai/search": {
             "post": {
                 "description": "Use AI to expand keywords and search articles with relevance ranking",
@@ -5229,6 +5659,72 @@
                 }
             }
         },
+        "handlers.ProfileRequest": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "custom_headers": {
+                    "type": "string"
+                },
+                "endpoint": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.ProfileTestRequest": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "type": "string"
+                },
+                "custom_headers": {
+                    "type": "string"
+                },
+                "endpoint": {
+                    "type": "string"
+                },
+                "model": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.ProfileTestResult": {
+            "type": "object",
+            "properties": {
+                "config_valid": {
+                    "type": "boolean"
+                },
+                "connection_success": {
+                    "type": "boolean"
+                },
+                "error_message": {
+                    "type": "string"
+                },
+                "model_available": {
+                    "type": "boolean"
+                },
+                "profile_id": {
+                    "type": "integer"
+                },
+                "profile_name": {
+                    "type": "string"
+                },
+                "response_time_ms": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.TestResult": {
             "type": "object",
             "properties": {
@@ -5248,6 +5744,41 @@
                     "type": "integer"
                 },
                 "test_time": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.AIProfile": {
+            "type": "object",
+            "properties": {
+                "api_key": {
+                    "description": "Hidden in responses, only sent when needed",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "custom_headers": {
+                    "description": "JSON string of key-value pairs",
+                    "type": "string"
+                },
+                "endpoint": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_default": {
+                    "description": "Default profile for new features",
+                    "type": "boolean"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }

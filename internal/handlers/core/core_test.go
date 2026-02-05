@@ -17,7 +17,7 @@ func TestNewHandler_ConstructsHandler(t *testing.T) {
 	}
 
 	f := feed.NewFetcher(db)
-	h := NewHandler(db, f, nil)
+	h := NewHandler(db, f, nil, nil)
 
 	if h.DB == nil {
 		t.Fatal("Handler DB is nil")

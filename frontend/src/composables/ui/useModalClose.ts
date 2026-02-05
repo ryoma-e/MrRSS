@@ -13,7 +13,7 @@ const Z_INDEX_INCREMENT = 10;
 export const LARGE_MODAL_Z_INDEX = 40;
 
 // Get the next available z-index
-export function getNextZIndex(baseZIndex?: number): number {
+function getNextZIndex(baseZIndex?: number): number {
   if (modalStack.length === 0) {
     return baseZIndex || BASE_Z_INDEX;
   }
