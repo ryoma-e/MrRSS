@@ -10,7 +10,7 @@ import {
   PhArrowClockwise,
   PhBookOpen,
 } from '@phosphor-icons/vue';
-import { SettingItem, SubSettingItem, KeyValueList, StatusBoxGroup } from '@/components/settings';
+import { SettingItem, KeyValueList, StatusBoxGroup } from '@/components/settings';
 import BaseModal from '@/components/common/BaseModal.vue';
 import ModalFooter from '@/components/common/ModalFooter.vue';
 import type { AIProfileFormData, AIProfileTestResult } from '@/types/aiProfile';
@@ -220,161 +220,162 @@ function handleClose() {
 </script>
 
 <template>
-  <BaseModal v-if="isOpen" :title="modalTitle" size="2xl" :z-index="60" @close="handleClose">
-    <!-- Custom Header (no icon) -->
-    <template #header>
-      <h3 class="text-base sm:text-lg font-semibold m-0 text-text-primary">
-        {{ modalTitle }}
-      </h3>
-    </template>
-
-    <!-- Form Content -->
-    <div class="p-4 sm:p-6 space-y-4">
-      <!-- Profile Name -->
-      <SettingItem
-        :icon="PhRobot"
-        :title="t('setting.ai.profileName')"
-        :description="t('setting.ai.profileNameDesc')"
-        required
-      >
-        <input
-          v-model="formData.name"
-          type="text"
-          :placeholder="t('setting.ai.profileNamePlaceholder')"
-          class="input-field w-full sm:w-48 text-xs sm:text-sm"
-        />
-      </SettingItem>
-
-      <!-- API Key -->
-      <SettingItem
-        :icon="PhKey"
-        :title="t('setting.ai.aiApiKey')"
-        :description="t('setting.ai.aiApiKeyDesc')"
-      >
-        <input
-          v-model="formData.api_key"
-          type="password"
-          :placeholder="t('setting.ai.aiApiKeyPlaceholder')"
-          class="input-field w-full sm:w-48 text-xs sm:text-sm"
-        />
-      </SettingItem>
-
-      <!-- Endpoint -->
-      <SettingItem
-        :icon="PhLink"
-        :title="t('setting.ai.aiEndpoint')"
-        :description="t('setting.ai.aiEndpointDesc')"
-        required
-      >
-        <input
-          v-model="formData.endpoint"
-          type="text"
-          :placeholder="t('setting.ai.aiEndpointPlaceholder')"
-          class="input-field w-full sm:w-48 text-xs sm:text-sm"
-        />
-      </SettingItem>
-
-      <!-- Model -->
-      <SettingItem
-        :icon="PhBrain"
-        :title="t('setting.ai.aiModel')"
-        :description="t('setting.ai.aiModelDesc')"
-        required
-      >
-        <input
-          v-model="formData.model"
-          type="text"
-          :placeholder="t('setting.ai.aiModelPlaceholder')"
-          class="input-field w-full sm:w-48 text-xs sm:text-sm"
-        />
-      </SettingItem>
-
-      <!-- Custom Headers -->
-      <SubSettingItem
-        :icon="PhSliders"
-        :title="t('setting.ai.aiCustomHeaders')"
-        :description="t('setting.ai.aiCustomHeadersDesc')"
-      >
-        <KeyValueList
-          v-model="formData.custom_headers"
-          :key-placeholder="t('setting.ai.aiCustomHeadersName')"
-          :value-placeholder="t('setting.ai.aiCustomHeadersValue')"
-          :add-button-text="t('setting.ai.aiCustomHeadersAdd')"
-          :remove-button-title="t('setting.ai.aiCustomHeadersRemove')"
-          ascii-only
-        />
-      </SubSettingItem>
-
-      <!-- Test Configuration Section -->
-      <div class="border-t border-border pt-4 mt-4">
-        <!-- Test Status Display -->
-        <StatusBoxGroup
-          :statuses="testStatuses"
-          :action-button="{
-            label: isTesting ? t('setting.ai.testing') : t('setting.ai.testAIConfig'),
-            icon: PhArrowClockwise,
-            loading: isTesting,
-            disabled: !formData.endpoint || !formData.model,
-            onClick: testConfiguration,
-          }"
-        />
-
-        <!-- Test Error -->
-        <div
-          v-if="testError"
-          class="bg-red-500/10 border border-red-500/30 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-red-500 mt-3"
+  <Teleport to="body">
+    <BaseModal v-if="isOpen" :title="modalTitle" size="2xl" :z-index="60" @close="handleClose">
+      <!-- Form Content -->
+      <div class="p-4 sm:p-6 space-y-4">
+        <!-- Profile Name -->
+        <SettingItem
+          :icon="PhRobot"
+          :title="t('setting.ai.profileName')"
+          :description="t('setting.ai.profileNameDesc')"
+          required
         >
-          {{ testError }}
+          <input
+            v-model="formData.name"
+            type="text"
+            :placeholder="t('setting.ai.profileNamePlaceholder')"
+            class="input-field w-full sm:w-48 text-xs sm:text-sm"
+          />
+        </SettingItem>
+
+        <!-- API Key -->
+        <SettingItem
+          :icon="PhKey"
+          :title="t('setting.ai.aiApiKey')"
+          :description="t('setting.ai.aiApiKeyDesc')"
+        >
+          <input
+            v-model="formData.api_key"
+            type="password"
+            :placeholder="t('setting.ai.aiApiKeyPlaceholder')"
+            class="input-field w-full sm:w-48 text-xs sm:text-sm"
+          />
+        </SettingItem>
+
+        <!-- Endpoint -->
+        <SettingItem
+          :icon="PhLink"
+          :title="t('setting.ai.aiEndpoint')"
+          :description="t('setting.ai.aiEndpointDesc')"
+          required
+        >
+          <input
+            v-model="formData.endpoint"
+            type="text"
+            :placeholder="t('setting.ai.aiEndpointPlaceholder')"
+            class="input-field w-full sm:w-48 text-xs sm:text-sm"
+          />
+        </SettingItem>
+
+        <!-- Model -->
+        <SettingItem
+          :icon="PhBrain"
+          :title="t('setting.ai.aiModel')"
+          :description="t('setting.ai.aiModelDesc')"
+          required
+        >
+          <input
+            v-model="formData.model"
+            type="text"
+            :placeholder="t('setting.ai.aiModelPlaceholder')"
+            class="input-field w-full sm:w-48 text-xs sm:text-sm"
+          />
+        </SettingItem>
+
+        <!-- Custom Headers -->
+        <div class="setting-item-col">
+          <div class="flex items-center gap-2 sm:gap-3">
+            <PhSliders :size="20" class="text-text-secondary shrink-0 sm:w-6 sm:h-6" />
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm">{{ t('setting.ai.aiCustomHeaders') }}</div>
+              <div class="text-xs text-text-secondary hidden sm:block">
+                {{ t('setting.ai.aiCustomHeadersDesc') }}
+              </div>
+            </div>
+          </div>
+
+          <KeyValueList
+            v-model="formData.custom_headers"
+            :key-placeholder="t('setting.ai.aiCustomHeadersName')"
+            :value-placeholder="t('setting.ai.aiCustomHeadersValue')"
+            :add-button-text="t('setting.ai.aiCustomHeadersAdd')"
+            :remove-button-title="t('setting.ai.aiCustomHeadersRemove')"
+            ascii-only
+          />
         </div>
 
-        <!-- Test Success (when all checks pass) -->
-        <div
-          v-if="testResult?.config_valid && testResult?.connection_success && !testError"
-          class="bg-green-500/10 border border-green-500/30 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-green-500 mt-3"
-        >
-          {{ t('setting.ai.aiConfigAllGood') }}
+        <!-- Test Configuration Section -->
+        <div class="border-t border-border pt-4 mt-4">
+          <!-- Test Status Display -->
+          <StatusBoxGroup
+            :statuses="testStatuses"
+            :action-button="{
+              label: isTesting ? t('setting.ai.testing') : t('setting.ai.testAIConfig'),
+              icon: PhArrowClockwise,
+              loading: isTesting,
+              disabled: !formData.endpoint || !formData.model,
+              onClick: testConfiguration,
+            }"
+          />
+
+          <!-- Test Error -->
+          <div
+            v-if="testError"
+            class="bg-red-500/10 border border-red-500/30 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-red-500 mt-3"
+          >
+            {{ testError }}
+          </div>
+
+          <!-- Test Success (when all checks pass) -->
+          <div
+            v-if="testResult?.config_valid && testResult?.connection_success && !testError"
+            class="bg-green-500/10 border border-green-500/30 rounded-lg p-2 sm:p-3 text-xs sm:text-sm text-green-500 mt-3"
+          >
+            {{ t('setting.ai.aiConfigAllGood') }}
+          </div>
+        </div>
+
+        <!-- Documentation Link -->
+        <div class="mt-3">
+          <button
+            type="button"
+            class="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1"
+            @click="openDocumentation"
+          >
+            <PhBookOpen :size="14" />
+            {{ t('setting.ai.aiConfigurationGuide') }}
+          </button>
         </div>
       </div>
 
-      <!-- Documentation Link -->
-      <div class="mt-3">
-        <button
-          type="button"
-          class="text-xs sm:text-sm text-accent hover:underline flex items-center gap-1"
-          @click="openDocumentation"
-        >
-          <PhBookOpen :size="14" />
-          {{ t('setting.ai.aiConfigurationGuide') }}
-        </button>
-      </div>
-    </div>
+      <!-- Footer -->
+      <template #footer>
+        <div class="flex items-center justify-between">
+          <!-- Error Message -->
+          <div v-if="saveError" class="text-xs sm:text-sm text-red-500 flex-1 mr-4">
+            {{ saveError }}
+          </div>
+          <div v-else class="flex-1" />
 
-    <!-- Footer -->
-    <template #footer>
-      <div class="flex items-center justify-between">
-        <!-- Error Message -->
-        <div v-if="saveError" class="text-xs sm:text-sm text-red-500 flex-1 mr-4">
-          {{ saveError }}
+          <!-- Actions -->
+          <ModalFooter
+            align="right"
+            :secondary-button="{
+              label: t('common.action.cancel'),
+              onClick: handleClose,
+            }"
+            :primary-button="{
+              label: isSaving ? t('common.action.saving') : t('common.action.save'),
+              disabled: isSaving,
+              loading: isSaving,
+              onClick: saveProfile,
+            }"
+          />
         </div>
-        <div v-else class="flex-1" />
-
-        <!-- Actions -->
-        <ModalFooter
-          align="right"
-          :secondary-button="{
-            label: t('common.action.cancel'),
-            onClick: handleClose,
-          }"
-          :primary-button="{
-            label: isSaving ? t('common.action.saving') : t('common.action.save'),
-            disabled: isSaving,
-            loading: isSaving,
-            onClick: saveProfile,
-          }"
-        />
-      </div>
-    </template>
-  </BaseModal>
+      </template>
+    </BaseModal>
+  </Teleport>
 </template>
 
 <style scoped>

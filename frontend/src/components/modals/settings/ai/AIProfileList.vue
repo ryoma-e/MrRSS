@@ -134,8 +134,22 @@ function getTestStatus(profileId: number): 'success' | 'error' | 'unknown' {
 
 <template>
   <SettingGroup :icon="PhRobot" :title="t('setting.ai.aiProfiles')">
-    <div class="text-xs text-text-secondary mb-3 sm:mb-4">
-      {{ t('setting.ai.aiProfilesDesc') }}
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button" class="btn-secondary" @click="openAddModal">
+        <PhPlus :size="16" />
+        {{ t('setting.ai.addProfile') }}
+      </button>
+
+      <button
+        type="button"
+        class="btn-secondary"
+        :disabled="isTestingAll || profiles.length === 0"
+        @click="handleTestAllProfiles"
+      >
+        <PhArrowClockwise :size="16" :class="{ 'animate-spin': isTestingAll }" />
+        {{ isTestingAll ? t('setting.ai.testingAll') : t('setting.ai.testAllProfiles') }}
+      </button>
     </div>
 
     <!-- Loading State -->
@@ -243,24 +257,6 @@ function getTestStatus(profileId: number): 'success' | 'error' | 'unknown' {
           {{ testResults.get(profile.id)?.error_message }}
         </div>
       </div>
-    </div>
-
-    <!-- Action Buttons at Bottom -->
-    <div class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border">
-      <button type="button" class="btn-secondary" @click="openAddModal">
-        <PhPlus :size="16" />
-        {{ t('setting.ai.addProfile') }}
-      </button>
-
-      <button
-        type="button"
-        class="btn-secondary"
-        :disabled="isTestingAll || profiles.length === 0"
-        @click="handleTestAllProfiles"
-      >
-        <PhArrowClockwise :size="16" :class="{ 'animate-spin': isTestingAll }" />
-        {{ isTestingAll ? t('setting.ai.testingAll') : t('setting.ai.testAllProfiles') }}
-      </button>
     </div>
   </SettingGroup>
 
