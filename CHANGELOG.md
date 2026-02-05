@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added Notion integration for exporting articles directly to Notion pages. (#625)
 - Supported hiding and showing the activity bar. (#588)
 
+### Fixed
+
+- Ensured summary generation waits for full content when applicable. (#629)
+
 ### Removed
 
 - Removed path auto-completion in AI handler. (#640)

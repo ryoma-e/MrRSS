@@ -273,9 +273,14 @@ async function fetchFullArticle(showErrors: boolean = true) {
 
       // After fetching full content, regenerate summary and trigger translation
       if (props.article) {
-        if (shouldAutoGenerateSummary()) {
+        // Generate summary if we should wait for full content
+        // This handles the case where:
+        // 1. Summary uses AI auto trigger OR local algorithm
+        // 2. AND auto-show all content is enabled
+        if (shouldWaitForFullContentBeforeSummary.value) {
           setTimeout(() => generateSummary(props.article), 100);
         }
+
         if (translationEnabled.value) {
           // Only translate content, not title (title translation is cached in DB)
           // Content hash will automatically detect new content and trigger translation
@@ -336,6 +341,21 @@ function shouldAutoGenerateSummary(): boolean {
 
   return false;
 }
+
+// Check if should wait for full content before generating summary
+// This returns true when:
+// 1. Summary uses AI with auto trigger mode, OR uses local algorithm
+// 2. AND "auto show all content" is enabled
+const shouldWaitForFullContentBeforeSummary = computed(() => {
+  if (!summaryEnabled.value) return false;
+
+  // Check if summary should be auto-generated
+  const shouldAutoGen = shouldAutoGenerateSummary();
+  if (!shouldAutoGen) return false;
+
+  // If summary is auto-generated and auto-expand content is enabled, wait for full content
+  return shouldAutoExpandContent.value;
+});
 
 // Translate title
 async function translateTitle(article: Article) {
@@ -630,8 +650,19 @@ async function onSummarySettingsChanged(): Promise<void> {
   if (props.article) {
     summaryResult.value = null;
     // Auto-generate summary if newly enabled
+    // But wait for full content if both conditions are met:
+    // 1. Summary uses AI auto trigger OR local algorithm
+    // 2. AND auto-show all content is enabled
     if (shouldAutoGenerateSummary() && props.articleContent) {
-      setTimeout(() => generateSummary(props.article), 100);
+      if (!shouldWaitForFullContentBeforeSummary.value) {
+        setTimeout(() => generateSummary(props.article), 100);
+      }
+      // If we should wait for full content, and full content exists, generate summary now
+      else if (fullArticleContent.value) {
+        setTimeout(() => generateSummary(props.article), 100);
+      }
+      // If we should wait but full content doesn't exist yet,
+      // it will be generated after fetchFullArticle completes
     }
   }
 }
@@ -664,7 +695,12 @@ watch(
           }
         } else if (shouldAutoGenerateSummary()) {
           // Only auto-generate if no cached summary exists
-          setTimeout(() => generateSummary(props.article), 100);
+          // But wait for full content if both conditions are met:
+          // 1. Summary uses AI auto trigger OR local algorithm
+          // 2. AND auto-show all content is enabled
+          if (!shouldWaitForFullContentBeforeSummary.value) {
+            setTimeout(() => generateSummary(props.article), 100);
+          }
         }
 
         // Translate title
@@ -718,13 +754,25 @@ watch(
       await reattachImageInteractions();
 
       // Auto-fetch full article if setting is enabled
-      if (shouldAutoExpandContent.value && !fullArticleContent.value) {
+      // Don't auto-fetch if we're already fetching
+      if (
+        shouldAutoExpandContent.value &&
+        !fullArticleContent.value &&
+        !isFetchingFullArticle.value
+      ) {
         setTimeout(() => fetchFullArticle(false), 200);
       }
 
       // Generate summary if needed
+      // But wait for full content if both conditions are met:
+      // 1. Summary uses AI auto trigger OR local algorithm
+      // 2. AND auto-show all content is enabled
       if (shouldAutoGenerateSummary()) {
-        setTimeout(() => generateSummary(props.article), 100);
+        // If we should wait for full content, don't generate summary here
+        // It will be generated after fetchFullArticle completes
+        if (!shouldWaitForFullContentBeforeSummary.value) {
+          setTimeout(() => generateSummary(props.article), 100);
+        }
       }
 
       // Translate content if enabled
@@ -751,7 +799,12 @@ onMounted(async () => {
       }
     } else if (shouldAutoGenerateSummary() && props.articleContent) {
       // Only auto-generate if no cached summary exists
-      setTimeout(() => generateSummary(props.article), 100);
+      // But wait for full content if both conditions are met:
+      // 1. Summary uses AI auto trigger OR local algorithm
+      // 2. AND auto-show all content is enabled
+      if (!shouldWaitForFullContentBeforeSummary.value) {
+        setTimeout(() => generateSummary(props.article), 100);
+      }
     }
 
     // Translate title
