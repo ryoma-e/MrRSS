@@ -51,6 +51,39 @@ watch(
   }
 );
 
+// Watch for currentIndex changes and auto-scroll to keep current thumbnail visible
+watch(
+  () => props.currentIndex,
+  async (newIndex) => {
+    await nextTick();
+    if (!thumbnailStripRef.value || newIndex < 0) return;
+
+    // Each thumbnail is 64px (w-16) + 8px (gap-2) = 72px
+    const thumbnailWidth = 72;
+    const containerWidth = thumbnailStripRef.value.offsetWidth;
+    const scrollLeft = thumbnailStripRef.value.scrollLeft;
+
+    // Calculate thumbnail position
+    const thumbnailLeft = newIndex * thumbnailWidth;
+    const thumbnailRight = thumbnailLeft + thumbnailWidth;
+
+    // Scroll into view if needed
+    if (thumbnailLeft < scrollLeft) {
+      // Thumbnail is to the left of viewport, scroll to show it
+      thumbnailStripRef.value.scrollTo({
+        left: thumbnailLeft,
+        behavior: 'smooth',
+      });
+    } else if (thumbnailRight > scrollLeft + containerWidth) {
+      // Thumbnail is to the right of viewport, scroll to show it
+      thumbnailStripRef.value.scrollTo({
+        left: thumbnailRight - containerWidth,
+        behavior: 'smooth',
+      });
+    }
+  }
+);
+
 /**
  * Check if thumbnails should be centered (when they don't fill the container)
  */

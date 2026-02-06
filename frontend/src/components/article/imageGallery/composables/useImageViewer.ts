@@ -8,17 +8,17 @@ const SCALE_STEP = 0.25;
 
 /**
  * Composable for managing image viewer functionality (zoom, pan, navigation)
- * @param allImages - All images from the current article
+ * @param getAllImages - Function to get all images from the current article
  * @param currentImageIndex - Index of currently displayed image
- * @param articles - All articles in the gallery
- * @param selectedArticle - Currently selected article
+ * @param getArticles - Function to get all articles in the gallery
+ * @param getSelectedArticle - Function to get currently selected article
  * @returns Image viewer state and methods
  */
 export function useImageViewer(
-  allImages: { value: string[] },
+  getAllImages: () => string[],
   currentImageIndex: { value: number },
-  articles: { value: Article[] },
-  selectedArticle: { value: Article | null }
+  getArticles: () => Article[],
+  getSelectedArticle: () => Article | null
 ): ImageViewerReturn {
   // State
   const scale = ref(1);
@@ -34,12 +34,16 @@ export function useImageViewer(
 
   // Find current article index in articles array
   const currentArticleIndex = computed(() => {
-    if (!selectedArticle.value) return -1;
-    return articles.value.findIndex((a) => a.id === selectedArticle.value!.id);
+    const selectedArticle = getSelectedArticle();
+    if (!selectedArticle) return -1;
+    const articles = getArticles();
+    return articles.findIndex((a) => a.id === selectedArticle!.id);
   });
 
   // Check if we can navigate to previous image/article
   const canNavigatePrevious = computed(() => {
+    const allImages = getAllImages();
+    const articles = getArticles();
     // Can navigate if not at first image of first article
     if (currentImageIndex.value > 0) return true;
     if (currentArticleIndex.value > 0) return true;
@@ -48,9 +52,11 @@ export function useImageViewer(
 
   // Check if we can navigate to next image/article
   const canNavigateNext = computed(() => {
+    const allImages = getAllImages();
+    const articles = getArticles();
     // Can navigate if not at last image of last article
-    if (currentImageIndex.value < allImages.value.length - 1) return true;
-    if (currentArticleIndex.value >= 0 && currentArticleIndex.value < articles.value.length - 1)
+    if (currentImageIndex.value < allImages.length - 1) return true;
+    if (currentArticleIndex.value >= 0 && currentArticleIndex.value < articles.length - 1)
       return true;
     return false;
   });

@@ -261,7 +261,7 @@ async function handleImageAction(action: string, article: Article): Promise<void
     await imageActions.copyArticleLink(article);
   } else if (action === 'downloadImage') {
     await imageActions.downloadImage(article.image_url || '');
-  } else if (action === 'openBrowser') {
+  } else if (action === 'openBrowser' || action === 'openOriginal') {
     imageActions.openOriginal(article);
   } else if (action === 'copyImage' && selectedArticle.value) {
     await imageActions.copyImage(selectedArticle.value.image_url || '');

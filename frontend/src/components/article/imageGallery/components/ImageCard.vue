@@ -84,7 +84,8 @@ function formatDate(dateString: string): string {
       <!-- Image count indicator -->
       <div
         v-if="imageCount > 1"
-        class="absolute bottom-2 left-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs font-semibold backdrop-blur-sm z-10 flex items-center gap-1"
+        class="absolute bottom-2 left-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs font-semibold backdrop-blur-sm z-10 flex items-center gap-1 transition-all duration-200"
+        :class="{ 'group-hover:bottom-20': !showTextOverlay }"
       >
         <PhImage :size="14" />
         <span class="ml-1">{{ imageCount }}</span>

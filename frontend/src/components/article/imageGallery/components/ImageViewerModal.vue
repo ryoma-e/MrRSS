@@ -54,7 +54,13 @@ watch(
 );
 
 // Use image viewer composable
-const viewer = useImageViewer(props.allImages, localImageIndex, props.articles, props.article);
+// Pass getter functions to ensure we always get the latest values
+const viewer = useImageViewer(
+  () => props.allImages,
+  localImageIndex,
+  () => props.articles,
+  () => props.article
+);
 
 // Get current image URL
 // Cover images (article.image_url) are always cached
@@ -350,14 +356,12 @@ window.addEventListener('image-wheel-navigate', ((e: CustomEvent) => {
           {{ article?.title }}
         </h2>
         <div class="flex items-center gap-2 shrink-0">
-          <a
-            :href="article?.url"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
             class="px-3 py-1.5 bg-accent hover:bg-accent-hover text-white rounded-md text-sm whitespace-nowrap transition-colors duration-200"
+            @click="handleViewerAction('openOriginal')"
           >
             {{ t('article.action.viewOriginal') }}
-          </a>
+          </button>
           <button
             class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm whitespace-nowrap transition-all duration-200"
             :title="t('article.action.viewArticle')"
