@@ -43,7 +43,11 @@ const { t } = useI18n();
       <button
         class="p-1 sm:p-1.5 rounded hover:bg-bg-tertiary text-text-primary transition-colors"
         :class="showOnlyUnread ? 'text-accent' : ''"
-        :title="t('setting.reading.showOnlyUnread')"
+        :title="
+          showOnlyUnread
+            ? t('setting.reading.showAllArticles')
+            : t('setting.reading.showOnlyUnread')
+        "
         @click="emit('toggleShowOnlyUnread')"
       >
         <PhEyeSlash v-if="showOnlyUnread" :size="20" />

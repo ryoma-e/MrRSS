@@ -944,6 +944,7 @@ const en: TranslationMessages = {
       showHiddenArticles: 'Show Hidden Articles',
       showHiddenArticlesDesc: 'Show articles hidden in the All Articles list',
       showOnlyUnread: 'Show only unread articles',
+      showAllArticles: 'Show all articles',
       showOriginal: 'Original',
       showTranslations: 'Show Translations',
       viewAsRendered: 'View as Rendered Content',

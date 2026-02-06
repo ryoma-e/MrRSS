@@ -925,6 +925,7 @@ const zh: TranslationMessages = {
       showHiddenArticles: '显示隐藏文章',
       showHiddenArticlesDesc: '在全部文章列表中显示隐藏的文章',
       showOnlyUnread: '仅显示未读文章',
+      showAllArticles: '显示全部文章',
       showOriginal: '原文',
       showTranslations: '显示翻译',
       viewAsRendered: '作为渲染内容查看',

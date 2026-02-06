@@ -5,35 +5,37 @@ All notable changes to MrRSS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.3.19] - 2026-02-07
+
+**NOTE:** After the update, AI-related settings may require reconfiguration due to conflicts introduced by new features.
 
 ### Refactored
 
-- Refactored the tip box and image gallery for improved consistency and maintainability.
+- Enhanced the tip box and image gallery components for improved consistency and maintainability.
 
 ### Added
 
-- Supported multiple AI profiles and configuration management. (#439)
-- Added Notion integration for exporting articles directly to Notion pages. (#625)
-- Supported hiding and showing the activity bar. (#588)
-- Added show only unread functionality for image gallery. (#559)
-- Added more filter conditions for article list and automatic rules. (#642)
+- Introduced support for multiple AI profiles and configuration management. (#439)
+- Implemented Notion integration for direct article export to Notion pages. (#625)
+- Added the ability to hide and show the activity bar. (#588)
+- Introduced a "show only unread" filter for the image gallery. (#559)
+- Added additional filter conditions for article lists and automatic rules. (#642)
 
 ### Changed
 
-- Auto-refresh will be triggered after feed update. (#639)
-- Cover images in image gallery are now forced to use caching. (#500)
+- Enabled auto-refresh upon feed updates. (#639)
+- Enforced caching for cover images in the image gallery. (#500)
 
 ### Fixed
 
-- Ensured summary generation waits for full content when applicable. (#629)
-- Prevented overflow from long content. (#574)
-- Fixed styling issues in the image gallery view. (#573)
-- Fixed multiple minor styling inconsistencies. (#578, #585, #624)
+- Ensured summary generation awaits full content when applicable. (#629)
+- Prevented layout overflow caused by lengthy content. (#574)
+- Resolved styling issues in the image gallery view. (#573)
+- Fixed multiple minor styling inconsistencies. (#578, #585, #624, #645)
 
 ### Removed
 
-- Removed path auto-completion in AI handler. (#640)
+- Removed path auto‑completion in the AI handler. (#640)
 
 ## [1.3.18] - 2026-01-29
 

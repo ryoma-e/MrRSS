@@ -734,7 +734,11 @@ function cardModalRetryLoadContent(): void {
           <button
             class="text-text-secondary hover:text-text-primary hover:bg-bg-tertiary p-1 sm:p-1.5 rounded transition-colors"
             :class="store.showOnlyUnread ? 'text-accent' : ''"
-            :title="t('setting.reading.showOnlyUnread')"
+            :title="
+              store.showOnlyUnread
+                ? t('setting.reading.showAllArticles')
+                : t('setting.reading.showOnlyUnread')
+            "
             @click="store.toggleShowOnlyUnread()"
           >
             <component
