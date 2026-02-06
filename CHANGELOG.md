@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensured summary generation waits for full content when applicable. (#629)
 - Prevented overflow from long content. (#574)
 - Fixed styling issues in the image gallery view. (#573)
-- Fixed multiple minor styling inconsistencies. (#585, #624)
+- Fixed multiple minor styling inconsistencies. (#578, #585, #624)
 
 ### Removed
 

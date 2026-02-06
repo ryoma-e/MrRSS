@@ -96,6 +96,8 @@ function formatActions(rule: Rule): string {
     unhide: t('setting.rule.actionUnhide'),
     mark_read: t('setting.rule.actionMarkRead'),
     mark_unread: t('setting.rule.actionMarkUnread'),
+    read_later: t('setting.rule.actionReadLater'),
+    remove_read_later: t('setting.rule.actionRemoveReadLater'),
   };
 
   return rule.actions.map((a: string) => actionLabels[a] || a).join(', ');
