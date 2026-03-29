@@ -224,7 +224,8 @@ export function useSettingsAutoSave(settings: Ref<SettingsData> | (() => Setting
 
       // Notify all components that settings have been updated
       // This ensures components like ArticleList can re-fetch settings
-      window.dispatchEvent(new CustomEvent('settings-updated'));
+      // Mark this as an auto-save event to prevent unnecessary re-fetching
+      window.dispatchEvent(new CustomEvent('settings-updated', { detail: { autoSave: true } }));
     } catch (e) {
       console.error('Error auto-saving settings:', e);
     }

@@ -19,7 +19,7 @@ interface Props {
   zIndex?: number;
   // Show close button in header (default: true)
   closable?: boolean;
-  // Close on click outside (default: true)
+  // Close on click outside (default: false)
   closeOnClickOutside?: boolean;
   // Show footer (default: false)
   showFooter?: boolean;
@@ -43,7 +43,7 @@ const props = withDefaults(defineProps<Props>(), {
   maxHeight: '90vh',
   zIndex: 50,
   closable: true,
-  closeOnClickOutside: true,
+  closeOnClickOutside: false,
   showFooter: false,
   containerClass: '',
   headerClass: '',
@@ -141,12 +141,10 @@ function handleClose() {
 }
 
 // Handle click outside
-function handleBackdropClick(event: MouseEvent) {
+function handleBackdropClick() {
+  // Only close if explicitly enabled via closeOnClickOutside prop
   if (props.closeOnClickOutside && !props.loading) {
-    // Check if click was on the backdrop (not on modal content)
-    if ((event.target as HTMLElement).dataset.modalBackdrop === 'true') {
-      handleClose();
-    }
+    handleClose();
   }
 }
 
@@ -193,7 +191,7 @@ onUnmounted(() => {
       >
         <div v-if="title || $slots.header">
           <slot name="header">
-            <h3 class="text-base sm:text-lg font-semibold m-0">{{ title }}</h3>
+            <h3 class="text-base sm:text-lg font-semibold m-0 text-text-primary">{{ title }}</h3>
           </slot>
         </div>
         <button
@@ -208,7 +206,7 @@ onUnmounted(() => {
 
       <!-- Body -->
       <div
-        :class="['flex-1 overflow-y-auto', title || $slots.header ? '' : 'p-4 sm:p-6', bodyClass]"
+        :class="['flex-1 overflow-y-scroll', title || $slots.header ? '' : 'p-4 sm:p-6', bodyClass]"
       >
         <slot></slot>
       </div>
@@ -228,8 +226,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 /* Desktop max-height for rounded modals */
 @media (min-width: 640px) {
   .rounded-2xl {

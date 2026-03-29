@@ -51,6 +51,9 @@ const cardModalArticle = ref<Article | null>(null);
 const cardModalContent = ref('');
 const isCardModalLoading = ref(false);
 
+// Track if user has scrolled to bottom
+const hasScrolledToBottom = ref(false);
+
 // Layout mode computed
 const layoutMode = computed(() => settings.value.layout_mode || 'normal');
 const isCardMode = computed(() => layoutMode.value === 'card');
@@ -465,6 +468,10 @@ function handleScroll(e: Event): void {
     const target = e.target as HTMLElement;
     const { scrollTop, clientHeight, scrollHeight } = target;
 
+    // Check if scrolled to bottom (within small threshold)
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 10;
+    hasScrolledToBottom.value = isAtBottom;
+
     // Load more when user is within threshold distance from bottom
     if (scrollTop + clientHeight >= scrollHeight - SCROLL_THRESHOLD) {
       if (activeFilters.value.length > 0) {
@@ -679,13 +686,12 @@ async function cardModalToggleFavorite(): Promise<void> {
 async function cardModalToggleReadLater(): Promise<void> {
   if (!cardModalArticle.value) return;
   const article = cardModalArticle.value;
-  const newReadLaterState = !article.is_read_later;
 
   try {
-    await fetch(`/api/articles/read-later?id=${article.id}&read_later=${newReadLaterState}`, {
+    await fetch(`/api/articles/toggle-read-later?id=${article.id}`, {
       method: 'POST',
     });
-    article.is_read_later = newReadLaterState;
+    article.is_read_later = !article.is_read_later;
     await store.fetchFilterCounts();
   } catch (e) {
     console.error('Error toggling read later:', e);
@@ -695,6 +701,48 @@ async function cardModalToggleReadLater(): Promise<void> {
 function cardModalRetryLoadContent(): void {
   if (cardModalArticle.value) {
     openCardModal(cardModalArticle.value);
+  }
+}
+
+// Show "Mark All Visible as Read" button at bottom
+const shouldShowBottomMarkAllRead = computed(() => {
+  return (
+    hasScrolledToBottom.value &&
+    !store.hasMore &&
+    !store.isLoading &&
+    !isFilterLoading.value &&
+    filteredArticles.value.length > 0
+  );
+});
+
+// Mark all currently visible articles as read
+async function markAllVisibleAsRead(): Promise<void> {
+  const articleIds = filteredArticles.value.map((a) => a.id);
+
+  if (articleIds.length === 0) {
+    window.showToast(t('article.action.noArticlesToMark'), 'info');
+    return;
+  }
+
+  try {
+    await Promise.all(
+      articleIds.map((id) => fetch(`/api/articles/read?id=${id}&read=true`, { method: 'POST' }))
+    );
+
+    // Update local article states
+    filteredArticles.value.forEach((article) => {
+      article.is_read = true;
+    });
+
+    // Refresh counts
+    await store.fetchUnreadCounts();
+    await store.fetchFilterCounts();
+
+    // Show success message with count
+    const message = t('article.action.markedNArticlesAsRead', { count: articleIds.length });
+    window.showToast(message, 'success');
+  } catch (e) {
+    console.error('Error marking visible articles as read:', e);
   }
 }
 </script>
@@ -952,6 +1000,29 @@ function cardModalRetryLoadContent(): void {
         />
       </div>
 
+      <!-- Bottom: Mark All Visible as Read button (inserted at end of list) -->
+      <Transition
+        enter-active-class="transition ease-out duration-200"
+        enter-from-class="opacity-0 translate-y-2"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition ease-in duration-150"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-2"
+      >
+        <div v-if="shouldShowBottomMarkAllRead" class="mx-3 mb-3 pt-6 pb-3 text-center">
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent/80 text-white rounded-lg transition-colors text-sm font-medium"
+            @click="markAllVisibleAsRead"
+          >
+            <PhCheckCircle :size="18" />
+            <span>{{ t('article.list.markAllVisibleAsRead') }}</span>
+          </button>
+          <div class="text-xs text-text-secondary mt-2">
+            {{ t('article.list.allArticlesLoaded') }}
+          </div>
+        </div>
+      </Transition>
+
       <div
         v-if="store.isLoading || isFilterLoading"
         class="p-3 sm:p-4 text-center text-text-secondary"
@@ -988,8 +1059,6 @@ function cardModalRetryLoadContent(): void {
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 @media (min-width: 768px) {
   .article-list {
     width: var(--article-list-width, 400px);

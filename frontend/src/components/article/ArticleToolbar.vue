@@ -49,6 +49,7 @@ defineEmits<{
   toggleTranslations: [];
   exportToObsidian: [];
   exportToNotion: [];
+  exportToZotero: [];
 }>();
 </script>
 
@@ -174,13 +175,23 @@ defineEmits<{
           alt="Notion"
         />
       </button>
+      <button
+        v-if="settings.zotero_enabled"
+        class="action-btn"
+        :title="t('setting.plugins.zotero.exportTo')"
+        @click="$emit('exportToZotero')"
+      >
+        <img
+          src="/assets/plugin_icons/zotero.png"
+          class="w-[18px] h-[18px] sm:w-5 sm:h-5"
+          alt="Zotero"
+        />
+      </button>
     </div>
   </div>
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 .action-btn {
   @apply text-lg sm:text-xl cursor-pointer text-text-secondary p-1 sm:p-1.5 rounded-md transition-colors hover:bg-bg-tertiary hover:text-text-primary;
 }

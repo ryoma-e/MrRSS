@@ -5,7 +5,6 @@ import {
   PhSpeakerHigh,
   PhPlay,
   PhPause,
-  PhGauge,
   PhSpinner,
   PhRewind,
   PhFastForward,
@@ -439,16 +438,6 @@ const downloadFilename = computed(() => {
 
         <!-- Controls -->
         <div class="flex items-center gap-3">
-          <!-- Playback speed control -->
-          <button
-            class="flex items-center gap-1.5 px-2 py-1 rounded-md bg-bg-tertiary hover:bg-bg-tertiary/80 transition-colors text-xs font-medium text-text-primary min-w-[70px]"
-            :title="t('article.audioPlayer.playbackSpeed')"
-            @click="cycleSpeed"
-          >
-            <PhGauge :size="12" class="text-text-secondary" />
-            <span>{{ playbackSpeed }}x</span>
-          </button>
-
           <!-- Volume control -->
           <div class="flex items-center gap-1.5">
             <PhSpeakerHigh :size="14" class="text-text-secondary flex-shrink-0" />
@@ -466,6 +455,15 @@ const downloadFilename = computed(() => {
               >{{ Math.round(volume * 100) }}%</span
             >
           </div>
+
+          <!-- Playback speed control -->
+          <button
+            class="flex items-center justify-center px-3 py-1 rounded-md bg-bg-tertiary hover:bg-bg-tertiary/80 transition-colors text-xs font-medium text-text-primary w-[52px]"
+            :title="t('article.audioPlayer.playbackSpeed')"
+            @click="cycleSpeed"
+          >
+            <span class="tabular-nums">{{ playbackSpeed }}x</span>
+          </button>
         </div>
       </div>
     </div>

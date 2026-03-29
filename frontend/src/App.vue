@@ -62,7 +62,14 @@ const {
 } = useResizablePanels();
 
 // Use app updates composable
-const { updateInfo, checkForUpdates, downloadAndInstallUpdate } = useAppUpdates();
+const {
+  updateInfo,
+  checkForUpdates,
+  downloadAndInstallUpdate,
+  downloadingUpdate,
+  installingUpdate,
+  downloadProgress,
+} = useAppUpdates();
 
 // Update dialog state
 const showUpdateDialog = ref(false);
@@ -321,9 +328,9 @@ function onFeedUpdated(): void {
     <UpdateAvailableDialog
       v-if="showUpdateDialog && updateInfo"
       :update-info="updateInfo"
-      :downloading-update="false"
-      :installing-update="false"
-      :download-progress="0"
+      :downloading-update="downloadingUpdate"
+      :installing-update="installingUpdate"
+      :download-progress="downloadProgress"
       @close="showUpdateDialog = false"
       @update="downloadAndInstallUpdate"
     />

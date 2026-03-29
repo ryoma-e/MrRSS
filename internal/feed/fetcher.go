@@ -208,29 +208,42 @@ func (f *Fetcher) FetchAll(ctx context.Context) {
 		return
 	}
 
-	// Filter out FreshRSS feeds and never-refresh feeds
+	// Filter out FreshRSS feeds, never-refresh feeds, and custom interval feeds
 	filteredFeeds := make([]models.Feed, 0, len(feeds))
 	freshRSSCount := 0
 	neverRefreshCount := 0
+	customIntervalCount := 0
 	for _, feed := range feeds {
 		if feed.IsFreshRSSSource {
 			freshRSSCount++
 		} else if feed.RefreshInterval == -2 {
 			// Skip feeds with never refresh mode
 			neverRefreshCount++
+		} else if feed.RefreshInterval > 0 {
+			// Skip feeds with custom refresh interval (they are scheduled individually)
+			customIntervalCount++
 		} else {
+			// Only include feeds using global setting (RefreshInterval == 0)
 			filteredFeeds = append(filteredFeeds, feed)
 		}
 	}
 
-	// If all feeds are FreshRSS feeds or never-refresh feeds, no standard refresh needed
+	// If all feeds are FreshRSS feeds, never-refresh feeds, or custom interval feeds, no standard refresh needed
 	if len(filteredFeeds) == 0 {
-		if freshRSSCount > 0 && neverRefreshCount > 0 {
+		if freshRSSCount > 0 && neverRefreshCount > 0 && customIntervalCount > 0 {
+			log.Printf("All feeds are either FreshRSS sources (%d), never-refresh feeds (%d), or custom interval feeds (%d), skipping standard refresh", freshRSSCount, neverRefreshCount, customIntervalCount)
+		} else if freshRSSCount > 0 && neverRefreshCount > 0 {
 			log.Printf("All feeds are either FreshRSS sources (%d) or never-refresh feeds (%d), skipping standard refresh", freshRSSCount, neverRefreshCount)
+		} else if freshRSSCount > 0 && customIntervalCount > 0 {
+			log.Printf("All feeds are either FreshRSS sources (%d) or custom interval feeds (%d), skipping standard refresh", freshRSSCount, customIntervalCount)
+		} else if neverRefreshCount > 0 && customIntervalCount > 0 {
+			log.Printf("All feeds are either never-refresh feeds (%d) or custom interval feeds (%d), skipping standard refresh", neverRefreshCount, customIntervalCount)
 		} else if freshRSSCount > 0 {
 			log.Printf("All %d feeds are FreshRSS sources (refreshed via sync only), skipping standard refresh", freshRSSCount)
-		} else {
+		} else if neverRefreshCount > 0 {
 			log.Printf("All %d feeds are never-refresh feeds, skipping standard refresh", neverRefreshCount)
+		} else {
+			log.Printf("All %d feeds are custom interval feeds, skipping standard refresh", customIntervalCount)
 		}
 
 		// Update last global refresh time even if no standard feeds
@@ -250,8 +263,13 @@ func (f *Fetcher) FetchAll(ctx context.Context) {
 		return
 	}
 
-	if neverRefreshCount > 0 {
+	// Log what's being refreshed
+	if neverRefreshCount > 0 && customIntervalCount > 0 {
+		log.Printf("Standard refresh: %d feeds (skipped %d FreshRSS feeds, %d never-refresh feeds, %d custom interval feeds)", len(filteredFeeds), freshRSSCount, neverRefreshCount, customIntervalCount)
+	} else if neverRefreshCount > 0 {
 		log.Printf("Standard refresh: %d feeds (skipped %d FreshRSS feeds, %d never-refresh feeds)", len(filteredFeeds), freshRSSCount, neverRefreshCount)
+	} else if customIntervalCount > 0 {
+		log.Printf("Standard refresh: %d feeds (skipped %d FreshRSS feeds, %d custom interval feeds)", len(filteredFeeds), freshRSSCount, customIntervalCount)
 	} else {
 		log.Printf("Standard refresh: %d feeds (skipped %d FreshRSS feeds)", len(filteredFeeds), freshRSSCount)
 	}

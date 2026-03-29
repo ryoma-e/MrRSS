@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhArrowCircleUp, PhDownloadSimple, PhCircleNotch, PhGear } from '@phosphor-icons/vue';
 import BaseModal from '@/components/common/BaseModal.vue';
@@ -44,12 +44,36 @@ function handleUpdate() {
 // Computed button text
 const updateButtonText = computed(() => {
   if (props.downloadingUpdate) {
-    return `${t('common.action.downloading')} ${props.downloadProgress}%`;
+    return t('common.action.downloading');
   } else if (props.installingUpdate) {
     return t('setting.update.installingUpdate');
   } else {
     return t('setting.update.updateNow');
   }
+});
+
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    // Only trigger update if not downloading/installing and download URL is available
+    if (!props.downloadingUpdate && !props.installingUpdate && props.updateInfo.download_url) {
+      handleUpdate();
+    }
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    // Only allow closing if not downloading/installing
+    if (!props.downloadingUpdate && !props.installingUpdate) {
+      handleClose();
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
 });
 </script>
 
@@ -92,16 +116,6 @@ const updateButtonText = computed(() => {
           {{ t('setting.about.viewOnGitHub') }}
         </a>
       </p>
-
-      <!-- Progress bar -->
-      <div v-if="props.downloadingUpdate" class="mt-4">
-        <div class="w-full bg-bg-tertiary rounded-full h-2 overflow-hidden">
-          <div
-            class="bg-accent h-full transition-all duration-300"
-            :style="{ width: props.downloadProgress + '%' }"
-          ></div>
-        </div>
-      </div>
     </div>
 
     <!-- Footer -->
@@ -113,15 +127,6 @@ const updateButtonText = computed(() => {
           disabled: props.downloadingUpdate || props.installingUpdate,
           onClick: handleClose,
         }"
-        :primary-button="
-          props.updateInfo.download_url
-            ? {
-                label: updateButtonText,
-                disabled: props.downloadingUpdate || props.installingUpdate,
-                onClick: handleUpdate,
-              }
-            : undefined
-        "
       >
         <template v-if="props.updateInfo.download_url" #right>
           <button
@@ -141,8 +146,6 @@ const updateButtonText = computed(() => {
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
 .btn-primary {
   @apply bg-accent text-white border-none px-5 py-2.5 rounded-lg cursor-pointer font-semibold hover:bg-accent-hover transition-colors flex items-center gap-2;
 }

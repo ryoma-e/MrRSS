@@ -42,11 +42,13 @@ type ProviderConfig struct {
 type ProviderType string
 
 const (
-	ProviderGoogle ProviderType = "google"
-	ProviderDeepL  ProviderType = "deepl"
-	ProviderBaidu  ProviderType = "baidu"
-	ProviderAI     ProviderType = "ai"
-	ProviderCustom ProviderType = "custom"
+	ProviderGoogle    ProviderType = "google"
+	ProviderDeepL     ProviderType = "deepl"
+	ProviderBaidu     ProviderType = "baidu"
+	ProviderAI        ProviderType = "ai"
+	ProviderCustom    ProviderType = "custom"
+	ProviderMicrosoft ProviderType = "microsoft"
+	ProviderTencent   ProviderType = "tencent"
 )
 
 // String 返回提供商类型的字符串表示

@@ -11,14 +11,14 @@ export interface Condition {
   values: string[];
 }
 
-export interface FieldOption {
+interface FieldOption {
   value: string;
   labelKey: string;
   multiSelect: boolean;
   booleanField?: boolean;
 }
 
-export interface ActionOption {
+interface ActionOption {
   value: string;
   labelKey: string;
 }

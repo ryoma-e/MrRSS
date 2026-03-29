@@ -21,9 +21,12 @@ import {
   NestedSettingsContainer,
   SubSettingItem,
   TextAreaControl,
+  InputControl,
+  NumberControl,
   ToggleControl,
   KeyValueList,
 } from '@/components/settings';
+import BaseSelect from '@/components/common/BaseSelect.vue';
 import AIProfileSelector from '@/components/modals/settings/ai/AIProfileSelector.vue';
 import '@/components/settings/styles.css';
 import type { SettingsData } from '@/types/settings';
@@ -125,9 +128,6 @@ async function clearTranslationCache() {
     isClearingCache.value = false;
   }
 }
-
-// Helper for validation error styling
-const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : '');
 </script>
 
 <template>
@@ -157,19 +157,21 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
         :title="t('setting.content.translationProvider')"
         :description="t('setting.content.translationProviderDesc')"
       >
-        <select
-          :value="settings.translation_provider"
-          class="input-field w-32 sm:w-48 text-xs sm:text-sm"
-          @change="
-            updateSetting('translation_provider', ($event.target as HTMLSelectElement).value)
-          "
-        >
-          <option value="google">{{ t('setting.content.googleTranslate') }}</option>
-          <option value="deepl">{{ t('setting.content.deeplApi') }}</option>
-          <option value="baidu">{{ t('setting.content.baiduTranslate') }}</option>
-          <option value="ai">{{ t('setting.content.aiTranslation') }}</option>
-          <option value="custom">{{ t('setting.translation.custom.title') }}</option>
-        </select>
+        <BaseSelect
+          :model-value="settings.translation_provider"
+          :options="[
+            { value: 'google', label: t('setting.content.googleTranslate') },
+            { value: 'deepl', label: t('setting.content.deeplApi') },
+            { value: 'baidu', label: t('setting.content.baiduTranslate') },
+            { value: 'microsoft', label: t('setting.content.microsoftTranslate') },
+            { value: 'tencent', label: t('setting.content.tencentTranslate') },
+            { value: 'ai', label: t('setting.content.aiTranslation') },
+            { value: 'custom', label: t('setting.translation.custom.title') },
+          ]"
+          :searchable="true"
+          width="w-32 sm:w-48"
+          @update:model-value="updateSetting('translation_provider', $event)"
+        />
       </SubSettingItem>
 
       <!-- Google Translate Endpoint -->
@@ -179,20 +181,21 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
         :title="t('setting.content.googleTranslateEndpoint')"
         :description="t('setting.content.googleTranslateEndpointDesc')"
       >
-        <select
-          :value="settings.google_translate_endpoint"
-          class="input-field w-32 sm:w-48 text-xs sm:text-sm"
-          @change="
-            updateSetting('google_translate_endpoint', ($event.target as HTMLSelectElement).value)
-          "
-        >
-          <option value="translate.googleapis.com">
-            {{ t('setting.content.googleTranslateEndpointDefault') }}
-          </option>
-          <option value="clients5.google.com">
-            {{ t('setting.content.googleTranslateEndpointAlternate') }}
-          </option>
-        </select>
+        <BaseSelect
+          :model-value="settings.google_translate_endpoint"
+          :options="[
+            {
+              value: 'translate.googleapis.com',
+              label: t('setting.content.googleTranslateEndpointDefault'),
+            },
+            {
+              value: 'clients5.google.com',
+              label: t('setting.content.googleTranslateEndpointAlternate'),
+            },
+          ]"
+          width="w-32 sm:w-48"
+          @update:model-value="updateSetting('google_translate_endpoint', $event)"
+        />
       </SubSettingItem>
 
       <!-- DeepL API Key -->
@@ -203,19 +206,17 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
         :description="t('setting.content.deeplApiKeyDesc')"
         :required="!settings.deepl_endpoint?.trim()"
       >
-        <input
-          :value="settings.deepl_api_key"
+        <InputControl
+          :model-value="settings.deepl_api_key"
           type="password"
           :placeholder="t('setting.content.deeplApiKeyPlaceholder')"
-          :class="[
-            'input-field w-32 sm:w-48 text-xs sm:text-sm',
-            getErrorClass(
-              settings.translation_provider === 'deepl' &&
-                !settings.deepl_api_key?.trim() &&
-                !settings.deepl_endpoint?.trim()
-            ),
-          ]"
-          @input="updateSetting('deepl_api_key', ($event.target as HTMLInputElement).value)"
+          :error="
+            settings.translation_provider === 'deepl' &&
+            !settings.deepl_api_key?.trim() &&
+            !settings.deepl_endpoint?.trim()
+          "
+          width="md"
+          @update:model-value="updateSetting('deepl_api_key', $event)"
         />
       </SubSettingItem>
 
@@ -226,12 +227,12 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
         :title="t('setting.content.deeplEndpoint')"
         :description="t('setting.content.deeplEndpointDesc')"
       >
-        <input
-          :value="settings.deepl_endpoint"
+        <InputControl
+          :model-value="settings.deepl_endpoint"
           type="text"
           :placeholder="t('setting.content.deeplEndpointPlaceholder')"
-          class="input-field w-32 sm:w-48 text-xs sm:text-sm"
-          @input="updateSetting('deepl_endpoint', ($event.target as HTMLInputElement).value)"
+          width="md"
+          @update:model-value="updateSetting('deepl_endpoint', $event)"
         />
       </SubSettingItem>
 
@@ -243,17 +244,13 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
           :description="t('setting.content.baiduAppIdDesc')"
           required
         >
-          <input
-            :value="settings.baidu_app_id"
+          <InputControl
+            :model-value="settings.baidu_app_id"
             type="text"
             :placeholder="t('setting.content.baiduAppIdPlaceholder')"
-            :class="[
-              'input-field w-32 sm:w-48 text-xs sm:text-sm',
-              getErrorClass(
-                settings.translation_provider === 'baidu' && !settings.baidu_app_id?.trim()
-              ),
-            ]"
-            @input="updateSetting('baidu_app_id', ($event.target as HTMLInputElement).value)"
+            :error="settings.translation_provider === 'baidu' && !settings.baidu_app_id?.trim()"
+            width="md"
+            @update:model-value="updateSetting('baidu_app_id', $event)"
           />
         </SubSettingItem>
 
@@ -263,17 +260,126 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
           :description="t('setting.content.baiduSecretKeyDesc')"
           required
         >
-          <input
-            :value="settings.baidu_secret_key"
+          <InputControl
+            :model-value="settings.baidu_secret_key"
             type="password"
             :placeholder="t('setting.content.baiduSecretKeyPlaceholder')"
-            :class="[
-              'input-field w-32 sm:w-48 text-xs sm:text-sm',
-              getErrorClass(
-                settings.translation_provider === 'baidu' && !settings.baidu_secret_key?.trim()
-              ),
+            :error="settings.translation_provider === 'baidu' && !settings.baidu_secret_key?.trim()"
+            width="md"
+            @update:model-value="updateSetting('baidu_secret_key', $event)"
+          />
+        </SubSettingItem>
+      </template>
+
+      <!-- Microsoft Translate Settings -->
+      <template v-if="settings.translation_provider === 'microsoft'">
+        <SubSettingItem
+          :icon="PhKey"
+          :title="t('setting.content.microsoftApiKey')"
+          :description="t('setting.content.microsoftApiKeyDesc')"
+          required
+        >
+          <InputControl
+            :model-value="settings.microsoft_api_key"
+            type="password"
+            :placeholder="t('setting.content.microsoftApiKeyPlaceholder')"
+            :error="
+              settings.translation_provider === 'microsoft' && !settings.microsoft_api_key?.trim()
+            "
+            width="md"
+            @update:model-value="updateSetting('microsoft_api_key', $event)"
+          />
+        </SubSettingItem>
+
+        <SubSettingItem
+          :icon="PhLink"
+          :title="t('setting.content.microsoftRegion')"
+          :description="t('setting.content.microsoftRegionDesc')"
+        >
+          <InputControl
+            :model-value="settings.microsoft_region"
+            type="text"
+            :placeholder="t('setting.content.microsoftRegionPlaceholder')"
+            width="md"
+            @update:model-value="updateSetting('microsoft_region', $event)"
+          />
+        </SubSettingItem>
+
+        <SubSettingItem
+          :icon="PhLink"
+          :title="t('setting.content.microsoftEndpoint')"
+          :description="t('setting.content.microsoftEndpointDesc')"
+        >
+          <InputControl
+            :model-value="settings.microsoft_endpoint"
+            type="text"
+            :placeholder="t('setting.content.microsoftEndpointPlaceholder')"
+            width="lg"
+            @update:model-value="updateSetting('microsoft_endpoint', $event)"
+          />
+        </SubSettingItem>
+      </template>
+
+      <!-- Tencent Translate Settings -->
+      <template v-if="settings.translation_provider === 'tencent'">
+        <SubSettingItem
+          :icon="PhKey"
+          :title="t('setting.content.tencentSecretId')"
+          :description="t('setting.content.tencentSecretIdDesc')"
+          required
+        >
+          <InputControl
+            :model-value="settings.tencent_secret_id"
+            type="text"
+            :placeholder="t('setting.content.tencentSecretIdPlaceholder')"
+            :error="
+              settings.translation_provider === 'tencent' && !settings.tencent_secret_id?.trim()
+            "
+            width="md"
+            @update:model-value="updateSetting('tencent_secret_id', $event)"
+          />
+        </SubSettingItem>
+
+        <SubSettingItem
+          :icon="PhKey"
+          :title="t('setting.content.tencentSecretKey')"
+          :description="t('setting.content.tencentSecretKeyDesc')"
+          required
+        >
+          <InputControl
+            :model-value="settings.tencent_secret_key"
+            type="password"
+            :placeholder="t('setting.content.tencentSecretKeyPlaceholder')"
+            :error="
+              settings.translation_provider === 'tencent' && !settings.tencent_secret_key?.trim()
+            "
+            width="md"
+            @update:model-value="updateSetting('tencent_secret_key', $event)"
+          />
+        </SubSettingItem>
+
+        <SubSettingItem
+          :icon="PhGlobe"
+          :title="t('setting.content.tencentRegion')"
+          :description="t('setting.content.tencentRegionDesc')"
+        >
+          <BaseSelect
+            :model-value="settings.tencent_region || 'ap-guangzhou'"
+            :options="[
+              { value: 'ap-guangzhou', label: ' Guangzhou (ap-guangzhou)' },
+              { value: 'ap-shanghai', label: 'Shanghai (ap-shanghai)' },
+              { value: 'ap-beijing', label: 'Beijing (ap-beijing)' },
+              { value: 'ap-chengdu', label: 'Chengdu (ap-chengdu)' },
+              { value: 'ap-hongkong', label: 'Hong Kong (ap-hongkong)' },
+              { value: 'ap-singapore', label: 'Singapore (ap-singapore)' },
+              { value: 'ap-tokyo', label: 'Tokyo (ap-tokyo)' },
+              { value: 'na-toronto', label: 'Toronto (na-toronto)' },
+              { value: 'na-ashburn', label: 'Ashburn (na-ashburn)' },
+              { value: 'na-siliconvalley', label: 'Silicon Valley (na-siliconvalley)' },
+              { value: 'eu-frankfurt', label: 'Frankfurt (eu-frankfurt)' },
             ]"
-            @input="updateSetting('baidu_secret_key', ($event.target as HTMLInputElement).value)"
+            width="w-40 sm:w-64"
+            @update:model-value="updateSetting('tencent_region', $event)"
           />
         </SubSettingItem>
       </template>
@@ -362,23 +468,16 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
           :description="t('setting.translation.custom.endpointDesc')"
           required
         >
-          <input
-            :value="settings.custom_translation_endpoint"
+          <InputControl
+            :model-value="settings.custom_translation_endpoint"
             type="text"
             :placeholder="t('setting.translation.custom.endpointPlaceholder')"
-            :class="[
-              'input-field w-32 sm:w-48 text-xs sm:text-sm',
-              getErrorClass(
-                settings.translation_provider === 'custom' &&
-                  !settings.custom_translation_endpoint?.trim()
-              ),
-            ]"
-            @input="
-              updateSetting(
-                'custom_translation_endpoint',
-                ($event.target as HTMLInputElement).value
-              )
+            :error="
+              settings.translation_provider === 'custom' &&
+              !settings.custom_translation_endpoint?.trim()
             "
+            width="lg"
+            @update:model-value="updateSetting('custom_translation_endpoint', $event)"
           />
         </SubSettingItem>
 
@@ -388,16 +487,15 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
           :title="t('setting.translation.custom.method')"
           :description="t('setting.translation.custom.methodDesc')"
         >
-          <select
-            :value="settings.custom_translation_method || 'POST'"
-            class="input-field w-24 sm:w-32 text-xs sm:text-sm"
-            @change="
-              updateSetting('custom_translation_method', ($event.target as HTMLSelectElement).value)
-            "
-          >
-            <option value="GET">GET</option>
-            <option value="POST">POST</option>
-          </select>
+          <BaseSelect
+            :model-value="settings.custom_translation_method || 'POST'"
+            :options="[
+              { value: 'GET', label: 'GET' },
+              { value: 'POST', label: 'POST' },
+            ]"
+            width="w-24 sm:w-32"
+            @update:model-value="updateSetting('custom_translation_method', $event)"
+          />
         </SubSettingItem>
 
         <!-- Custom Translation Headers -->
@@ -428,7 +526,7 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
         <!-- Custom Translation Body Template -->
         <div
           v-if="(settings.custom_translation_method || 'POST') === 'POST'"
-          class="sub-setting-item flex-col items-stretch gap-2"
+          class="sub-setting-item-col"
         >
           <div class="flex items-center sm:items-start gap-2 sm:gap-3 min-w-0">
             <PhCode :size="20" class="text-text-secondary mt-0.5 shrink-0 sm:w-6 sm:h-6" />
@@ -442,17 +540,16 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
               </div>
             </div>
           </div>
-          <textarea
-            :value="settings.custom_translation_body_template"
-            class="input-field w-full text-xs sm:text-sm font-mono resize-none"
-            rows="4"
-            placeholder="Enter request body template"
-            @input="
-              updateSetting(
-                'custom_translation_body_template',
-                ($event.target as HTMLTextAreaElement).value
-              )
+          <TextAreaControl
+            :model-value="settings.custom_translation_body_template"
+            :placeholder="
+              t('setting.translation.custom.bodyTemplatePlaceholder') ||
+              'Enter request body template'
             "
+            :rows="4"
+            :resize="false"
+            :font-mono="true"
+            @update:model-value="updateSetting('custom_translation_body_template', $event)"
           />
         </div>
 
@@ -463,23 +560,16 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
           :description="t('setting.translation.custom.responsePathDesc')"
           required
         >
-          <input
-            :value="settings.custom_translation_response_path"
+          <InputControl
+            :model-value="settings.custom_translation_response_path"
             type="text"
             :placeholder="t('setting.translation.custom.responsePathPlaceholder')"
-            :class="[
-              'input-field w-32 sm:w-48 text-xs sm:text-sm font-mono',
-              getErrorClass(
-                settings.translation_provider === 'custom' &&
-                  !settings.custom_translation_response_path?.trim()
-              ),
-            ]"
-            @input="
-              updateSetting(
-                'custom_translation_response_path',
-                ($event.target as HTMLInputElement).value
-              )
+            :error="
+              settings.translation_provider === 'custom' &&
+              !settings.custom_translation_response_path?.trim()
             "
+            width="lg"
+            @update:model-value="updateSetting('custom_translation_response_path', $event)"
           />
         </SubSettingItem>
 
@@ -515,24 +605,14 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
           :title="t('setting.translation.custom.timeout')"
           :description="t('setting.translation.custom.timeoutDesc')"
         >
-          <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-            <input
-              :value="settings.custom_translation_timeout || 10"
-              type="number"
-              min="1"
-              max="60"
-              class="input-field w-14 sm:w-20 text-center text-xs sm:text-sm"
-              @input="
-                updateSetting(
-                  'custom_translation_timeout',
-                  parseInt(($event.target as HTMLInputElement).value) || 10
-                )
-              "
-            />
-            <span class="text-xs sm:text-sm text-text-secondary">{{
-              t('common.time.seconds')
-            }}</span>
-          </div>
+          <NumberControl
+            :model-value="settings.custom_translation_timeout || 10"
+            :min="1"
+            :max="60"
+            :suffix="t('common.time.seconds')"
+            width="sm"
+            @update:model-value="updateSetting('custom_translation_timeout', $event)"
+          />
         </SubSettingItem>
       </template>
 
@@ -541,19 +621,20 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
         :title="t('setting.content.targetLanguage')"
         :description="t('setting.content.targetLanguageDesc')"
       >
-        <select
-          :value="settings.target_language"
-          class="input-field w-24 sm:w-48 text-xs sm:text-sm"
-          @change="updateSetting('target_language', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="en">{{ t('common.language.english') }}</option>
-          <option value="es">{{ t('common.language.spanish') }}</option>
-          <option value="fr">{{ t('common.language.french') }}</option>
-          <option value="de">{{ t('common.language.german') }}</option>
-          <option value="zh">{{ t('common.language.simplifiedChinese') }}</option>
-          <option value="zh-TW">{{ t('common.language.traditionalChinese') }}</option>
-          <option value="ja">{{ t('common.language.japanese') }}</option>
-        </select>
+        <BaseSelect
+          :model-value="settings.target_language"
+          :options="[
+            { value: 'en', label: t('common.language.english') },
+            { value: 'es', label: t('common.language.spanish') },
+            { value: 'fr', label: t('common.language.french') },
+            { value: 'de', label: t('common.language.german') },
+            { value: 'zh', label: t('common.language.simplifiedChinese') },
+            { value: 'zh-TW', label: t('common.language.traditionalChinese') },
+            { value: 'ja', label: t('common.language.japanese') },
+          ]"
+          width="w-24 sm:w-48"
+          @update:model-value="updateSetting('target_language', $event)"
+        />
       </SubSettingItem>
 
       <!-- Cache Management -->
@@ -581,9 +662,5 @@ const getErrorClass = (condition: boolean) => (condition ? 'border-red-500' : ''
 </template>
 
 <style scoped>
-@reference "../../../../style.css";
-
-.input-field {
-  @apply p-1.5 sm:p-2.5 border border-border rounded-md bg-bg-secondary text-text-primary focus:border-accent focus:outline-none transition-colors;
-}
+/* Styles are now handled by BaseSelect and select.css */
 </style>

@@ -2,7 +2,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useAppStore } from '@/stores/app';
 import { openInBrowser } from '@/utils/browser';
 
-export interface KeyboardShortcuts {
+interface KeyboardShortcuts {
   nextArticle: string;
   previousArticle: string;
   nextArticleArrow: string;
@@ -26,7 +26,7 @@ export interface KeyboardShortcuts {
   goToReadLater: string;
 }
 
-export interface KeyboardShortcutCallbacks {
+interface KeyboardShortcutCallbacks {
   onOpenSettings: () => void;
   onAddFeed: () => void;
   onMarkAllRead: () => Promise<void>;
@@ -187,7 +187,8 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutCallbacks) {
     if (!articleDetail) return false;
 
     // Check if the article detail has scrollable content
-    const scrollableContent = articleDetail.querySelector('.overflow-y-auto');
+    // Check for both overflow-y-auto and overflow-y-scroll
+    const scrollableContent = articleDetail.querySelector('.overflow-y-auto, .overflow-y-scroll');
     if (!scrollableContent) return false;
 
     return true;
@@ -204,7 +205,10 @@ export function useKeyboardShortcuts(callbacks: KeyboardShortcutCallbacks) {
     const articleDetail = document.querySelector('main[class*="flex-1 bg-bg-primary"]');
     if (!articleDetail) return;
 
-    const scrollableContent = articleDetail.querySelector('.overflow-y-auto') as HTMLElement;
+    // Check for both overflow-y-auto and overflow-y-scroll
+    const scrollableContent = articleDetail.querySelector(
+      '.overflow-y-auto, .overflow-y-scroll'
+    ) as HTMLElement;
     if (!scrollableContent) return;
 
     const scrollAmount =

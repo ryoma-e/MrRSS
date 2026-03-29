@@ -198,14 +198,15 @@ func (tm *TaskManager) AddToQueueHead(ctx context.Context, feed models.Feed, rea
 	}
 	tm.progressMutex.Unlock()
 
-	// Remove existing task from queue if present
-	tm.queueMutex.Lock()
-	removed := removeFromQueue(&tm.queue, feed.ID)
-
-	// Check if already in pool
+	// Check if already in pool first (before acquiring queue lock)
 	tm.poolMutex.RLock()
 	inPool := tm.pool[feed.ID] != nil
 	tm.poolMutex.RUnlock()
+
+	// Then remove existing task from queue if present
+	// Lock order: always pool check first, then queue operations
+	tm.queueMutex.Lock()
+	removed := removeFromQueue(&tm.queue, feed.ID)
 
 	// Only add if not in pool
 	var added bool
@@ -263,14 +264,15 @@ func (tm *TaskManager) AddToQueueTail(ctx context.Context, feed models.Feed, rea
 	}
 	tm.progressMutex.Unlock()
 
-	// Check if already in queue or pool
-	tm.queueMutex.Lock()
+	// Check if already in pool first (before acquiring queue lock)
+	// Lock order: always check pool first, then queue
 	tm.poolMutex.RLock()
-
-	inQueue := containsInQueue(tm.queue, feed.ID)
 	inPool := tm.pool[feed.ID] != nil
-
 	tm.poolMutex.RUnlock()
+
+	// Check queue and add if needed
+	tm.queueMutex.Lock()
+	inQueue := containsInQueue(tm.queue, feed.ID)
 
 	// Only add if not in queue and not in pool
 	var added bool
@@ -367,18 +369,19 @@ func (tm *TaskManager) AddGlobalRefresh(ctx context.Context, feeds []models.Feed
 	}
 
 	// Add feeds to queue tail with deduplication
-	tm.queueMutex.Lock()
-	tm.poolMutex.RLock()
-
+	// Lock order: always check pool first, then queue
 	existingFeedIDs := make(map[int64]bool)
-	for _, feedID := range tm.queue {
-		existingFeedIDs[feedID] = true
-	}
+
+	tm.poolMutex.RLock()
 	for feedID := range tm.pool {
 		existingFeedIDs[feedID] = true
 	}
-
 	tm.poolMutex.RUnlock()
+
+	tm.queueMutex.Lock()
+	for _, feedID := range tm.queue {
+		existingFeedIDs[feedID] = true
+	}
 
 	addedCount := 0
 	addedFeeds := make([]models.Feed, 0, len(feeds))
@@ -540,17 +543,17 @@ func (tm *TaskManager) processQueue(ctx context.Context) {
 		}
 
 		// Check if we can start a new task
-		tm.queueMutex.Lock()
+		// Lock order: always check pool first, then queue
 		tm.poolMutex.Lock()
+		poolAtCapacity := len(tm.pool) >= tm.poolCapacity
+		tm.poolMutex.Unlock()
 
-		// Get next task from queue
+		tm.queueMutex.Lock()
 		var feedID int64
-		if len(tm.queue) > 0 && len(tm.pool) < tm.poolCapacity {
+		if !poolAtCapacity && len(tm.queue) > 0 {
 			feedID = tm.queue[0]
 			tm.queue = tm.queue[1:]
 		}
-
-		tm.poolMutex.Unlock()
 		tm.queueMutex.Unlock()
 
 		if feedID == 0 {

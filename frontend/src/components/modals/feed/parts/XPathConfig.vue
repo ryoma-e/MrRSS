@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhBookOpen } from '@phosphor-icons/vue';
+import BaseSelect from '@/components/common/BaseSelect.vue';
 import { openInBrowser } from '@/utils/browser';
+import type { SelectOption } from '@/types/select';
 
 interface Props {
   mode: 'add' | 'edit';
@@ -42,6 +45,14 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
+
+// Build options for BaseSelect
+const xpathTypeOptions = computed<SelectOption[]>(() => {
+  return [
+    { value: 'HTML+XPath', label: t('modal.feed.xpathHtml') },
+    { value: 'XML+XPath', label: t('modal.feed.xpathXml') },
+  ];
+});
 
 function openDocumentation() {
   const docUrl = locale.value.startsWith('zh')
@@ -84,14 +95,11 @@ const xpathPlaceholders = {
       <label class="block mb-1 sm:mb-1.5 font-semibold text-xs sm:text-sm text-text-secondary">{{
         t('modal.feed.xpathType')
       }}</label>
-      <select
-        :value="props.xpathType"
-        class="input-field"
-        @change="emit('update:xpath-type', ($event.target as HTMLSelectElement).value)"
-      >
-        <option value="HTML+XPath">{{ t('modal.feed.xpathHtml') }}</option>
-        <option value="XML+XPath">{{ t('modal.feed.xpathXml') }}</option>
-      </select>
+      <BaseSelect
+        :model-value="props.xpathType"
+        :options="xpathTypeOptions"
+        @update:model-value="emit('update:xpath-type', String($event))"
+      />
     </div>
 
     <div class="mb-3">
@@ -246,8 +254,6 @@ const xpathPlaceholders = {
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
 .input-field {
   @apply w-full p-2 sm:p-2.5 border border-border rounded-md bg-bg-tertiary text-text-primary text-xs sm:text-sm focus:border-accent focus:outline-none transition-colors;
 }

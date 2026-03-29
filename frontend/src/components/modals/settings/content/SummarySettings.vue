@@ -16,6 +16,7 @@ import {
   SubSettingItem,
   TextAreaControl,
 } from '@/components/settings';
+import BaseSelect from '@/components/common/BaseSelect.vue';
 import AIProfileSelector from '@/components/modals/settings/ai/AIProfileSelector.vue';
 import '@/components/settings/styles.css';
 import type { SettingsData } from '@/types/settings';
@@ -88,14 +89,15 @@ const isClearingCache = ref(false);
         :title="t('setting.content.summaryProvider')"
         :description="t('setting.content.summaryProviderDesc')"
       >
-        <select
-          :value="settings.summary_provider"
-          class="input-field w-32 sm:w-48 text-xs sm:text-sm"
-          @change="updateSetting('summary_provider', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="local">{{ t('setting.content.localAlgorithm') }}</option>
-          <option value="ai">{{ t('setting.content.aiSummary') }}</option>
-        </select>
+        <BaseSelect
+          :model-value="settings.summary_provider"
+          :options="[
+            { value: 'local', label: t('setting.content.localAlgorithm') },
+            { value: 'ai', label: t('setting.content.aiSummary') },
+          ]"
+          width="w-32 sm:w-48"
+          @update:model-value="updateSetting('summary_provider', $event)"
+        />
       </SubSettingItem>
 
       <!-- AI Summary Prompt -->
@@ -137,16 +139,15 @@ const isClearingCache = ref(false);
           :title="t('setting.content.summaryTriggerMode')"
           :description="t('setting.content.summaryTriggerModeDesc')"
         >
-          <select
-            :value="settings.summary_trigger_mode"
-            class="input-field w-32 sm:w-48 text-xs sm:text-sm"
-            @change="
-              updateSetting('summary_trigger_mode', ($event.target as HTMLSelectElement).value)
-            "
-          >
-            <option value="auto">{{ t('setting.content.summaryTriggerModeAuto') }}</option>
-            <option value="manual">{{ t('setting.content.summaryTriggerModeManual') }}</option>
-          </select>
+          <BaseSelect
+            :model-value="settings.summary_trigger_mode"
+            :options="[
+              { value: 'auto', label: t('setting.content.summaryTriggerModeAuto') },
+              { value: 'manual', label: t('setting.content.summaryTriggerModeManual') },
+            ]"
+            width="w-32 sm:w-48"
+            @update:model-value="updateSetting('summary_trigger_mode', $event)"
+          />
         </SubSettingItem>
       </template>
 
@@ -155,15 +156,16 @@ const isClearingCache = ref(false);
         :title="t('setting.content.summaryLength')"
         :description="t('setting.content.summaryLengthDesc')"
       >
-        <select
-          :value="settings.summary_length"
-          class="input-field w-32 sm:w-48 text-xs sm:text-sm"
-          @change="updateSetting('summary_length', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="short">{{ t('setting.content.summaryLengthShort') }}</option>
-          <option value="medium">{{ t('setting.content.summaryLengthMedium') }}</option>
-          <option value="long">{{ t('setting.content.summaryLengthLong') }}</option>
-        </select>
+        <BaseSelect
+          :model-value="settings.summary_length"
+          :options="[
+            { value: 'short', label: t('setting.content.summaryLengthShort') },
+            { value: 'medium', label: t('setting.content.summaryLengthMedium') },
+            { value: 'long', label: t('setting.content.summaryLengthLong') },
+          ]"
+          width="w-32 sm:w-48"
+          @update:model-value="updateSetting('summary_length', $event)"
+        />
       </SubSettingItem>
 
       <!-- Cache Management -->
@@ -191,9 +193,5 @@ const isClearingCache = ref(false);
 </template>
 
 <style scoped>
-@reference "../../../../style.css";
-
-.input-field {
-  @apply p-1.5 sm:p-2.5 border border-border rounded-md bg-bg-secondary text-text-primary focus:border-accent focus:outline-none transition-colors;
-}
+/* Styles are now handled by BaseSelect and select.css */
 </style>

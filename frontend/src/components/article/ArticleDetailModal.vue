@@ -116,6 +116,39 @@ async function exportToNotion() {
   }
 }
 
+// Export to Zotero
+async function exportToZotero() {
+  if (!props.article) return;
+
+  try {
+    window.showToast(t('setting.plugins.zotero.exporting'), 'info');
+
+    const response = await fetch('/api/articles/export/zotero', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        article_id: props.article.id,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(error);
+    }
+
+    const data = await response.json();
+
+    // Show success message
+    const message = data.message || t('setting.plugins.zotero.exported');
+    window.showToast(message, 'success');
+  } catch (error) {
+    console.error('Failed to export to Zotero:', error);
+    const message =
+      error instanceof Error ? error.message : t('setting.plugins.zotero.exportFailed');
+    window.showToast(message, 'error');
+  }
+}
+
 // Navigation
 const currentArticleIndex = computed(() => {
   if (!props.article) return -1;
@@ -278,6 +311,7 @@ function handleOverlayClick(e: MouseEvent) {
           @toggle-translations="toggleTranslations"
           @export-to-obsidian="exportToObsidian"
           @export-to-notion="exportToNotion"
+          @export-to-zotero="exportToZotero"
         />
 
         <!-- Modal content -->
@@ -354,8 +388,6 @@ function handleOverlayClick(e: MouseEvent) {
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 .article-modal-overlay {
   @apply fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4;
 }

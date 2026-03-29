@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import { TipBox } from '@/components/settings';
 import ObsidianSettings from './ObsidianSettings.vue';
 import NotionSettings from './NotionSettings.vue';
+import ZoteroSettings from './ZoteroSettings.vue';
 import FreshRSSSettings from './FreshRSSSettings.vue';
 import RSSHubSettings from './RSSHubSettings.vue';
 
@@ -42,12 +43,12 @@ function handleUpdateSettings(updatedSettings: SettingsData) {
 
     <NotionSettings :settings="settings" @update:settings="handleUpdateSettings" />
 
+    <ZoteroSettings :settings="settings" @update:settings="handleUpdateSettings" />
+
     <FreshRSSSettings :settings="settings" @update:settings="handleUpdateSettings" />
 
     <RSSHubSettings :settings="settings" @update:settings="handleUpdateSettings" />
   </div>
 </template>
 
-<style scoped>
-@reference "../../../../style.css";
-</style>
+<style scoped></style>

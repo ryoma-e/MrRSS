@@ -3,6 +3,7 @@ package feed
 import (
 	"MrRSS/internal/database"
 	"MrRSS/internal/models"
+	"strings"
 	"testing"
 	"time"
 
@@ -454,5 +455,121 @@ func TestProcessArticlesWithYouTubeFeed(t *testing.T) {
 	expectedVideoURL := "https://www.youtube.com/embed/KZcE7HgtFsA"
 	if article.VideoURL != expectedVideoURL {
 		t.Errorf("Expected video URL '%s', got '%s'", expectedVideoURL, article.VideoURL)
+	}
+}
+
+func TestExtractBilibiliVideoURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		content  string
+		expected string
+	}{
+		{
+			name:     "Bilibili RSSHub iframe in description",
+			content:  `<iframe width="640" height="360" src="https://www.bilibili.com/blackboard/html5mobileplayer.html?aid=116142274314455&amp;cid=undefined&amp;bvid=BV11bAUzBEqG" frameborder="0" allowfullscreen=""></iframe><br/><img src="https://i1.hdslb.com/bfs/archive/fe5ffe1fdb3ac021529814058b04e47b74dd4468.jpg"/><br/>2026第363期 02.27 - 03.05 决战！我要夺冠！！！《下一个是谁6》06 - 完美收官`,
+			expected: "https://www.bilibili.com/blackboard/html5mobileplayer.html?aid=116142274314455&cid=undefined&bvid=BV11bAUzBEqG",
+		},
+		{
+			name:     "Bilibili iframe with single quotes",
+			content:  `<iframe width='640' height='360' src='https://www.bilibili.com/blackboard/html5mobileplayer.html?aid=123&bvid=BV1234567890' frameborder='0'></iframe>`,
+			expected: "https://www.bilibili.com/blackboard/html5mobileplayer.html?aid=123&bvid=BV1234567890",
+		},
+		{
+			name:     "No iframe in content",
+			content:  `<p>Just some text content</p><img src="https://example.com/image.jpg">`,
+			expected: "",
+		},
+		{
+			name:     "Empty content",
+			content:  "",
+			expected: "",
+		},
+		{
+			name:     "YouTube iframe (should not match)",
+			content:  `<iframe src="https://www.youtube.com/embed/KZcE7HgtFsA"></iframe>`,
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractBilibiliVideoURL(tt.content)
+			if result != tt.expected {
+				t.Errorf("extractBilibiliVideoURL() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestProcessArticlesWithBilibiliFeed(t *testing.T) {
+	// Create a mock database
+	db, err := database.NewDB(":memory:")
+	if err != nil {
+		t.Fatalf("Failed to create db: %v", err)
+	}
+	if err := db.Init(); err != nil {
+		t.Fatalf("Failed to init db: %v", err)
+	}
+
+	// Create a mock fetcher
+	f := &Fetcher{
+		db: db,
+	}
+
+	// Create a mock feed
+	feed := models.Feed{
+		ID:  1,
+		URL: "https://rsshub.example.com/bilibili/weekly",
+	}
+
+	// Create mock Bilibili RSSHub feed items
+	publishedTime := time.Now()
+	items := []*gofeed.Item{
+		{
+			Title:           "决战！我要夺冠！！！《下一个是谁6》06",
+			Link:            "https://www.bilibili.com/video/BV11bAUzBEqG",
+			Description:     `<iframe width="640" height="360" src="https://www.bilibili.com/blackboard/html5mobileplayer.html?aid=116142274314455&amp;cid=undefined&amp;bvid=BV11bAUzBEqG" frameborder="0" allowfullscreen=""></iframe><br/><img src="https://i1.hdslb.com/bfs/archive/fe5ffe1fdb3ac021529814058b04e47b74dd4468.jpg"/><br/>2026第363期 02.27 - 03.05 决战！我要夺冠！！！《下一个是谁6》06 - 完美收官`,
+			PublishedParsed: &publishedTime,
+		},
+	}
+
+	// Process the articles
+	articlesWithContent := f.processArticles(feed, items)
+
+	// Verify results
+	if len(articlesWithContent) != 1 {
+		t.Fatalf("Expected 1 article, got %d", len(articlesWithContent))
+	}
+
+	article := articlesWithContent[0].Article
+
+	// Should have correct title
+	expectedTitle := "决战！我要夺冠！！！《下一个是谁6》06"
+	if article.Title != expectedTitle {
+		t.Errorf("Expected title '%s', got '%s'", expectedTitle, article.Title)
+	}
+
+	// Should extract image from description
+	expectedImageURL := "https://i1.hdslb.com/bfs/archive/fe5ffe1fdb3ac021529814058b04e47b74dd4468.jpg"
+	if article.ImageURL != expectedImageURL {
+		t.Errorf("Expected image URL '%s', got '%s'", expectedImageURL, article.ImageURL)
+	}
+
+	// Should have correct URL
+	expectedURL := "https://www.bilibili.com/video/BV11bAUzBEqG"
+	if article.URL != expectedURL {
+		t.Errorf("Expected URL '%s', got '%s'", expectedURL, article.URL)
+	}
+
+	// Should extract Bilibili video URL
+	expectedVideoURL := "https://www.bilibili.com/blackboard/html5mobileplayer.html?aid=116142274314455&cid=undefined&bvid=BV11bAUzBEqG"
+	if article.VideoURL != expectedVideoURL {
+		t.Errorf("Expected video URL '%s', got '%s'", expectedVideoURL, article.VideoURL)
+	}
+
+	// Content should still contain iframe (CleanHTML doesn't remove iframes)
+	content := articlesWithContent[0].Content
+	if !strings.Contains(content, "iframe") {
+		t.Error("Content should still contain iframe tag")
 	}
 }

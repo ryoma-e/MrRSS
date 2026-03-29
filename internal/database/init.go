@@ -1,8 +1,6 @@
 package database
 
 import (
-	"fmt"
-
 	"MrRSS/internal/config"
 
 	_ "modernc.org/sqlite"
@@ -43,7 +41,8 @@ func (db *DB) Init() error {
 		settingsKeys := config.SettingsKeys()
 		for _, key := range settingsKeys {
 			defaultVal := config.GetString(key)
-			_, _ = db.Exec(fmt.Sprintf(`INSERT OR IGNORE INTO settings (key, value) VALUES ('%s', '%s')`, key, defaultVal))
+			// Use parameterized query to prevent SQL injection
+			_, _ = db.Exec(`INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)`, key, defaultVal)
 		}
 
 		// Apply additional migrations

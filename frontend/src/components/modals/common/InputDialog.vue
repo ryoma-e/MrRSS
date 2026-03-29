@@ -71,7 +71,7 @@ function handleKeyDown(e: KeyboardEvent) {
 </script>
 
 <template>
-  <BaseModal :title="title" size="md" :closable="false" @close="handleClose">
+  <BaseModal :title="title" size="md" :closable="false" :z-index="150" @close="handleClose">
     <!-- Body -->
     <div class="p-3 sm:p-5">
       <p v-if="message" class="m-0 mb-2 sm:mb-3 text-text-primary text-sm sm:text-base">
@@ -108,8 +108,6 @@ function handleKeyDown(e: KeyboardEvent) {
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
 .input-field {
   @apply px-3 py-2 rounded-lg border border-border bg-bg-secondary text-text-primary;
   @apply focus:outline-none focus:ring-2 focus:ring-accent;

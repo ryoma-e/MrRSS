@@ -88,9 +88,9 @@ func HandleTestConnection(h *core.Handler, w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Test with a simple, common route
+	// Test connection using /healthz endpoint
 	client := rsshub.NewClient(req.Endpoint, req.APIKey)
-	err := client.ValidateRoute("nytimes")
+	err := client.ValidateRoute("healthz")
 
 	if err != nil {
 		response.JSON(w, map[string]interface{}{
@@ -140,7 +140,7 @@ func HandleValidateRoute(h *core.Handler, w http.ResponseWriter, r *http.Request
 	// Get RSSHub settings
 	endpoint, _ := h.DB.GetSetting("rsshub_endpoint")
 	if endpoint == "" {
-		endpoint = "https://rsshub.app"
+		endpoint = "https://rss.spriple.org"
 	}
 	apiKey, _ := h.DB.GetEncryptedSetting("rsshub_api_key")
 
@@ -210,7 +210,7 @@ func HandleTransformURL(h *core.Handler, w http.ResponseWriter, r *http.Request)
 	// Get RSSHub settings
 	endpoint, _ := h.DB.GetSetting("rsshub_endpoint")
 	if endpoint == "" {
-		endpoint = "https://rsshub.app"
+		endpoint = "https://rss.spriple.org"
 	}
 	apiKey, _ := h.DB.GetEncryptedSetting("rsshub_api_key")
 

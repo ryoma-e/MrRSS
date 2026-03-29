@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseSelect from '@/components/common/BaseSelect.vue';
+
 interface Option {
   value: string | number;
   label: string;
@@ -18,11 +20,6 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | number];
 }>();
 
-function handleChange(event: Event) {
-  const target = event.target as HTMLSelectElement;
-  emit('update:modelValue', target.value);
-}
-
 const widthClass = (width?: string) => {
   switch (width) {
     case 'sm':
@@ -38,30 +35,17 @@ const widthClass = (width?: string) => {
 </script>
 
 <template>
-  <select
-    class="input-field select"
-    :class="[widthClass(width), { 'opacity-50 cursor-not-allowed': disabled }]"
+  <BaseSelect
+    :model-value="modelValue"
+    :options="options"
     :disabled="disabled"
-    :value="modelValue"
-    @change="handleChange"
-  >
-    <option
-      v-for="option in options"
-      :key="option.value"
-      :value="option.value"
-      :disabled="option.disabled"
-    >
-      {{ option.label }}
-    </option>
-  </select>
+    :width="widthClass(width)"
+    :class="{ 'opacity-50 cursor-not-allowed': disabled }"
+    bg-mode="secondary"
+    @update:model-value="emit('update:modelValue', $event)"
+  />
 </template>
 
 <style scoped>
-.input-field {
-  @apply p-1.5 sm:p-2.5 border border-border rounded-md bg-bg-secondary text-text-primary focus:border-accent focus:outline-none transition-colors text-xs sm:text-sm;
-}
-
-.input-field:disabled {
-  @apply cursor-not-allowed;
-}
+/* Styles are now handled by BaseSelect and select.css */
 </style>

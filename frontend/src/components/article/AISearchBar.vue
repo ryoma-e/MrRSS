@@ -154,8 +154,6 @@ function handleKeyDown(event: KeyboardEvent) {
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 .ai-search-bar {
   flex-shrink: 0;
 }

@@ -129,4 +129,65 @@ func TestArticleContentCache(t *testing.T) {
 			t.Errorf("Expected 0 rows affected, got %d", affected)
 		}
 	})
+
+	t.Run("GetArticleContentsBatch", func(t *testing.T) {
+		// Setup test data
+		testData := map[int64]string{
+			10: "<p>Content for article 10</p>",
+			20: "<p>Content for article 20</p>",
+			30: "<p>Content for article 30</p>",
+		}
+
+		// Set contents for multiple articles
+		for articleID, content := range testData {
+			if err := db.SetArticleContent(articleID, content); err != nil {
+				t.Fatalf("Failed to set content for article %d: %v", articleID, err)
+			}
+		}
+
+		// Test 1: Get all existing contents
+		articleIDs := []int64{10, 20, 30}
+		contents, err := db.GetArticleContentsBatch(articleIDs)
+		if err != nil {
+			t.Fatalf("GetArticleContentsBatch failed: %v", err)
+		}
+
+		// Verify we got all 3 contents
+		if len(contents) != 3 {
+			t.Errorf("Expected 3 contents, got %d", len(contents))
+		}
+
+		// Verify each content
+		for articleID, expectedContent := range testData {
+			if content, ok := contents[articleID]; !ok {
+				t.Errorf("Missing content for article %d", articleID)
+			} else if content != expectedContent {
+				t.Errorf("Content mismatch for article %d: got %q, want %q", articleID, content, expectedContent)
+			}
+		}
+
+		// Test 2: Mix of existing and non-existing articles
+		mixedIDs := []int64{10, 999, 20} // 999 doesn't exist
+		contents, err = db.GetArticleContentsBatch(mixedIDs)
+		if err != nil {
+			t.Fatalf("GetArticleContentsBatch with mixed IDs failed: %v", err)
+		}
+
+		if len(contents) != 2 {
+			t.Errorf("Expected 2 contents for mixed IDs, got %d", len(contents))
+		}
+
+		if _, ok := contents[999]; ok {
+			t.Error("Should not have content for non-existent article 999")
+		}
+
+		// Test 3: Empty slice
+		contents, err = db.GetArticleContentsBatch([]int64{})
+		if err != nil {
+			t.Fatalf("GetArticleContentsBatch with empty slice failed: %v", err)
+		}
+		if len(contents) != 0 {
+			t.Errorf("Expected empty map for empty input, got %d entries", len(contents))
+		}
+	})
 }

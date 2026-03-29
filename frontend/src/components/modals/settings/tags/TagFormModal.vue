@@ -9,9 +9,12 @@ import ModalFooter from '@/components/common/ModalFooter.vue';
 
 interface Props {
   editingTag: Tag | null;
+  initialName?: string;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  initialName: '',
+});
 
 const emit = defineEmits<{
   close: [];
@@ -46,7 +49,7 @@ watch(
       newTagName.value = tag.name;
       newTagColor.value = tag.color;
     } else {
-      newTagName.value = '';
+      newTagName.value = props.initialName || '';
       newTagColor.value = '#3B82F6';
     }
   },
@@ -97,7 +100,7 @@ const saveButtonText = computed(() => {
     <div class="p-4 sm:p-6 space-y-4">
       <!-- Name -->
       <div>
-        <label class="block mb-1.5 text-sm font-medium text-text-secondary">
+        <label class="block mb-1.5 text-sm font-medium text-text-primary">
           {{ t('modal.tag.name') }}
         </label>
         <input
@@ -111,7 +114,7 @@ const saveButtonText = computed(() => {
 
       <!-- Color -->
       <div>
-        <label class="block mb-1.5 text-sm font-medium text-text-secondary">
+        <label class="block mb-1.5 text-sm font-medium text-text-primary">
           {{ t('modal.tag.color') }}
         </label>
         <div class="flex gap-2 flex-wrap">
@@ -174,8 +177,6 @@ const saveButtonText = computed(() => {
 </template>
 
 <style scoped>
-@reference "../../../../style.css";
-
 .input-field {
   @apply w-full p-2 sm:p-2.5 border border-border rounded-md bg-bg-tertiary text-text-primary text-xs sm:text-sm focus:border-accent focus:outline-none transition-colors;
   box-sizing: border-box;

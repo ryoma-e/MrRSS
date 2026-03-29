@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
+import { onMounted, onUnmounted } from 'vue';
 import BaseModal from '@/components/common/BaseModal.vue';
 import ModalFooter from '@/components/common/ModalFooter.vue';
 
@@ -44,10 +45,28 @@ function handleClose() {
   emit('cancel');
   emit('close');
 }
+
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    handleConfirm();
+  } else if (e.key === 'Escape') {
+    e.preventDefault();
+    handleCancel();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 </script>
 
 <template>
-  <BaseModal :title="title" :closable="false" size="md" @close="handleClose">
+  <BaseModal :title="title" :closable="false" size="md" :z-index="150" @close="handleClose">
     <!-- Body -->
     <div class="p-3 sm:p-5">
       <p class="m-0 text-text-primary text-sm sm:text-base">{{ message }}</p>
@@ -70,6 +89,4 @@ function handleClose() {
   </BaseModal>
 </template>
 
-<style scoped>
-@reference "../../../style.css";
-</style>
+<style scoped></style>

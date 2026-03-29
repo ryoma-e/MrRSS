@@ -136,6 +136,4 @@ async function clearAllChatSessions() {
   </SettingGroup>
 </template>
 
-<style scoped>
-@reference "../../../../style.css";
-</style>
+<style scoped></style>

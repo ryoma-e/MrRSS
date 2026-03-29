@@ -748,6 +748,39 @@ export function useArticleDetail() {
     }
   }
 
+  // Export article to Zotero
+  async function exportToZotero() {
+    if (!article.value) return;
+
+    try {
+      window.showToast(t('setting.plugins.zotero.exporting'), 'info');
+
+      const response = await fetch('/api/articles/export/zotero', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          article_id: article.value.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const data = await response.json();
+
+      // Show success message
+      const message = data.message || t('setting.plugins.zotero.exported');
+      window.showToast(message, 'success');
+    } catch (error) {
+      console.error('Failed to export to Zotero:', error);
+      const message =
+        error instanceof Error ? error.message : t('setting.plugins.zotero.exportFailed');
+      window.showToast(message, 'error');
+    }
+  }
+
   // Listen for render content event from context menu
   async function handleRenderContent(e: Event) {
     const event = e as RenderActionEvent;
@@ -865,6 +898,7 @@ export function useArticleDetail() {
     downloadImage,
     exportToObsidian,
     exportToNotion,
+    exportToZotero,
     attachImageEventListeners, // Expose for re-attaching after content modifications
     handleRetryLoadContent,
     goToPreviousArticle,

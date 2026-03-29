@@ -196,3 +196,79 @@ func (p *customProvider) SupportedLanguages() []string {
 	// 取决于自定义配置
 	return []string{}
 }
+
+// microsoftProvider 实现 Provider 接口的 Microsoft 翻译适配器
+type microsoftProvider struct {
+	translator *MicrosoftTranslator
+}
+
+// Name 返回提供商名称
+func (p *microsoftProvider) Name() string {
+	return "microsoft"
+}
+
+// Translate 执行翻译
+func (p *microsoftProvider) Translate(ctx context.Context, text, targetLang string) (*TranslationResult, error) {
+	translated, err := p.translator.Translate(text, targetLang)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TranslationResult{
+		Original:   text,
+		Translated: translated,
+		FromLang:   "auto", // Microsoft 自动检测源语言
+		ToLang:     targetLang,
+		Provider:   "microsoft",
+	}, nil
+}
+
+// IsAvailable 检查提供商是否可用
+func (p *microsoftProvider) IsAvailable() bool {
+	// Microsoft 需要 API key
+	return p.translator.APIKey != ""
+}
+
+// SupportedLanguages 返回支持的语言列表
+func (p *microsoftProvider) SupportedLanguages() []string {
+	// Microsoft 支持所有常用语言
+	return []string{}
+}
+
+// tencentProvider 实现 Provider 接口的腾讯云翻译适配器
+type tencentProvider struct {
+	translator *TencentTranslator
+}
+
+// Name 返回提供商名称
+func (p *tencentProvider) Name() string {
+	return "tencent"
+}
+
+// Translate 执行翻译
+func (p *tencentProvider) Translate(ctx context.Context, text, targetLang string) (*TranslationResult, error) {
+	translated, err := p.translator.Translate(text, targetLang)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TranslationResult{
+		Original:   text,
+		Translated: translated,
+		FromLang:   "auto", // 腾讯云自动检测源语言
+		ToLang:     targetLang,
+		Provider:   "tencent",
+	}, nil
+}
+
+// IsAvailable 检查提供商是否可用
+func (p *tencentProvider) IsAvailable() bool {
+	// 腾讯云需要 SecretID 和 SecretKey
+	return p.translator.SecretID != "" && p.translator.SecretKey != ""
+}
+
+// SupportedLanguages 返回支持的语言列表
+func (p *tencentProvider) SupportedLanguages() []string {
+	// 腾讯云支持所有常用语言
+	return []string{}
+}

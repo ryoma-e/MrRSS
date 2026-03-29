@@ -123,6 +123,10 @@ func HandleAddFeed(h *core.Handler, w http.ResponseWriter, r *http.Request) {
 	} else if req.Type == "email" {
 		// Add feed as email newsletter subscription
 		feedID, err = h.Fetcher.AddEmailSubscription(req.EmailAddress, req.EmailIMAPServer, req.EmailUsername, req.EmailPassword, req.Category, req.Title, req.EmailFolder, req.EmailIMAPPort)
+	} else if rsshub.IsRSSHubURL(req.URL) {
+		// Add feed using RSSHub route
+		route := rsshub.ExtractRoute(req.URL)
+		feedID, err = h.Fetcher.AddRSSHubSubscription(route, req.Category, req.Title)
 	} else {
 		// Add feed using URL
 		feedID, err = h.Fetcher.AddSubscription(req.URL, req.Category, req.Title)

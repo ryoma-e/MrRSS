@@ -147,8 +147,6 @@ function handleDangerClick() {
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 button {
   box-sizing: border-box;
 }

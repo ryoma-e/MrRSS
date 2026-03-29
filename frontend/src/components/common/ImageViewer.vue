@@ -370,8 +370,6 @@ const imageStyle = computed<CSSProperties>(() => ({
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 /* Close button */
 .close-btn {
   @apply absolute top-4 right-4 w-8 h-8 bg-black/50 hover:bg-black/70;

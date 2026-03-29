@@ -185,6 +185,19 @@ func HandleFilteredArticles(h *core.Handler, w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// Collect feed IDs for batch tag loading
+	feedIDs := make([]int64, len(feeds))
+	for i, feed := range feeds {
+		feedIDs[i] = feed.ID
+	}
+
+	// Batch load all tags at once (fixes N+1 query problem)
+	tagsMap, err := h.DB.GetTagsForFeeds(feedIDs)
+	if err != nil {
+		response.Error(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	// Create maps of feed ID to feed data
 	feedCategories := make(map[int64]string)
 	feedTypes := make(map[int64]string)
@@ -200,8 +213,8 @@ func HandleFilteredArticles(h *core.Handler, w http.ResponseWriter, r *http.Requ
 		feedArticlesPerMonth[feed.ID] = feed.ArticlesPerMonth
 		feedLastUpdateStatus[feed.ID] = feed.LastUpdateStatus
 
-		// Build tag names list for this feed
-		tags, _ := h.DB.GetFeedTags(feed.ID)
+		// Build tag names list for this feed from pre-loaded tags
+		tags := tagsMap[feed.ID]
 		tagNames := make([]string, len(tags))
 		for i, tag := range tags {
 			tagNames[i] = tag.Name

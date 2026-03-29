@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"MrRSS/internal/models"
 )
@@ -180,6 +181,61 @@ func (db *DB) GetFeedTags(feedID int64) ([]models.Tag, error) {
 	}
 
 	return tags, nil
+}
+
+// GetTagsForFeeds retrieves tags for multiple feeds in a single query.
+// Returns a map where key is feedID and value is a slice of tags for that feed.
+// This is more efficient than calling GetFeedTags multiple times (N+1 query problem).
+func (db *DB) GetTagsForFeeds(feedIDs []int64) (map[int64][]models.Tag, error) {
+	db.WaitForReady()
+
+	if len(feedIDs) == 0 {
+		return make(map[int64][]models.Tag), nil
+	}
+
+	// Build placeholders for IN clause
+	placeholders := make([]string, len(feedIDs))
+	args := make([]interface{}, len(feedIDs))
+	for i, id := range feedIDs {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	query := fmt.Sprintf(`
+		SELECT ft.feed_id, t.id, t.name, t.color, t.position
+		FROM tags t
+		INNER JOIN feed_tags ft ON t.id = ft.tag_id
+		WHERE ft.feed_id IN (%s)
+		ORDER BY ft.feed_id, t.position ASC, t.id ASC
+	`, strings.Join(placeholders, ", "))
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Initialize result map with empty slices for all feed IDs
+	result := make(map[int64][]models.Tag)
+	for _, feedID := range feedIDs {
+		result[feedID] = []models.Tag{}
+	}
+
+	for rows.Next() {
+		var feedID int64
+		var tag models.Tag
+		err := rows.Scan(&feedID, &tag.ID, &tag.Name, &tag.Color, &tag.Position)
+		if err != nil {
+			return nil, err
+		}
+		result[feedID] = append(result[feedID], tag)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // SetFeedTags replaces all tags for a feed with the provided tag IDs.

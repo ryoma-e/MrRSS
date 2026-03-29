@@ -51,7 +51,7 @@ func (db *DB) SaveArticles(ctx context.Context, articles []*models.Article) erro
 	}
 	defer tx.Rollback()
 
-	stmt, err := tx.PrepareContext(ctx, `INSERT OR IGNORE INTO articles (feed_id, title, url, image_url, audio_url, video_url, published_at, translated_title, is_read, is_favorite, is_hidden, is_read_later, summary, unique_id, author) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+	stmt, err := tx.PrepareContext(ctx, `INSERT OR REPLACE INTO articles (feed_id, title, url, image_url, audio_url, video_url, published_at, translated_title, is_read, is_favorite, is_hidden, is_read_later, summary, unique_id, author) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,24 @@ func (db *DB) SaveArticles(ctx context.Context, articles []*models.Article) erro
 
 		// Generate unique_id for deduplication
 		uniqueID := urlutil.GenerateArticleUniqueID(article.Title, article.FeedID, article.PublishedAt, article.HasValidPublishedTime)
-		_, err := stmt.ExecContext(ctx, article.FeedID, article.Title, article.URL, article.ImageURL, article.AudioURL, article.VideoURL, article.PublishedAt, article.TranslatedTitle, article.IsRead, article.IsFavorite, article.IsHidden, article.IsReadLater, article.Summary, uniqueID, article.Author)
+
+		// For INSERT OR REPLACE, we need to preserve existing status fields
+		// Check if article exists to preserve its status
+		var existingIsRead, existingIsFavorite, existingIsHidden, existingIsReadLater int
+		err := tx.QueryRowContext(ctx, "SELECT is_read, is_favorite, is_hidden, is_read_later FROM articles WHERE unique_id = ?", uniqueID).Scan(&existingIsRead, &existingIsFavorite, &existingIsHidden, &existingIsReadLater)
+		isRead := article.IsRead
+		isFavorite := article.IsFavorite
+		isHidden := article.IsHidden
+		isReadLater := article.IsReadLater
+		if err == nil {
+			// Article exists, preserve its status
+			isRead = existingIsRead == 1
+			isFavorite = existingIsFavorite == 1
+			isHidden = existingIsHidden == 1
+			isReadLater = existingIsReadLater == 1
+		}
+
+		_, err = stmt.ExecContext(ctx, article.FeedID, article.Title, article.URL, article.ImageURL, article.AudioURL, article.VideoURL, article.PublishedAt, article.TranslatedTitle, isRead, isFavorite, isHidden, isReadLater, article.Summary, uniqueID, article.Author)
 		if err != nil {
 			log.Println("Error saving article in batch:", err)
 			// Continue even if one fails

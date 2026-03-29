@@ -91,6 +91,20 @@ func (f *Factory) Create(providerType ProviderType) (Provider, error) {
 		}
 		return f.createCustomProvider(customConfig), nil
 
+	case ProviderMicrosoft:
+		microsoftConfig, err := f.loadMicrosoftConfig()
+		if err != nil {
+			return nil, err
+		}
+		return f.createMicrosoftProvider(microsoftConfig), nil
+
+	case ProviderTencent:
+		tencentConfig, err := f.loadTencentConfig()
+		if err != nil {
+			return nil, err
+		}
+		return f.createTencentProvider(tencentConfig), nil
+
 	default:
 		// 默认返回 Google 提供商
 		return f.createGoogleProvider(ProviderConfig{}), nil
@@ -259,6 +273,18 @@ type aiConfig struct {
 	CustomHeaders string
 }
 
+type microsoftConfig struct {
+	APIKey   string
+	Region   string
+	Endpoint string
+}
+
+type tencentConfig struct {
+	SecretID  string
+	SecretKey string
+	Region    string
+}
+
 // isLocalEndpoint 检查端点 URL 是否指向本地服务
 func isLocalEndpoint(endpointURL string) bool {
 	if endpointURL == "" {
@@ -283,4 +309,73 @@ func isLocalEndpoint(endpointURL string) bool {
 		host == "::1" ||
 		strings.HasPrefix(host, "127.") ||
 		host == "0.0.0.0"
+}
+
+// loadMicrosoftConfig 从设置加载 Microsoft 配置
+func (f *Factory) loadMicrosoftConfig() (*microsoftConfig, error) {
+	apiKey, _ := f.settingsProvider.GetEncryptedSetting("microsoft_api_key")
+	region, _ := f.settingsProvider.GetSetting("microsoft_region")
+	endpoint, _ := f.settingsProvider.GetSetting("microsoft_endpoint")
+
+	if apiKey == "" {
+		return nil, fmt.Errorf("microsoft API key is required")
+	}
+
+	return &microsoftConfig{
+		APIKey:   apiKey,
+		Region:   region,
+		Endpoint: endpoint,
+	}, nil
+}
+
+// loadTencentConfig 从设置加载腾讯云配置
+func (f *Factory) loadTencentConfig() (*tencentConfig, error) {
+	secretID, _ := f.settingsProvider.GetSetting("tencent_secret_id")
+	secretKey, _ := f.settingsProvider.GetEncryptedSetting("tencent_secret_key")
+	region, _ := f.settingsProvider.GetSetting("tencent_region")
+
+	if secretID == "" || secretKey == "" {
+		return nil, fmt.Errorf("tencent SecretID and SecretKey are required")
+	}
+
+	// Default region
+	if region == "" {
+		region = "ap-guangzhou"
+	}
+
+	return &tencentConfig{
+		SecretID:  secretID,
+		SecretKey: secretKey,
+		Region:    region,
+	}, nil
+}
+
+// createMicrosoftProvider 创建 Microsoft 翻译提供商
+func (f *Factory) createMicrosoftProvider(config *microsoftConfig) Provider {
+	var translator *MicrosoftTranslator
+
+	// Create translator based on configuration
+	if config.Endpoint != "" {
+		translator = NewMicrosoftTranslatorWithEndpoint(config.APIKey, config.Endpoint)
+	} else if config.Region != "" {
+		translator = NewMicrosoftTranslatorWithRegion(config.APIKey, config.Region)
+	} else {
+		translator = NewMicrosoftTranslator(config.APIKey)
+	}
+
+	return &microsoftProvider{translator: translator}
+}
+
+// createTencentProvider 创建腾讯云翻译提供商
+func (f *Factory) createTencentProvider(config *tencentConfig) Provider {
+	var translator *TencentTranslator
+
+	// Create translator based on configuration
+	if config.Region != "" && config.Region != "ap-guangzhou" {
+		translator = NewTencentTranslatorWithRegion(config.SecretID, config.SecretKey, config.Region)
+	} else {
+		translator = NewTencentTranslator(config.SecretID, config.SecretKey)
+	}
+
+	return &tencentProvider{translator: translator}
 }

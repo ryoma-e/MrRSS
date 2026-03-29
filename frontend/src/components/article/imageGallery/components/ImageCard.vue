@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { PhImage, PhHeart } from '@phosphor-icons/vue';
+import { PhImage, PhHeart, PhPlay } from '@phosphor-icons/vue';
 import { computed } from 'vue';
 import type { Article } from '@/types/models';
 import { getProxiedMediaUrl } from '@/utils/mediaProxy';
+import { isYouTubeArticle, extractYouTubeVideoId, getYouTubeThumbnailUrl } from '@/utils/youtube';
+import { isBilibiliArticle } from '@/utils/bilibili';
 
 interface Props {
   article: Article;
@@ -20,14 +22,55 @@ const emit = defineEmits<{
 }>();
 
 /**
- * Get proxied image URL for cover image
- * Cover images (image_url) are always cached to ensure they display correctly
- * This prevents hotlinking issues and ensures consistent loading
+ * Check if this article has a YouTube video
  */
-const proxiedImageUrl = computed(() => {
-  // Always use proxy with force_cache=true for cover images
-  // Cover images are the main image shown in the gallery grid
-  return getProxiedMediaUrl(props.article.image_url, undefined, true);
+const isYouTube = computed(() => isYouTubeArticle(props.article));
+
+/**
+ * Check if this article has a Bilibili video
+ */
+const isBilibili = computed(() => isBilibiliArticle(props.article));
+
+/**
+ * Check if this article has any video (YouTube or Bilibili)
+ */
+const isVideo = computed(() => isYouTube.value || isBilibili.value);
+
+/**
+ * Get platform badge icon path
+ */
+const platformBadge = computed(() => {
+  if (isYouTube.value) {
+    return {
+      label: 'YouTube',
+      iconPath: '/assets/video_icons/youtube.svg',
+    };
+  }
+  if (isBilibili.value) {
+    return {
+      label: 'Bilibili',
+      iconPath: '/assets/video_icons/bilibili.svg',
+    };
+  }
+  return null;
+});
+
+/**
+ * Get the display URL (image, YouTube thumbnail, or Bilibili thumbnail)
+ */
+const displayUrl = computed(() => {
+  if (isYouTube.value && props.article.video_url) {
+    const videoId = extractYouTubeVideoId(props.article.video_url);
+    if (videoId) {
+      return getYouTubeThumbnailUrl(videoId, 'high');
+    }
+  }
+  // For Bilibili, use the article's image_url which contains the thumbnail from RSS
+  if (isBilibili.value && props.article.image_url) {
+    return getProxiedMediaUrl(props.article.image_url, undefined, true);
+  }
+  // Use proxy with force_cache=true for cover images
+  return getProxiedMediaUrl(props.article.image_url || '', undefined, true);
 });
 
 /**
@@ -77,35 +120,60 @@ function formatDate(dateString: string): string {
   >
     <!-- Image container -->
     <div
-      class="relative overflow-hidden rounded-lg bg-bg-secondary transition-transform duration-200 hover:scale-[1.02]"
+      class="relative overflow-hidden rounded-lg bg-bg-secondary transition-transform duration-200 hover:scale-[1.02] group/image-container"
     >
-      <img :src="proxiedImageUrl" :alt="article.title" class="w-full h-auto block" loading="lazy" />
+      <!-- Hover overlay (gray mask on hover) -->
+      <div
+        class="absolute inset-0 bg-black/0 group-hover/image-container:bg-black/30 pointer-events-none transition-all duration-200 z-0"
+      ></div>
+
+      <img
+        :src="displayUrl"
+        :alt="article.title"
+        class="w-full h-auto block relative z-0"
+        loading="lazy"
+      />
+
+      <!-- Platform badge (top-left) -->
+      <div
+        v-if="platformBadge"
+        class="absolute top-2 left-2 px-2 py-1 rounded-md bg-white/90 dark:bg-gray-800/90 text-gray-900 dark:text-white text-xs font-semibold shadow-lg z-10 flex items-center gap-1.5 backdrop-blur-sm pointer-events-auto"
+      >
+        <img :src="platformBadge.iconPath" class="w-4 h-4" alt="" />
+        <span>{{ platformBadge.label }}</span>
+      </div>
+
+      <!-- Unified play button (center) -->
+      <div
+        v-if="isVideo"
+        class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity duration-200 group-hover:opacity-0 z-10"
+      >
+        <div class="bg-gray-800/70 rounded-full p-4 shadow-lg backdrop-blur-sm">
+          <PhPlay :size="32" weight="fill" class="text-white" />
+        </div>
+      </div>
 
       <!-- Image count indicator -->
       <div
-        v-if="imageCount > 1"
-        class="absolute bottom-2 left-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs font-semibold backdrop-blur-sm z-10 flex items-center gap-1 transition-all duration-200"
+        v-if="imageCount > 1 && !isVideo"
+        class="absolute bottom-2 left-2 px-2 py-1 rounded-full bg-black/60 text-white text-xs font-semibold backdrop-blur-sm z-10 flex items-center gap-1 transition-all duration-200 pointer-events-auto"
         :class="{ 'group-hover:bottom-20': !showTextOverlay }"
       >
         <PhImage :size="14" />
         <span class="ml-1">{{ imageCount }}</span>
       </div>
 
-      <!-- Favorite button overlay -->
-      <div
-        class="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all duration-200 flex items-start justify-end p-2"
+      <!-- Favorite button -->
+      <button
+        class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/50 rounded-full p-1.5 hover:bg-black/70 z-10 pointer-events-auto"
+        @click="handleFavoriteClick($event)"
       >
-        <button
-          class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/50 rounded-full p-1.5 hover:bg-black/70"
-          @click="handleFavoriteClick($event)"
-        >
-          <PhHeart
-            :size="20"
-            :weight="article.is_favorite ? 'fill' : 'regular'"
-            :class="article.is_favorite ? 'text-red-500' : 'text-white'"
-          />
-        </button>
-      </div>
+        <PhHeart
+          :size="20"
+          :weight="article.is_favorite ? 'fill' : 'regular'"
+          :class="article.is_favorite ? 'text-red-500' : 'text-white'"
+        />
+      </button>
 
       <!-- Hover overlay when text is hidden -->
       <div

@@ -77,6 +77,9 @@ type Defaults struct {
 	MediaCacheMaxAgeDays          int    `json:"media_cache_max_age_days"`
 	MediaCacheMaxSizeMb           int    `json:"media_cache_max_size_mb"`
 	MediaProxyFallback            bool   `json:"media_proxy_fallback"`
+	MicrosoftAPIKey               string `json:"microsoft_api_key"`
+	MicrosoftEndpoint             string `json:"microsoft_endpoint"`
+	MicrosoftRegion               string `json:"microsoft_region"`
 	NetworkBandwidthMbps          string `json:"network_bandwidth_mbps"`
 	NetworkLatencyMs              string `json:"network_latency_ms"`
 	NetworkSpeed                  string `json:"network_speed"`
@@ -101,6 +104,7 @@ type Defaults struct {
 	Shortcuts                     string `json:"shortcuts"`
 	ShortcutsEnabled              bool   `json:"shortcuts_enabled"`
 	ShowArticlePreviewImages      bool   `json:"show_article_preview_images"`
+	ShowFloatingToc               bool   `json:"show_floating_toc"`
 	ShowHiddenArticles            bool   `json:"show_hidden_articles"`
 	StartupOnBoot                 bool   `json:"startup_on_boot"`
 	SummaryEnabled                bool   `json:"summary_enabled"`
@@ -108,6 +112,9 @@ type Defaults struct {
 	SummaryProvider               string `json:"summary_provider"`
 	SummaryTriggerMode            string `json:"summary_trigger_mode"`
 	TargetLanguage                string `json:"target_language"`
+	TencentRegion                 string `json:"tencent_region"`
+	TencentSecretId               string `json:"tencent_secret_id"`
+	TencentSecretKey              string `json:"tencent_secret_key"`
 	Theme                         string `json:"theme"`
 	TranslationEnabled            bool   `json:"translation_enabled"`
 	TranslationOnlyMode           bool   `json:"translation_only_mode"`
@@ -118,6 +125,9 @@ type Defaults struct {
 	WindowWidth                   string `json:"window_width"`
 	WindowX                       string `json:"window_x"`
 	WindowY                       string `json:"window_y"`
+	ZoteroAPIKey                  string `json:"zotero_api_key"`
+	ZoteroEnabled                 bool   `json:"zotero_enabled"`
+	ZoteroUserId                  string `json:"zotero_user_id"`
 }
 
 var defaults Defaults
@@ -254,6 +264,12 @@ func GetString(key string) string {
 		return strconv.Itoa(defaults.MediaCacheMaxSizeMb)
 	case "media_proxy_fallback":
 		return strconv.FormatBool(defaults.MediaProxyFallback)
+	case "microsoft_api_key":
+		return defaults.MicrosoftAPIKey
+	case "microsoft_endpoint":
+		return defaults.MicrosoftEndpoint
+	case "microsoft_region":
+		return defaults.MicrosoftRegion
 	case "network_bandwidth_mbps":
 		return defaults.NetworkBandwidthMbps
 	case "network_latency_ms":
@@ -302,6 +318,8 @@ func GetString(key string) string {
 		return strconv.FormatBool(defaults.ShortcutsEnabled)
 	case "show_article_preview_images":
 		return strconv.FormatBool(defaults.ShowArticlePreviewImages)
+	case "show_floating_toc":
+		return strconv.FormatBool(defaults.ShowFloatingToc)
 	case "show_hidden_articles":
 		return strconv.FormatBool(defaults.ShowHiddenArticles)
 	case "startup_on_boot":
@@ -316,6 +334,12 @@ func GetString(key string) string {
 		return defaults.SummaryTriggerMode
 	case "target_language":
 		return defaults.TargetLanguage
+	case "tencent_region":
+		return defaults.TencentRegion
+	case "tencent_secret_id":
+		return defaults.TencentSecretId
+	case "tencent_secret_key":
+		return defaults.TencentSecretKey
 	case "theme":
 		return defaults.Theme
 	case "translation_enabled":
@@ -336,6 +360,12 @@ func GetString(key string) string {
 		return defaults.WindowX
 	case "window_y":
 		return defaults.WindowY
+	case "zotero_api_key":
+		return defaults.ZoteroAPIKey
+	case "zotero_enabled":
+		return strconv.FormatBool(defaults.ZoteroEnabled)
+	case "zotero_user_id":
+		return defaults.ZoteroUserId
 	default:
 		return ""
 	}

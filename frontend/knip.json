@@ -1,18 +1,8 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["src/main.ts"],
+  "entry": ["src/**/*.ts"],
   "project": ["src/**/*.vue", "src/**/*.ts"],
-  "ignore": [
-    "node_modules/**",
-    "dist/**",
-    "wailsjs/**",
-    "dist-electron/**",
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "cypress/**",
-    "vitest.config.ts",
-    "vite.config.ts"
-  ],
+  "ignore": ["src/test/**"],
   "ignoreDependencies": ["@cypress/*"],
   "ignoreIssues": {
     "src/composables/article/useContentTranslation.ts": ["exports"],

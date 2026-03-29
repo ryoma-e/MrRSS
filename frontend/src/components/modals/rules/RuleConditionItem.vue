@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhProhibit, PhTrash } from '@phosphor-icons/vue';
+import BaseSelect from '@/components/common/BaseSelect.vue';
+import BaseMultiSelect from '@/components/common/BaseMultiSelect.vue';
 import {
   useRuleOptions,
   type Condition,
@@ -9,6 +12,7 @@ import {
   isNumberField,
   needsOperator,
 } from '@/composables/rules/useRuleOptions';
+import type { SelectOption } from '@/types/select';
 
 const { t } = useI18n();
 
@@ -38,10 +42,9 @@ const {
 interface Props {
   condition: Condition;
   index: number;
-  isDropdownOpen: boolean;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const emit = defineEmits<{
   'update:field': [value: string];
@@ -49,46 +52,46 @@ const emit = defineEmits<{
   'update:value': [value: string];
   'update:values': [values: string[]];
   'update:negate': [];
-  'toggle-dropdown': [];
   remove: [];
 }>();
 
-function handleFieldChange(event: Event): void {
-  const target = event.target as HTMLSelectElement;
-  emit('update:field', target.value);
-}
+// Build options for BaseSelect
+const fieldSelectOptions = computed<SelectOption[]>(() => {
+  return fieldOptions.map((opt) => ({
+    value: opt.value,
+    label: t(opt.labelKey),
+  }));
+});
 
-function handleOperatorChange(event: Event): void {
-  const target = event.target as HTMLSelectElement;
-  emit('update:operator', target.value);
-}
+const operatorSelectOptions = computed<SelectOption[]>(() => {
+  return textOperatorOptions.map((opt) => ({
+    value: opt.value,
+    label: t(opt.labelKey),
+  }));
+});
+
+const booleanSelectOptions = computed<SelectOption[]>(() => {
+  return booleanOptions.map((opt) => ({
+    value: opt.value,
+    label: t(opt.labelKey),
+  }));
+});
+
+const updateStatusOptions = computed<SelectOption[]>(() => {
+  return [
+    { value: '', label: t('modal.filter.updateSuccess') },
+    { value: 'success', label: t('modal.filter.updateSuccess') },
+    { value: 'failed', label: t('modal.filter.updateFailed') },
+  ];
+});
 
 function handleValueChange(event: Event): void {
   const target = event.target as HTMLInputElement;
   emit('update:value', target.value);
 }
 
-function handleToggleMultiSelectValue(value: string): void {
-  const currentValues = props.condition.values || [];
-  const newValues = currentValues.includes(value)
-    ? currentValues.filter((v) => v !== value)
-    : [...currentValues, value];
-  emit('update:values', newValues);
-}
-
-function getMultiSelectDisplayText(): string {
-  const values = props.condition.values || [];
-  if (values.length === 0) return t('common.search.selectItems');
-
-  // For feed_type, translate the type codes to display text
-  if (props.condition.field === 'feed_type') {
-    if (values.length === 1) return getFeedTypeLabel(values[0]);
-    return t('common.search.itemsSelected', { count: values.length });
-  }
-
-  // For other fields, use the values directly
-  if (values.length === 1) return values[0];
-  return t('common.search.itemsSelected', { count: values.length });
+function handleMultiSelectUpdate(values: (string | number)[]): void {
+  emit('update:values', values.map(String));
 }
 </script>
 
@@ -113,15 +116,11 @@ function getMultiSelectDisplayText(): string {
         <label class="block text-[10px] sm:text-xs text-text-secondary mb-1">{{
           t('modal.filter.filterField')
         }}</label>
-        <select
-          :value="condition.field"
-          class="select-field w-full text-xs sm:text-sm"
-          @change="handleFieldChange"
-        >
-          <option v-for="opt in fieldOptions" :key="opt.value" :value="opt.value">
-            {{ t(opt.labelKey) }}
-          </option>
-        </select>
+        <BaseSelect
+          :model-value="condition.field"
+          :options="fieldSelectOptions"
+          @update:model-value="emit('update:field', String($event))"
+        />
       </div>
 
       <!-- Operator selector (only for article_title) -->
@@ -129,15 +128,11 @@ function getMultiSelectDisplayText(): string {
         <label class="block text-[10px] sm:text-xs text-text-secondary mb-1">{{
           t('modal.filter.filterOperator')
         }}</label>
-        <select
-          :value="condition.operator"
-          class="select-field w-full text-xs sm:text-sm"
-          @change="handleOperatorChange"
-        >
-          <option v-for="opt in textOperatorOptions" :key="opt.value" :value="opt.value">
-            {{ t(opt.labelKey) }}
-          </option>
-        </select>
+        <BaseSelect
+          :model-value="condition.operator"
+          :options="operatorSelectOptions"
+          @update:model-value="emit('update:operator', String($event))"
+        />
       </div>
 
       <!-- Value input -->
@@ -156,16 +151,12 @@ function getMultiSelectDisplayText(): string {
         />
 
         <!-- Boolean select -->
-        <select
+        <BaseSelect
           v-else-if="isBooleanField(condition.field)"
-          :value="condition.value"
-          class="select-field w-full text-xs sm:text-sm"
-          @change="handleValueChange"
-        >
-          <option v-for="opt in booleanOptions" :key="opt.value" :value="opt.value">
-            {{ t(opt.labelKey) }}
-          </option>
-        </select>
+          :model-value="condition.value"
+          :options="booleanSelectOptions"
+          @update:model-value="emit('update:value', String($event))"
+        />
 
         <!-- Number input -->
         <input
@@ -178,155 +169,51 @@ function getMultiSelectDisplayText(): string {
         />
 
         <!-- Special dropdown for feed_last_update_status -->
-        <select
+        <BaseSelect
           v-else-if="condition.field === 'feed_last_update_status'"
-          :value="condition.value"
-          class="select-field w-full text-xs sm:text-sm"
-          @change="handleValueChange"
-        >
-          <option value="">{{ t('modal.filter.updateSuccess') }}</option>
-          <option value="success">{{ t('modal.filter.updateSuccess') }}</option>
-          <option value="failed">{{ t('modal.filter.updateFailed') }}</option>
-        </select>
+          :model-value="condition.value"
+          :options="updateStatusOptions"
+          @update:model-value="emit('update:value', String($event))"
+        />
 
         <!-- Multi-select dropdown for feed name -->
-        <div v-else-if="condition.field === 'feed_name'" class="dropdown-container">
-          <button
-            type="button"
-            class="dropdown-trigger text-xs sm:text-sm"
-            @click="emit('toggle-dropdown')"
-          >
-            <span class="dropdown-text truncate">{{ getMultiSelectDisplayText() }}</span>
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div v-if="isDropdownOpen" class="dropdown-menu dropdown-down">
-            <div
-              v-for="name in feedNames"
-              :key="name"
-              :class="[
-                'dropdown-option text-xs sm:text-sm',
-                condition.values.includes(name) ? 'selected' : '',
-              ]"
-              @click.stop="handleToggleMultiSelectValue(name)"
-            >
-              <input
-                type="checkbox"
-                :checked="condition.values.includes(name)"
-                class="checkbox-input"
-                tabindex="-1"
-              />
-              <span class="truncate">{{ name }}</span>
-            </div>
-            <div v-if="feedNames.length === 0" class="text-text-secondary text-xs sm:text-sm p-2">
-              {{ t('article.content.noArticles') }}
-            </div>
-          </div>
-        </div>
+        <BaseMultiSelect
+          v-else-if="condition.field === 'feed_name'"
+          :model-value="condition.values || []"
+          :options="feedNames.map((name) => ({ value: name, label: name }))"
+          :placeholder="t('common.search.selectItems')"
+          :searchable="true"
+          @update:model-value="handleMultiSelectUpdate"
+        />
 
         <!-- Multi-select dropdown for category -->
-        <div v-else-if="condition.field === 'feed_category'" class="dropdown-container">
-          <button
-            type="button"
-            class="dropdown-trigger text-xs sm:text-sm"
-            @click="emit('toggle-dropdown')"
-          >
-            <span class="dropdown-text truncate">{{ getMultiSelectDisplayText() }}</span>
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div v-if="isDropdownOpen" class="dropdown-menu dropdown-down">
-            <div
-              v-for="cat in feedCategories"
-              :key="cat"
-              :class="[
-                'dropdown-option text-xs sm:text-sm',
-                condition.values.includes(cat as string) ? 'selected' : '',
-              ]"
-              @click.stop="handleToggleMultiSelectValue(cat as string)"
-            >
-              <input
-                type="checkbox"
-                :checked="condition.values.includes(cat as string)"
-                class="checkbox-input"
-                tabindex="-1"
-              />
-              <span class="truncate">{{ cat }}</span>
-            </div>
-            <div
-              v-if="feedCategories.length === 0"
-              class="text-text-secondary text-xs sm:text-sm p-2"
-            >
-              {{ t('article.content.noArticles') }}
-            </div>
-          </div>
-        </div>
+        <BaseMultiSelect
+          v-else-if="condition.field === 'feed_category'"
+          :model-value="condition.values || []"
+          :options="feedCategories.map((cat) => ({ value: cat, label: cat }))"
+          :placeholder="t('common.search.selectItems')"
+          :searchable="true"
+          @update:model-value="handleMultiSelectUpdate"
+        />
 
         <!-- Multi-select dropdown for feed type -->
-        <div v-else-if="condition.field === 'feed_type'" class="dropdown-container">
-          <button
-            type="button"
-            class="dropdown-trigger text-xs sm:text-sm"
-            @click="emit('toggle-dropdown')"
-          >
-            <span class="dropdown-text truncate">{{ getMultiSelectDisplayText() }}</span>
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div v-if="isDropdownOpen" class="dropdown-menu dropdown-down">
-            <div
-              v-for="type in feedTypes"
-              :key="type"
-              :class="[
-                'dropdown-option text-xs sm:text-sm',
-                condition.values.includes(type as string) ? 'selected' : '',
-              ]"
-              @click.stop="handleToggleMultiSelectValue(type as string)"
-            >
-              <input
-                type="checkbox"
-                :checked="condition.values.includes(type as string)"
-                class="checkbox-input"
-                tabindex="-1"
-              />
-              <span class="truncate">{{ getFeedTypeLabel(type as string) }}</span>
-            </div>
-            <div v-if="feedTypes.length === 0" class="text-text-secondary text-xs sm:text-sm p-2">
-              {{ t('article.content.noArticles') }}
-            </div>
-          </div>
-        </div>
+        <BaseMultiSelect
+          v-else-if="condition.field === 'feed_type'"
+          :model-value="condition.values || []"
+          :options="feedTypes.map((type) => ({ value: type, label: getFeedTypeLabel(type) }))"
+          :placeholder="t('common.search.selectItems')"
+          @update:model-value="handleMultiSelectUpdate"
+        />
 
         <!-- Multi-select dropdown for feed tags -->
-        <div v-else-if="condition.field === 'feed_tags'" class="dropdown-container">
-          <button
-            type="button"
-            class="dropdown-trigger text-xs sm:text-sm"
-            @click="emit('toggle-dropdown')"
-          >
-            <span class="dropdown-text truncate">{{ getMultiSelectDisplayText() }}</span>
-            <span class="dropdown-arrow">▼</span>
-          </button>
-          <div v-if="isDropdownOpen" class="dropdown-menu dropdown-down">
-            <div
-              v-for="tag in feedTags"
-              :key="tag"
-              :class="[
-                'dropdown-option text-xs sm:text-sm',
-                condition.values.includes(tag as string) ? 'selected' : '',
-              ]"
-              @click.stop="handleToggleMultiSelectValue(tag as string)"
-            >
-              <input
-                type="checkbox"
-                :checked="condition.values.includes(tag as string)"
-                class="checkbox-input"
-                tabindex="-1"
-              />
-              <span class="truncate">{{ tag }}</span>
-            </div>
-            <div v-if="feedTags.length === 0" class="text-text-secondary text-xs sm:text-sm p-2">
-              {{ t('article.content.noArticles') }}
-            </div>
-          </div>
-        </div>
+        <BaseMultiSelect
+          v-else-if="condition.field === 'feed_tags'"
+          :model-value="condition.values || []"
+          :options="feedTags.map((tag) => ({ value: tag, label: tag }))"
+          :placeholder="t('common.search.selectItems')"
+          :searchable="true"
+          @update:model-value="handleMultiSelectUpdate"
+        />
 
         <!-- Regular text input -->
         <input
@@ -355,21 +242,17 @@ function getMultiSelectDisplayText(): string {
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
 .input-field {
   @apply p-1.5 sm:p-2 border border-border rounded-md bg-bg-primary text-text-primary focus:border-accent focus:outline-none transition-colors;
   height: 38px;
 }
-.select-field {
-  @apply p-1.5 sm:p-2 border border-border rounded-md bg-bg-primary text-text-primary focus:border-accent focus:outline-none transition-colors cursor-pointer;
-  height: 38px;
-}
+
 .date-field {
   @apply p-1.5 sm:p-2 border border-border rounded-md bg-bg-primary text-text-primary focus:border-accent focus:outline-none transition-colors cursor-pointer;
   color-scheme: light dark;
   height: 38px;
 }
+
 .btn-danger-icon {
   @apply p-1.5 sm:p-2 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer;
   height: 38px;
@@ -387,38 +270,5 @@ function getMultiSelectDisplayText(): string {
 }
 .not-btn.active {
   @apply bg-red-500/10 border-red-500 text-red-500;
-}
-
-/* Dropdown multi-select styling */
-.dropdown-container {
-  @apply relative;
-}
-.dropdown-trigger {
-  @apply w-full p-1.5 sm:p-2 border border-border rounded-md bg-bg-primary text-text-primary;
-  @apply flex items-center justify-between cursor-pointer hover:border-accent transition-colors;
-  height: 38px;
-}
-.dropdown-text {
-  @apply flex-1 text-left;
-}
-.dropdown-arrow {
-  @apply text-text-secondary text-[10px] sm:text-xs ml-2;
-}
-.dropdown-menu {
-  @apply absolute left-0 right-0 border border-border rounded-md bg-bg-primary;
-  @apply max-h-32 overflow-y-auto z-50 shadow-lg scroll-smooth;
-}
-.dropdown-menu.dropdown-down {
-  @apply top-full mt-1;
-}
-.dropdown-option {
-  @apply flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer text-text-primary hover:bg-bg-tertiary;
-  min-height: 36px;
-}
-.dropdown-option.selected {
-  background-color: rgba(59, 130, 246, 0.1);
-}
-.checkbox-input {
-  @apply w-4 h-4 accent-accent cursor-pointer flex-shrink-0;
 }
 </style>

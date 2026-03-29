@@ -72,6 +72,9 @@ export function generateInitialSettings(): SettingsData {
     media_cache_max_age_days: settingsDefaults.media_cache_max_age_days,
     media_cache_max_size_mb: settingsDefaults.media_cache_max_size_mb,
     media_proxy_fallback: settingsDefaults.media_proxy_fallback,
+    microsoft_api_key: settingsDefaults.microsoft_api_key,
+    microsoft_endpoint: settingsDefaults.microsoft_endpoint,
+    microsoft_region: settingsDefaults.microsoft_region,
     network_bandwidth_mbps: settingsDefaults.network_bandwidth_mbps,
     network_latency_ms: settingsDefaults.network_latency_ms,
     network_speed: settingsDefaults.network_speed,
@@ -96,6 +99,7 @@ export function generateInitialSettings(): SettingsData {
     shortcuts: settingsDefaults.shortcuts,
     shortcuts_enabled: settingsDefaults.shortcuts_enabled,
     show_article_preview_images: settingsDefaults.show_article_preview_images,
+    show_floating_toc: settingsDefaults.show_floating_toc,
     show_hidden_articles: settingsDefaults.show_hidden_articles,
     startup_on_boot: settingsDefaults.startup_on_boot,
     summary_enabled: settingsDefaults.summary_enabled,
@@ -103,6 +107,9 @@ export function generateInitialSettings(): SettingsData {
     summary_provider: settingsDefaults.summary_provider,
     summary_trigger_mode: settingsDefaults.summary_trigger_mode,
     target_language: settingsDefaults.target_language,
+    tencent_region: settingsDefaults.tencent_region,
+    tencent_secret_id: settingsDefaults.tencent_secret_id,
+    tencent_secret_key: settingsDefaults.tencent_secret_key,
     theme: settingsDefaults.theme,
     translation_enabled: settingsDefaults.translation_enabled,
     translation_only_mode: settingsDefaults.translation_only_mode,
@@ -113,6 +120,9 @@ export function generateInitialSettings(): SettingsData {
     window_width: settingsDefaults.window_width,
     window_x: settingsDefaults.window_x,
     window_y: settingsDefaults.window_y,
+    zotero_api_key: settingsDefaults.zotero_api_key,
+    zotero_enabled: settingsDefaults.zotero_enabled,
+    zotero_user_id: settingsDefaults.zotero_user_id,
   } as SettingsData;
 }
 
@@ -197,6 +207,9 @@ export function parseSettingsData(data: Record<string, string>): SettingsData {
     media_cache_max_size_mb:
       parseInt(data.media_cache_max_size_mb) || settingsDefaults.media_cache_max_size_mb,
     media_proxy_fallback: data.media_proxy_fallback === 'true',
+    microsoft_api_key: data.microsoft_api_key || settingsDefaults.microsoft_api_key,
+    microsoft_endpoint: data.microsoft_endpoint || settingsDefaults.microsoft_endpoint,
+    microsoft_region: data.microsoft_region || settingsDefaults.microsoft_region,
     network_bandwidth_mbps: data.network_bandwidth_mbps || settingsDefaults.network_bandwidth_mbps,
     network_latency_ms: data.network_latency_ms || settingsDefaults.network_latency_ms,
     network_speed: data.network_speed || settingsDefaults.network_speed,
@@ -222,6 +235,7 @@ export function parseSettingsData(data: Record<string, string>): SettingsData {
     shortcuts: data.shortcuts || settingsDefaults.shortcuts,
     shortcuts_enabled: data.shortcuts_enabled === 'true',
     show_article_preview_images: data.show_article_preview_images === 'true',
+    show_floating_toc: data.show_floating_toc === 'true',
     show_hidden_articles: data.show_hidden_articles === 'true',
     startup_on_boot: data.startup_on_boot === 'true',
     summary_enabled: data.summary_enabled === 'true',
@@ -229,6 +243,9 @@ export function parseSettingsData(data: Record<string, string>): SettingsData {
     summary_provider: data.summary_provider || settingsDefaults.summary_provider,
     summary_trigger_mode: data.summary_trigger_mode || settingsDefaults.summary_trigger_mode,
     target_language: data.target_language || settingsDefaults.target_language,
+    tencent_region: data.tencent_region || settingsDefaults.tencent_region,
+    tencent_secret_id: data.tencent_secret_id || settingsDefaults.tencent_secret_id,
+    tencent_secret_key: data.tencent_secret_key || settingsDefaults.tencent_secret_key,
     theme: data.theme || settingsDefaults.theme,
     translation_enabled: data.translation_enabled === 'true',
     translation_only_mode: data.translation_only_mode === 'true',
@@ -239,6 +256,9 @@ export function parseSettingsData(data: Record<string, string>): SettingsData {
     window_width: data.window_width || settingsDefaults.window_width,
     window_x: data.window_x || settingsDefaults.window_x,
     window_y: data.window_y || settingsDefaults.window_y,
+    zotero_api_key: data.zotero_api_key || settingsDefaults.zotero_api_key,
+    zotero_enabled: data.zotero_enabled === 'true',
+    zotero_user_id: data.zotero_user_id || settingsDefaults.zotero_user_id,
   } as SettingsData;
 }
 
@@ -363,6 +383,9 @@ export function buildAutoSavePayload(settingsRef: Ref<SettingsData>): Record<str
     media_proxy_fallback: (
       settingsRef.value.media_proxy_fallback ?? settingsDefaults.media_proxy_fallback
     ).toString(),
+    microsoft_api_key: settingsRef.value.microsoft_api_key ?? settingsDefaults.microsoft_api_key,
+    microsoft_endpoint: settingsRef.value.microsoft_endpoint ?? settingsDefaults.microsoft_endpoint,
+    microsoft_region: settingsRef.value.microsoft_region ?? settingsDefaults.microsoft_region,
     network_bandwidth_mbps:
       settingsRef.value.network_bandwidth_mbps ?? settingsDefaults.network_bandwidth_mbps,
     network_latency_ms: settingsRef.value.network_latency_ms ?? settingsDefaults.network_latency_ms,
@@ -401,6 +424,9 @@ export function buildAutoSavePayload(settingsRef: Ref<SettingsData>): Record<str
     show_article_preview_images: (
       settingsRef.value.show_article_preview_images ?? settingsDefaults.show_article_preview_images
     ).toString(),
+    show_floating_toc: (
+      settingsRef.value.show_floating_toc ?? settingsDefaults.show_floating_toc
+    ).toString(),
     show_hidden_articles: (
       settingsRef.value.show_hidden_articles ?? settingsDefaults.show_hidden_articles
     ).toString(),
@@ -415,6 +441,9 @@ export function buildAutoSavePayload(settingsRef: Ref<SettingsData>): Record<str
     summary_trigger_mode:
       settingsRef.value.summary_trigger_mode ?? settingsDefaults.summary_trigger_mode,
     target_language: settingsRef.value.target_language ?? settingsDefaults.target_language,
+    tencent_region: settingsRef.value.tencent_region ?? settingsDefaults.tencent_region,
+    tencent_secret_id: settingsRef.value.tencent_secret_id ?? settingsDefaults.tencent_secret_id,
+    tencent_secret_key: settingsRef.value.tencent_secret_key ?? settingsDefaults.tencent_secret_key,
     theme: settingsRef.value.theme ?? settingsDefaults.theme,
     translation_enabled: (
       settingsRef.value.translation_enabled ?? settingsDefaults.translation_enabled
@@ -427,5 +456,10 @@ export function buildAutoSavePayload(settingsRef: Ref<SettingsData>): Record<str
     update_interval: (
       settingsRef.value.update_interval ?? settingsDefaults.update_interval
     ).toString(),
+    zotero_api_key: settingsRef.value.zotero_api_key ?? settingsDefaults.zotero_api_key,
+    zotero_enabled: (
+      settingsRef.value.zotero_enabled ?? settingsDefaults.zotero_enabled
+    ).toString(),
+    zotero_user_id: settingsRef.value.zotero_user_id ?? settingsDefaults.zotero_user_id,
   };
 }

@@ -6,24 +6,24 @@ import type {
   ToastType,
 } from '@/types/global';
 
-export interface Toast {
+interface Toast {
   id: number;
   message: string;
   type: ToastType;
   duration: number;
 }
 
-export interface ConfirmDialogState extends ConfirmDialogOptions {
+interface ConfirmDialogState extends ConfirmDialogOptions {
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export interface InputDialogState extends InputDialogOptions {
+interface InputDialogState extends InputDialogOptions {
   onConfirm: (string) => void;
   onCancel: () => void;
 }
 
-export interface MultiSelectDialogState extends MultiSelectDialogOptions {
+interface MultiSelectDialogState extends MultiSelectDialogOptions {
   onConfirm: (values: string[]) => void;
   onCancel: () => void;
 }

@@ -137,6 +137,8 @@ onMounted(async () => {
 
   // Listen for layout mode changes
   window.addEventListener('layout-mode-changed', handleLayoutModeChange);
+  // Listen for category expansion events
+  window.addEventListener('categories-expanded', handleCategoriesExpanded);
 });
 
 // Handle layout mode changes
@@ -146,8 +148,19 @@ function handleLayoutModeChange() {
   });
 }
 
+// Handle categories expanded event
+function handleCategoriesExpanded() {
+  // Reload openCategories from localStorage
+  const savedCategories = localStorage.getItem('openCategories');
+  if (savedCategories) {
+    const categories = JSON.parse(savedCategories);
+    openCategories.value = new Set(categories);
+  }
+}
+
 onUnmounted(() => {
   window.removeEventListener('layout-mode-changed', handleLayoutModeChange);
+  window.removeEventListener('categories-expanded', handleCategoriesExpanded);
 });
 
 // Edit mode for drag reordering
@@ -170,6 +183,7 @@ const {
   searchQuery,
   onFeedContextMenu,
   onCategoryContextMenu,
+  openCategories,
 } = useSidebar();
 
 // Track if we should collapse after selection
@@ -579,7 +593,7 @@ function handleFilterDragEnd() {
   >
     <div
       v-if="isExpanded || isPinned"
-      class="w-[280px] min-w-[280px] max-w-[80vw] md:w-[280px] md:min-w-[280px] flex flex-col h-full flex-shrink-0 relative border-r border-border feed-drawer-width"
+      class="w-[280px] min-w-[280px] max-w-[80vw] md:w-[280px] md:min-w-[280px] flex flex-col h-full flex-shrink-0 relative border-r border-border feed-drawer-width z-20"
       :class="[isPinned ? 'bg-bg-primary' : 'bg-bg-secondary shadow-2xl']"
     >
       <!-- Drawer Header -->

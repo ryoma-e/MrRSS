@@ -182,46 +182,8 @@ async function submit() {
       body.id = props.feed!.id;
     }
 
-    // Special handling for RSSHub URLs - use dedicated endpoint
-    if (body.url && typeof body.url === 'string' && body.url.startsWith('rsshub://')) {
-      const route = body.url.replace('rsshub://', '');
-
-      try {
-        // Use the specialized RSSHub add endpoint
-        const rsshubResp = await fetch('/api/rsshub/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            route: route,
-            category: category.value,
-            title: title.value,
-          }),
-        });
-
-        if (rsshubResp.ok) {
-          const rsshubResult = await rsshubResp.json();
-          if (rsshubResult.success) {
-            emit('added');
-            resetForm();
-            window.showToast(t('modal.feed.feedAddedSuccess'), 'success');
-            close();
-            return;
-          }
-        }
-
-        // If RSSHub endpoint failed, try the generic add endpoint as fallback
-        const errorText = await rsshubResp.text();
-        throw new Error(errorText || 'RSSHub add failed');
-      } catch (e) {
-        console.error('RSSHub add failed:', e);
-        window.showToast(
-          `${t('common.errors.addingFeed')}: ${e instanceof Error ? e.message : 'Unknown error'}`,
-          'error'
-        );
-        isSubmitting.value = false;
-        return;
-      }
-    }
+    // Note: RSSHub URLs (rsshub://) are now handled through the standard feed endpoints
+    // to ensure all advanced settings (hide_from_timeline, is_image_mode, etc.) are properly saved
 
     const endpoint = props.mode === 'add' ? '/api/feeds/add' : '/api/feeds/update';
     const res = await fetch(endpoint, {
@@ -659,8 +621,6 @@ const submitButtonText = computed(() => {
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
 .input-field {
   @apply w-full p-2 sm:p-2.5 border border-border rounded-md bg-bg-tertiary text-text-primary text-xs sm:text-sm focus:border-accent focus:outline-none transition-colors;
 }

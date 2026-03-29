@@ -201,6 +201,4 @@ function handleClose() {
   </Teleport>
 </template>
 
-<style scoped>
-@reference "../../../style.css";
-</style>
+<style scoped></style>

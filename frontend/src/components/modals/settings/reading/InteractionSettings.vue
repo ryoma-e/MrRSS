@@ -45,6 +45,4 @@ function updateSetting(key: keyof SettingsData, value: any) {
   </SettingGroup>
 </template>
 
-<style scoped>
-@reference "../../../../style.css";
-</style>
+<style scoped></style>

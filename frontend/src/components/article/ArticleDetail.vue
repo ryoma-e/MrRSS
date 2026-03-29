@@ -29,6 +29,7 @@ const {
   attachImageEventListeners,
   exportToObsidian,
   exportToNotion,
+  exportToZotero,
   handleRetryLoadContent,
   goToPreviousArticle,
   goToNextArticle,
@@ -106,6 +107,7 @@ onBeforeUnmount(() => {
         @toggle-translations="toggleTranslations"
         @export-to-obsidian="exportToObsidian"
         @export-to-notion="exportToNotion"
+        @export-to-zotero="exportToZotero"
       />
 
       <!-- Original webpage view -->

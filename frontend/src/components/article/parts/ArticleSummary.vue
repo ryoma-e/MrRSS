@@ -322,6 +322,17 @@ async function handleSummaryLinkClick(event: MouseEvent) {
   color: inherit;
 }
 
+/* Fix for dark mode: ensure prose inherits text color correctly */
+.dark-mode .summary-display .prose {
+  color: var(--text-primary);
+}
+
+.dark-mode .summary-display .prose p,
+.dark-mode .summary-display .prose li,
+.dark-mode .summary-display .prose span {
+  color: var(--text-primary);
+}
+
 .prose.select-text,
 .prose.select-text * {
   user-select: text !important;

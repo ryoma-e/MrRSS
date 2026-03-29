@@ -443,6 +443,44 @@ export function useSidebar() {
     );
   }
 
+  // Expand category containing a specific feed
+  function expandCategoryForFeed(feedId: number): void {
+    const feed = store.feeds?.find((f) => f.id === feedId);
+    if (feed?.category) {
+      // Expand the feed's category
+      if (!openCategories.value.has(feed.category)) {
+        openCategories.value.add(feed.category);
+      }
+      // Also expand all parent categories
+      const parts = feed.category.split('/');
+      for (let i = 1; i < parts.length; i++) {
+        const parentPath = parts.slice(0, i).join('/');
+        if (!openCategories.value.has(parentPath)) {
+          openCategories.value.add(parentPath);
+        }
+      }
+      // Trigger reactivity by creating a new Set
+      const newSet = new Set(openCategories.value);
+      openCategories.value = newSet;
+      // Save to localStorage
+      localStorage.setItem('openCategories', JSON.stringify([...openCategories.value]));
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('categories-expanded'));
+    } else if (feed && !feed.category) {
+      // Expand uncategorized category
+      if (!openCategories.value.has('uncategorized')) {
+        openCategories.value.add('uncategorized');
+        // Trigger reactivity by creating a new Set
+        const newSet = new Set(openCategories.value);
+        openCategories.value = newSet;
+        // Save to localStorage
+        localStorage.setItem('openCategories', JSON.stringify([...openCategories.value]));
+        // Dispatch event to notify other components
+        window.dispatchEvent(new CustomEvent('categories-expanded'));
+      }
+    }
+  }
+
   return {
     tree,
     categoryUnreadCounts,
@@ -453,5 +491,6 @@ export function useSidebar() {
     isCategoryOpen,
     onFeedContextMenu,
     onCategoryContextMenu,
+    expandCategoryForFeed,
   };
 }

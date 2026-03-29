@@ -14,6 +14,7 @@ import { useRuleConditions } from '@/composables/rules/useRuleConditions';
 import { useRuleActions } from '@/composables/rules/useRuleActions';
 import BaseModal from '@/components/common/BaseModal.vue';
 import ModalFooter from '@/components/common/ModalFooter.vue';
+import TipBox from '@/components/settings/base/TipBox.vue';
 
 const { t } = useI18n();
 
@@ -21,12 +22,10 @@ const { t } = useI18n();
 const { actionOptions } = useRuleOptions();
 
 const {
-  openDropdownIndex,
   addCondition: addConditionHelper,
   removeCondition: removeConditionHelper,
   onFieldChange,
   toggleNegate,
-  toggleDropdown,
 } = useRuleConditions();
 
 const {
@@ -198,7 +197,6 @@ async function handleClose(checkUnsaved = false): Promise<void> {
     }
   }
 
-  openDropdownIndex.value = null;
   emit('close');
 }
 </script>
@@ -217,7 +215,9 @@ async function handleClose(checkUnsaved = false): Promise<void> {
     <div class="px-4 sm:px-6 pt-6 sm:pt-8 pb-20 sm:pb-24 space-y-6">
       <!-- Rule Name -->
       <div class="space-y-2">
-        <label class="block text-sm font-medium">{{ t('modal.rule.name') }}</label>
+        <label class="block text-sm font-medium text-text-primary">{{
+          t('modal.rule.name')
+        }}</label>
         <input
           v-model="ruleName"
           type="text"
@@ -229,11 +229,14 @@ async function handleClose(checkUnsaved = false): Promise<void> {
       <!-- Conditions Section -->
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <label class="flex items-center gap-2 text-sm font-medium">
+          <label class="flex items-center gap-2 text-sm font-medium text-text-primary">
             <PhFunnel :size="16" />
             {{ t('modal.rule.condition') }}
           </label>
         </div>
+
+        <!-- Logic Precedence Tip -->
+        <TipBox type="help" :title="t('modal.rule.logicPrecedence')" />
 
         <!-- Empty state -->
         <div
@@ -257,7 +260,6 @@ async function handleClose(checkUnsaved = false): Promise<void> {
             <RuleConditionItem
               :condition="condition"
               :index="index"
-              :is-dropdown-open="openDropdownIndex === index"
               @update:field="
                 (value) => {
                   condition.field = value;
@@ -268,7 +270,6 @@ async function handleClose(checkUnsaved = false): Promise<void> {
               @update:value="(value) => (condition.value = value)"
               @update:values="(values) => (condition.values = values)"
               @update:negate="handleToggleNegate(index)"
-              @toggle-dropdown="toggleDropdown(index)"
               @remove="removeCondition(index)"
             />
           </div>
@@ -287,7 +288,7 @@ async function handleClose(checkUnsaved = false): Promise<void> {
       <!-- Actions Section -->
       <div class="space-y-3">
         <div class="flex items-center justify-between">
-          <label class="flex items-center gap-2 text-sm font-medium">
+          <label class="flex items-center gap-2 text-sm font-medium text-text-primary">
             <PhListChecks :size="16" />
             {{ t('modal.rule.actions') }}
           </label>
@@ -346,8 +347,6 @@ async function handleClose(checkUnsaved = false): Promise<void> {
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
 .input-field {
   @apply p-2 border border-border rounded-md bg-bg-primary text-text-primary text-sm focus:border-accent focus:outline-none transition-colors;
   height: 38px;

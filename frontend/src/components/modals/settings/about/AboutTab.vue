@@ -149,23 +149,10 @@ function openGitHubRelease() {
               />
               <PhGear v-else-if="installingUpdate" :size="18" class="animate-spin sm:w-5 sm:h-5" />
               <PhDownloadSimple v-else :size="18" class="sm:w-5 sm:h-5" />
-              <span v-if="downloadingUpdate"
-                >{{ t('common.action.downloading') }} {{ downloadProgress }}%</span
-              >
+              <span v-if="downloadingUpdate">{{ t('common.action.downloading') }}</span>
               <span v-else-if="installingUpdate">{{ t('setting.update.installingUpdate') }}</span>
               <span v-else>{{ t('modal.update.downloadUpdate') }}</span>
             </button>
-
-            <!-- Progress bar -->
-            <div
-              v-if="downloadingUpdate"
-              class="mt-2 w-full bg-bg-tertiary rounded-full h-1.5 sm:h-2 overflow-hidden"
-            >
-              <div
-                class="bg-accent h-full transition-all duration-300"
-                :style="{ width: downloadProgress + '%' }"
-              ></div>
-            </div>
           </div>
 
           <!-- Fallback to GitHub if no download URL -->
@@ -206,8 +193,6 @@ function openGitHubRelease() {
 </template>
 
 <style scoped>
-@reference "../../../../style.css";
-
 .btn {
   @apply px-3 sm:px-4 py-1.5 sm:py-2 rounded-md cursor-pointer flex items-center gap-1.5 sm:gap-2 font-medium transition-colors;
 }

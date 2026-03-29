@@ -38,6 +38,7 @@ type FilterResponse struct {
 }
 
 // evaluateArticleConditions evaluates all filter conditions for an article
+// Operator precedence: NOT > AND > OR
 func evaluateArticleConditions(
 	article models.Article,
 	conditions []FilterCondition,
@@ -53,18 +54,35 @@ func evaluateArticleConditions(
 		return true
 	}
 
-	result := evaluateSingleCondition(article, conditions[0], feedCategories, feedTypes, feedIsImageMode, feedTags, feedArticlesPerMonth, feedLastUpdateStatus, articleContents)
+	// Step 1: Evaluate all individual conditions (NOT is applied at this level)
+	conditionResults := make([]bool, len(conditions))
+	for i, condition := range conditions {
+		conditionResults[i] = evaluateSingleCondition(article, condition, feedCategories, feedTypes, feedIsImageMode, feedTags, feedArticlesPerMonth, feedLastUpdateStatus, articleContents)
+	}
 
-	for i := 1; i < len(conditions); i++ {
-		condition := conditions[i]
-		conditionResult := evaluateSingleCondition(article, condition, feedCategories, feedTypes, feedIsImageMode, feedTags, feedArticlesPerMonth, feedLastUpdateStatus, articleContents)
-
-		switch condition.Logic {
-		case "and":
-			result = result && conditionResult
-		case "or":
-			result = result || conditionResult
+	// Step 2: Process all AND connections first (higher precedence)
+	// We merge conditions connected by AND into a single result
+	i := 0
+	for i < len(conditionResults) {
+		if i > 0 && conditions[i].Logic == "and" {
+			// Merge with previous result using AND
+			conditionResults[i-1] = conditionResults[i-1] && conditionResults[i]
+			// Remove current element
+			conditionResults = append(conditionResults[:i], conditionResults[i+1:]...)
+			conditions = append(conditions[:i], conditions[i+1:]...)
+		} else {
+			i++
 		}
+	}
+
+	// Step 3: Process all OR connections (lower precedence)
+	if len(conditionResults) == 0 {
+		return true
+	}
+
+	result := conditionResults[0]
+	for i := 1; i < len(conditionResults); i++ {
+		result = result || conditionResults[i]
 	}
 
 	return result

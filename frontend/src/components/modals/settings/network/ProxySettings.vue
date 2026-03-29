@@ -21,6 +21,7 @@ import {
   InputControl,
   NumberControl,
 } from '@/components/settings';
+import BaseSelect from '@/components/common/BaseSelect.vue';
 import '@/components/settings/styles.css';
 import type { SettingsData } from '@/types/settings';
 
@@ -66,15 +67,16 @@ function updateSetting(key: keyof SettingsData, value: any) {
         :title="t('setting.network.proxyType')"
         :description="t('setting.network.proxyTypeDesc')"
       >
-        <select
-          :value="props.settings.proxy_type"
-          class="input-field w-28 sm:w-32 text-xs sm:text-sm"
-          @change="updateSetting('proxy_type', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="http">{{ t('setting.network.httpProxy') }}</option>
-          <option value="https">{{ t('setting.network.httpsProxy') }}</option>
-          <option value="socks5">{{ t('setting.network.socks5Proxy') }}</option>
-        </select>
+        <BaseSelect
+          :model-value="props.settings.proxy_type"
+          :options="[
+            { value: 'http', label: t('setting.network.httpProxy') },
+            { value: 'https', label: t('setting.network.httpsProxy') },
+            { value: 'socks5', label: t('setting.network.socks5Proxy') },
+          ]"
+          width="w-28 sm:w-32"
+          @update:model-value="updateSetting('proxy_type', $event)"
+        />
       </SubSettingItem>
 
       <!-- Proxy Host -->
@@ -163,9 +165,5 @@ function updateSetting(key: keyof SettingsData, value: any) {
 </template>
 
 <style scoped>
-@reference "../../../../style.css";
-
-.input-field {
-  @apply p-1.5 sm:p-2.5 border border-border rounded-md bg-bg-secondary text-text-primary focus:border-accent focus:outline-none transition-colors;
-}
+/* Styles are now handled by BaseSelect and select.css */
 </style>

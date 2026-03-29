@@ -13,6 +13,8 @@ import type { Article } from '@/types/models';
 import { useImageViewer } from '../composables/useImageViewer';
 import ThumbnailStrip from './ThumbnailStrip.vue';
 import { getProxiedMediaUrl, isMediaCacheEnabled } from '@/utils/mediaProxy';
+import { isYouTubeArticle, extractYouTubeVideoId } from '@/utils/youtube';
+import { isBilibiliArticle } from '@/utils/bilibili';
 
 interface Props {
   article: Article | null;
@@ -36,6 +38,34 @@ const { t } = useI18n();
 
 // Track media cache setting
 const mediaCacheEnabled = ref(false);
+
+// Check if current article is a YouTube video
+const isYouTube = computed(() => (props.article ? isYouTubeArticle(props.article) : false));
+
+// Check if current article is a Bilibili video
+const isBilibili = computed(() => (props.article ? isBilibiliArticle(props.article) : false));
+
+// Check if current article is any video (YouTube or Bilibili)
+const isVideo = computed(() => isYouTube.value || isBilibili.value);
+
+// Get YouTube embed URL if applicable
+const youtubeEmbedUrl = computed(() => {
+  if (isYouTube.value && props.article?.video_url) {
+    const videoId = extractYouTubeVideoId(props.article.video_url);
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    }
+  }
+  return '';
+});
+
+// Get Bilibili video URL (already in embed format)
+const bilibiliVideoUrl = computed(() => {
+  if (isBilibili.value && props.article?.video_url) {
+    return props.article.video_url;
+  }
+  return '';
+});
 
 // Check media cache setting on mount
 onMounted(async () => {
@@ -195,40 +225,55 @@ window.addEventListener('image-wheel-navigate', ((e: CustomEvent) => {
       <!-- Left: Image counter -->
       <div class="absolute left-0 top-0 flex items-center gap-2">
         <div
-          v-if="allImages.length > 1"
+          v-if="!isVideo && allImages.length > 1"
           class="px-2 py-1 rounded bg-black/50 text-white text-sm font-medium min-w-[60px] text-center backdrop-blur-sm"
         >
           {{ localImageIndex + 1 }} / {{ allImages.length }}
+        </div>
+        <div
+          v-else-if="isYouTube"
+          class="px-2 py-1 rounded bg-red-600/80 text-white text-sm font-medium backdrop-blur-sm flex items-center gap-1"
+        >
+          YouTube
+        </div>
+        <div
+          v-else-if="isBilibili"
+          class="px-2 py-1 rounded bg-pink-600/80 text-white text-sm font-medium backdrop-blur-sm flex items-center gap-1"
+        >
+          Bilibili
         </div>
       </div>
 
       <!-- Center: Zoom controls and Action buttons -->
       <div class="flex items-center justify-center gap-2">
-        <!-- Zoom controls -->
-        <button
-          class="px-2 py-1.5 rounded bg-black/50 hover:bg-black/70 text-white transition-all duration-200 hover:scale-105 active:scale-95"
-          :disabled="viewer.scale <= 0.5"
-          :title="t('common.imageViewer.zoomOut')"
-          @click="viewer.zoomOut"
-        >
-          <PhMagnifyingGlassMinus :size="20" />
-        </button>
-        <span
-          class="px-2 py-1.5 rounded bg-black/50 text-white text-sm font-medium min-w-[60px] text-center"
-        >
-          {{ Math.round(viewer.scale.value * 100) }}%
-        </span>
-        <button
-          class="px-2 py-1.5 rounded bg-black/50 hover:bg-black/70 text-white transition-all duration-200 hover:scale-105 active:scale-95"
-          :disabled="viewer.scale.value >= 5"
-          :title="t('common.imageViewer.zoomIn')"
-          @click="viewer.zoomIn"
-        >
-          <PhMagnifyingGlassPlus :size="20" />
-        </button>
+        <!-- Zoom controls (only for images) -->
+        <template v-if="!isVideo">
+          <button
+            class="px-2 py-1.5 rounded bg-black/50 hover:bg-black/70 text-white transition-all duration-200 hover:scale-105 active:scale-95"
+            :disabled="viewer.scale.value <= 0.5"
+            :title="t('common.imageViewer.zoomOut')"
+            @click="viewer.zoomOut"
+          >
+            <PhMagnifyingGlassMinus :size="20" />
+          </button>
+          <span
+            class="px-2 py-1.5 rounded bg-black/50 text-white text-sm font-medium min-w-[60px] text-center"
+          >
+            {{ Math.round(viewer.scale.value * 100) }}%
+          </span>
+          <button
+            class="px-2 py-1.5 rounded bg-black/50 hover:bg-black/70 text-white transition-all duration-200 hover:scale-105 active:scale-95"
+            :disabled="viewer.scale.value >= 5"
+            :title="t('common.imageViewer.zoomIn')"
+            @click="viewer.zoomIn"
+          >
+            <PhMagnifyingGlassPlus :size="20" />
+          </button>
+        </template>
 
         <!-- Action buttons -->
         <button
+          v-if="!isVideo"
           class="px-2 py-1.5 rounded bg-black/50 hover:bg-black/70 text-white transition-all duration-200 hover:scale-105 active:scale-95"
           :title="t('common.contextMenu.copyImage')"
           @click="handleViewerAction('copyImage')"
@@ -236,6 +281,7 @@ window.addEventListener('image-wheel-navigate', ((e: CustomEvent) => {
           <PhCopy :size="20" />
         </button>
         <button
+          v-if="!isVideo"
           class="px-2 py-1.5 rounded bg-black/50 hover:bg-black/70 text-white transition-all duration-200 hover:scale-105 active:scale-95"
           :title="t('common.contextMenu.downloadImage')"
           @click="handleViewerAction('downloadImage')"
@@ -270,7 +316,7 @@ window.addEventListener('image-wheel-navigate', ((e: CustomEvent) => {
       </div>
     </div>
 
-    <!-- Navigation buttons -->
+    <!-- Navigation buttons (available for both images and videos) -->
     <template v-if="viewer.canNavigatePrevious">
       <button
         class="absolute top-[calc(50%-64px-8px)] left-4 -translate-y-1/2 w-12 h-12 rounded text-white text-4xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 z-10"
@@ -300,7 +346,58 @@ window.addEventListener('image-wheel-navigate', ((e: CustomEvent) => {
 
     <!-- Main image area -->
     <div class="flex-1 flex flex-col items-center justify-center min-h-0 relative" @click.stop>
+      <!-- YouTube video player -->
       <div
+        v-if="isYouTube && youtubeEmbedUrl"
+        class="flex-1 flex items-center justify-center w-full min-h-0"
+      >
+        <div class="relative w-full h-full max-w-5xl max-h-[80vh]">
+          <iframe
+            :src="youtubeEmbedUrl"
+            :title="article?.title || ''"
+            class="w-full h-full border-none rounded-lg"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+              web-share;
+            "
+            allowfullscreen
+          />
+        </div>
+      </div>
+
+      <!-- Bilibili video player -->
+      <div
+        v-else-if="isBilibili && bilibiliVideoUrl"
+        class="flex-1 flex items-center justify-center w-full min-h-0"
+      >
+        <div class="relative w-full h-full max-w-5xl max-h-[80vh]">
+          <iframe
+            :src="bilibiliVideoUrl"
+            :title="article?.title || ''"
+            class="w-full h-full border-none rounded-lg"
+            allow="
+              accelerometer;
+              autoplay;
+              clipboard-write;
+              encrypted-media;
+              gyroscope;
+              picture-in-picture;
+              web-share;
+            "
+            allowfullscreen
+            sandbox="allow-forms allow-scripts allow-same-origin allow-presentation"
+          />
+        </div>
+      </div>
+
+      <!-- Image viewer -->
+      <div
+        v-else
         class="flex-1 flex items-center justify-center w-full min-h-0 overflow-hidden"
         :class="{
           'cursor-grab': !viewer.isDragging.value,
@@ -337,8 +434,9 @@ window.addEventListener('image-wheel-navigate', ((e: CustomEvent) => {
         />
       </div>
 
-      <!-- Thumbnail strip -->
+      <!-- Thumbnail strip (only show for images, not videos) -->
       <ThumbnailStrip
+        v-if="!isVideo"
         :images="allImages"
         :current-index="localImageIndex"
         :show="showThumbnailStrip"
@@ -363,6 +461,7 @@ window.addEventListener('image-wheel-navigate', ((e: CustomEvent) => {
             {{ t('article.action.viewOriginal') }}
           </button>
           <button
+            v-if="!isVideo"
             class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-md text-sm whitespace-nowrap transition-all duration-200"
             :title="t('article.action.viewArticle')"
             @click="handleViewerAction('openArticleDetail')"

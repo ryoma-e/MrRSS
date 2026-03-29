@@ -5,6 +5,66 @@ All notable changes to MrRSS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.23] - 2026-03-26
+
+### Fixed
+
+- Resolved OPML import failure for self-exported feedURL attributes. (#781) (@kv-chiu)
+
+## [1.3.22] - 2026-03-07
+
+**BREAKING**: The logic operator precedence for filter conditions and rules has been standardized to `NOT` > `AND` > `OR`. This means that `NOT` conditions will be evaluated first, followed by `AND`, and then `OR`. Please review your existing filters and rules to ensure they behave as expected with this precedence.
+
+### Added
+
+- Supported floating TOC feature for articles. (@MidnightCrowing)
+- Supported Miniflux format OPML import. (#768)
+- Supported displaying Youtube and Bilibili video in multimedia gallery view.
+
+### Changed
+
+- Optimized RSSHub connection handling to improve performance and reliability.
+- Changed evaluation methods for filter conditions and added logic precedence tips in filter and rule modals. (#756)
+
+### Fixed
+
+- Fixed an issue where the advanced settings for a RSSHub feed can not be saved correctly.
+- Enhanced FetchAll to skip feeds with custom refresh intervals. (#774)
+- Resolved multiple minor styling inconsistencies. (#751, #752, #753, #755)
+
+## [1.3.21] - 2026-02-27
+
+### Added
+
+- Added support for additional translation providers. (#690)
+- Enabled exporting to Zotero. (#735)
+- Enhanced error messages for feed refresh failures in the settings page. (#518)
+- Introduced an option to mark all articles as read from the bottom of the article list. (#667)
+
+### Changed
+
+- Refactored the dropdown input component to improve usability and added search functionality. (#697)
+
+### Fixed
+
+- Removed leaked thinking content from AI translation results. (@MidnightCrowing)
+- Fixed a bug where rules might not apply correctly in certain scenarios. (#698)
+- Resolved multiple minor styling inconsistencies. (#510, #648, #650, #697)
+
+## [1.3.20] - 2026-02-13
+
+### Changed
+
+- Disabled closing the pop-up window by clicking on the background to prevent accidental closures.
+
+### Fixed
+
+- Fixed multiple minor styling inconsistencies. (#402, #407, #428, #646, #648, #649, #651, #665, #666, #668) (@RUBisco0211)
+- Fixed an issue where the rule addition/editing modal could not be closed. (#647)
+- Fixed an issue where some input fields would revert to their previous values after being cleared. (#689)
+- Fixed an issue where the "Read Later" feature did not function correctly in the card layout. (#662)
+- Fixed an issue where the image gallery could not adjust the number of columns based on the window width. (#652)
+
 ## [1.3.19] - 2026-02-07
 
 **NOTE:** After the update, AI-related settings may require reconfiguration due to conflicts introduced by new features.

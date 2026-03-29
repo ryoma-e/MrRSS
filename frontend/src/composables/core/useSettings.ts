@@ -64,8 +64,17 @@ export function useSettings() {
   /**
    * Handle settings-updated event
    * Re-fetches settings when backend updates them (e.g., after feed refresh)
+   * Skips re-fetching if this is an auto-save event to prevent overwriting user input
    */
-  function handleSettingsUpdated() {
+  function handleSettingsUpdated(event: Event) {
+    const customEvent = event as CustomEvent<{ autoSave?: boolean }>;
+
+    // Skip re-fetching if this is an auto-save event
+    // The settings are already up-to-date since we just saved them
+    if (customEvent.detail?.autoSave) {
+      return;
+    }
+
     fetchSettings().catch((e) => {
       console.error('Error re-fetching settings after update:', e);
     });

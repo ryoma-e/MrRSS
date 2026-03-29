@@ -197,6 +197,14 @@ function handleCategoryDoubleClick() {
   // Toggle expand/collapse
   emit('toggle');
 }
+
+// Handle caret click - toggles expand/collapse and ensures context menu closes
+function handleCaretClick() {
+  emit('toggle');
+  // Manually trigger a click event to ensure context menu closes
+  // The click.stop modifier prevents event bubbling, so we need to manually trigger it
+  document.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+}
 </script>
 
 <template>
@@ -237,7 +245,7 @@ function handleCategoryDoubleClick() {
         :size="20"
         class="p-1 cursor-pointer transition-transform text-text-secondary"
         :class="{ 'rotate-180': isOpen }"
-        @click.stop="emit('toggle')"
+        @click.stop="handleCaretClick"
       />
     </div>
     <div
@@ -328,8 +336,6 @@ function handleCategoryDoubleClick() {
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 .category-header {
   @apply px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer font-semibold text-xs sm:text-sm text-text-secondary flex items-center justify-between hover:bg-bg-tertiary hover:text-text-primary transition-colors;
   @apply sticky z-10 bg-bg-secondary;

@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-
+import BaseSelect from '@/components/common/BaseSelect.vue';
+import type { SelectOption } from '@/types/select';
 import type { ProxyMode, RefreshMode } from '@/composables/feed/useFeedForm';
 
 interface Props {
@@ -37,6 +39,64 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+// Article View Mode options
+const articleViewModeOptions = computed<SelectOption[]>(() => [
+  { value: 'global', label: t('setting.feed.useGlobalSettings') },
+  { value: 'webpage', label: t('setting.reading.viewAsWebpage') },
+  { value: 'rendered', label: t('setting.reading.viewAsRendered') },
+  { value: 'external', label: t('article.action.viewModeExternal') },
+]);
+
+// Auto Expand Content options
+const autoExpandContentOptions = computed<SelectOption[]>(() => [
+  { value: 'global', label: t('setting.feed.useGlobalSettings') },
+  { value: 'enabled', label: t('common.form.enabled') },
+  { value: 'disabled', label: t('common.form.disabled') },
+]);
+
+// Proxy Mode options
+const proxyModeOptions = computed<SelectOption[]>(() => [
+  { value: 'global', label: t('setting.network.useGlobalProxy') },
+  { value: 'custom', label: t('setting.network.useCustomProxy') },
+  { value: 'none', label: t('setting.network.noProxy') },
+]);
+
+// Proxy Type options
+const proxyTypeOptions = computed<SelectOption[]>(() => [
+  { value: 'http', label: t('setting.network.httpProxy') },
+  { value: 'https', label: t('setting.network.httpsProxy') },
+  { value: 'socks5', label: t('setting.network.socks5Proxy') },
+]);
+
+// Refresh Mode options
+const refreshModeOptions = computed<SelectOption[]>(() => [
+  { value: 'global', label: t('setting.feed.useGlobalRefresh') },
+  { value: 'intelligent', label: t('setting.feed.useIntelligentInterval') },
+  { value: 'custom', label: t('setting.feed.useCustomInterval') },
+  { value: 'never', label: t('setting.feed.neverRefresh') },
+]);
+
+// Helper functions for emit with proper typing
+function handleArticleViewModeChange(value: string | number) {
+  emit('update:articleViewMode', value as 'global' | 'webpage' | 'rendered' | 'external');
+}
+
+function handleAutoExpandContentChange(value: string | number) {
+  emit('update:autoExpandContent', value as 'global' | 'enabled' | 'disabled');
+}
+
+function handleProxyModeChange(value: string | number) {
+  emit('update:proxyMode', value as ProxyMode);
+}
+
+function handleProxyTypeChange(value: string | number) {
+  emit('update:proxyType', String(value));
+}
+
+function handleRefreshModeChange(value: string | number) {
+  emit('update:refreshMode', value as RefreshMode);
+}
 </script>
 
 <template>
@@ -93,25 +153,11 @@ const { t } = useI18n();
       <p class="text-[10px] sm:text-xs text-text-secondary mb-2">
         {{ t('setting.feed.articleViewModeDesc') }}
       </p>
-      <select
-        :value="props.articleViewMode"
-        class="input-field w-full"
-        @change="
-          emit(
-            'update:articleViewMode',
-            ($event.target as HTMLSelectElement).value as
-              | 'global'
-              | 'webpage'
-              | 'rendered'
-              | 'external'
-          )
-        "
-      >
-        <option value="global">{{ t('setting.feed.useGlobalSettings') }}</option>
-        <option value="webpage">{{ t('setting.reading.viewAsWebpage') }}</option>
-        <option value="rendered">{{ t('setting.reading.viewAsRendered') }}</option>
-        <option value="external">{{ t('article.action.viewModeExternal') }}</option>
-      </select>
+      <BaseSelect
+        :model-value="props.articleViewMode"
+        :options="articleViewModeOptions"
+        @update:model-value="handleArticleViewModeChange"
+      />
     </div>
 
     <!-- Auto Expand Content -->
@@ -122,20 +168,11 @@ const { t } = useI18n();
       <p class="text-[10px] sm:text-xs text-text-secondary mb-2">
         {{ t('setting.feed.autoExpandContentDesc') }}
       </p>
-      <select
-        :value="props.autoExpandContent"
-        class="input-field w-full"
-        @change="
-          emit(
-            'update:autoExpandContent',
-            ($event.target as HTMLSelectElement).value as 'global' | 'enabled' | 'disabled'
-          )
-        "
-      >
-        <option value="global">{{ t('setting.feed.useGlobalSettings') }}</option>
-        <option value="enabled">{{ t('common.form.enabled') }}</option>
-        <option value="disabled">{{ t('common.form.disabled') }}</option>
-      </select>
+      <BaseSelect
+        :model-value="props.autoExpandContent"
+        :options="autoExpandContentOptions"
+        @update:model-value="handleAutoExpandContentChange"
+      />
     </div>
 
     <!-- Proxy Settings -->
@@ -147,15 +184,11 @@ const { t } = useI18n();
         <p class="text-[10px] sm:text-xs text-text-secondary mb-2">
           {{ t('modal.feed.proxyDesc') }}
         </p>
-        <select
-          :value="props.proxyMode"
-          class="input-field w-full"
-          @change="emit('update:proxyMode', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="global">{{ t('setting.network.useGlobalProxy') }}</option>
-          <option value="custom">{{ t('setting.network.useCustomProxy') }}</option>
-          <option value="none">{{ t('setting.network.noProxy') }}</option>
-        </select>
+        <BaseSelect
+          :model-value="props.proxyMode"
+          :options="proxyModeOptions"
+          @update:model-value="handleProxyModeChange"
+        />
       </div>
 
       <!-- Custom Proxy Configuration -->
@@ -165,15 +198,12 @@ const { t } = useI18n();
           <label class="block mb-1 text-[10px] sm:text-xs font-medium text-text-secondary">
             {{ t('modal.feed.proxyType') }}
           </label>
-          <select
-            :value="props.proxyType"
-            class="input-field w-full text-xs sm:text-sm"
-            @change="emit('update:proxyType', ($event.target as HTMLSelectElement).value)"
-          >
-            <option value="http">{{ t('setting.network.httpProxy') }}</option>
-            <option value="https">{{ t('setting.network.httpsProxy') }}</option>
-            <option value="socks5">{{ t('setting.network.socks5Proxy') }}</option>
-          </select>
+          <BaseSelect
+            :model-value="props.proxyType"
+            :options="proxyTypeOptions"
+            size="sm"
+            @update:model-value="handleProxyTypeChange"
+          />
         </div>
 
         <!-- Proxy Host and Port -->
@@ -249,16 +279,12 @@ const { t } = useI18n();
         <p class="text-[10px] sm:text-xs text-text-secondary mb-2">
           {{ t('modal.feed.refreshModeDesc') }}
         </p>
-        <select
-          :value="props.refreshMode"
-          class="input-field w-full"
-          @change="emit('update:refreshMode', ($event.target as HTMLSelectElement).value)"
-        >
-          <option value="global">{{ t('setting.feed.useGlobalRefresh') }}</option>
-          <option value="intelligent">{{ t('setting.feed.useIntelligentInterval') }}</option>
-          <option value="custom">{{ t('setting.feed.useCustomInterval') }}</option>
-          <option value="never">{{ t('setting.feed.neverRefresh') }}</option>
-        </select>
+        <BaseSelect
+          :model-value="props.refreshMode"
+          :options="refreshModeOptions"
+          :position="'auto'"
+          @update:model-value="handleRefreshModeChange"
+        />
       </div>
 
       <!-- Custom Refresh Interval -->
@@ -294,8 +320,6 @@ const { t } = useI18n();
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
 .input-field {
   @apply w-full p-2 sm:p-2.5 border border-border rounded-md bg-bg-tertiary text-text-primary text-xs sm:text-sm focus:border-accent focus:outline-none transition-colors;
 }

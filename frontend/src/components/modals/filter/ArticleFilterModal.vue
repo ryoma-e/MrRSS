@@ -8,6 +8,7 @@ import { useFilterConditions } from '@/composables/filter/useFilterConditions';
 import RuleConditionItem from '../rules/RuleConditionItem.vue';
 import BaseModal from '@/components/common/BaseModal.vue';
 import ModalFooter from '@/components/common/ModalFooter.vue';
+import TipBox from '@/components/settings/base/TipBox.vue';
 
 const { t } = useI18n();
 
@@ -31,12 +32,10 @@ const { logicOptions, onFieldChange: handleFieldChange } = useFilterFields();
 
 const {
   conditions,
-  openDropdownIndex,
   initializeConditions,
   addCondition,
   removeCondition,
   toggleNegate,
-  toggleDropdown,
   clearConditions,
   getValidConditions,
 } = useFilterConditions();
@@ -92,6 +91,9 @@ function close() {
 
     <!-- Content -->
     <div class="px-4 sm:px-6 pt-6 sm:pt-8 pb-20 sm:pb-24">
+      <!-- Logic Precedence Tip -->
+      <TipBox type="help" class="mb-4" :title="t('modal.filter.logicPrecedence')" />
+
       <!-- Empty state -->
       <div v-if="conditions.length === 0" class="text-center text-text-secondary py-8">
         <PhFunnel :size="48" class="mx-auto mb-3 opacity-50" />
@@ -121,7 +123,6 @@ function close() {
           <RuleConditionItem
             :condition="condition"
             :index="index"
-            :is-dropdown-open="openDropdownIndex === index"
             @update:field="
               (value) => {
                 condition.field = value;
@@ -132,7 +133,6 @@ function close() {
             @update:value="(value) => (condition.value = value)"
             @update:values="(values) => (condition.values = values)"
             @update:negate="toggleNegate(index)"
-            @toggle-dropdown="toggleDropdown(index)"
             @remove="removeCondition(index)"
           />
         </div>
@@ -167,8 +167,6 @@ function close() {
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
 .btn-secondary {
   @apply bg-bg-tertiary text-text-primary border border-border px-4 py-2.5 rounded-lg cursor-pointer font-medium hover:bg-bg-secondary transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
 }

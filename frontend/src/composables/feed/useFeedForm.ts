@@ -3,9 +3,9 @@ import { useI18n } from 'vue-i18n';
 import type { Feed } from '@/types/models';
 import { useAppStore } from '@/stores/app';
 
-export type FeedType = 'url' | 'script' | 'xpath' | 'email';
-export type ProxyMode = 'global' | 'custom' | 'none';
-export type RefreshMode = 'global' | 'fixed' | 'intelligent' | 'custom' | 'never';
+type FeedType = 'url' | 'script' | 'xpath' | 'email';
+type ProxyMode = 'global' | 'custom' | 'none';
+type RefreshMode = 'global' | 'fixed' | 'intelligent' | 'custom' | 'never';
 
 export function useFeedForm(feed?: Feed) {
   const { t } = useI18n();

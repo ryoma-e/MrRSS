@@ -134,3 +134,27 @@ func TestAITranslate_AutoDetectOllama(t *testing.T) {
 		t.Fatalf("expected 1 API call (Ollama format should succeed on first try), got %d", callCount)
 	}
 }
+
+func TestAITranslate_RemovesThinkingBlocks(t *testing.T) {
+	t1 := NewAITranslator("apikey", "https://api.test", "m1")
+
+	testHTTPClient := &http.Client{Transport: rtFunc(func(req *http.Request) (*http.Response, error) {
+		body := `{"choices":[{"message":{"content":"<thinking>analyze first</thinking>\nBonjour"}}]}`
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body)), Header: http.Header{"Content-Type": {"application/json"}}}, nil
+	}), Timeout: 5 * time.Second}
+
+	t1.client = ai.NewClientWithHTTPClient(ai.ClientConfig{
+		APIKey:   "apikey",
+		Endpoint: "https://api.test",
+		Model:    "m1",
+		Timeout:  5 * time.Second,
+	}, testHTTPClient)
+
+	out, err := t1.Translate("Hello", "fr")
+	if err != nil {
+		t.Fatalf("AI translate failed: %v", err)
+	}
+	if out != "Bonjour" {
+		t.Fatalf("expected thinking-free translation, got %q", out)
+	}
+}

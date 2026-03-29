@@ -281,6 +281,4 @@ watch(
   </SettingGroup>
 </template>
 
-<style scoped>
-@reference "../../../../style.css";
-</style>
+<style scoped></style>

@@ -244,8 +244,27 @@ func extractAudioURL(item *gofeed.Item) string {
 	return ""
 }
 
-// extractVideoURL extracts the video URL from a feed item (for YouTube videos)
+// extractVideoURL extracts the video URL from a feed item (for YouTube and Bilibili videos)
 func extractVideoURL(item *gofeed.Item) string {
+	// First check if this is a Bilibili video with iframe in content
+	// Some RSSHub feeds might include iframe in description/content with complete parameters (aid, cid, bvid)
+	// This should take priority over generating a simplified URL from the link
+	content := ExtractContent(item)
+	if bilibiliURL := extractBilibiliVideoURL(content); bilibiliURL != "" {
+		return bilibiliURL
+	}
+
+	// Check if this is a Bilibili video link (similar to YouTube detection)
+	// Bilibili URLs: https://www.bilibili.com/video/BV...
+	if item.Link != "" && strings.Contains(item.Link, "bilibili.com/video/") {
+		// Extract BVID from Bilibili URL
+		bvid := extractBilibiliBVID(item.Link)
+		if bvid != "" {
+			// Return embed URL for Bilibili player
+			return "https://www.bilibili.com/blackboard/html5mobileplayer.html?bvid=" + bvid + "&autoplay=0"
+		}
+	}
+
 	// Check if this is a YouTube link (watch, youtu.be, or shorts)
 	if item.Link != "" && (strings.Contains(item.Link, "youtube.com/watch") ||
 		strings.Contains(item.Link, "youtu.be/") ||
@@ -268,6 +287,27 @@ func extractVideoURL(item *gofeed.Item) string {
 				}
 			}
 		}
+	}
+
+	return ""
+}
+
+// extractBilibiliVideoURL extracts Bilibili iframe URL from HTML content
+func extractBilibiliVideoURL(content string) string {
+	if content == "" {
+		return ""
+	}
+
+	// Look for Bilibili iframe in the content
+	// Pattern matches: <iframe src="https://www.bilibili.com/blackboard/html5mobileplayer.html?...">
+	// Use (?s) flag to make . match newlines, and use [\s\S] instead of . to match any character including newlines
+	re := regexp.MustCompile(`(?s)<iframe[\s\S]+?src=["']([^"']*bilibili\.com/blackboard/html5mobileplayer\.html[^"']*)["']`)
+	matches := re.FindStringSubmatch(content)
+
+	if len(matches) > 1 {
+		// Unescape HTML entities (e.g., &amp; -> &)
+		unescapedURL := html.UnescapeString(matches[1])
+		return unescapedURL
 	}
 
 	return ""
@@ -296,6 +336,21 @@ func extractYouTubeVideoID(url string) string {
 	// Handle youtube.com/shorts/VIDEO_ID
 	if strings.Contains(url, "youtube.com/shorts/") {
 		re := regexp.MustCompile(`shorts/([^?&]+)`)
+		matches := re.FindStringSubmatch(url)
+		if len(matches) > 1 {
+			return matches[1]
+		}
+	}
+
+	return ""
+}
+
+// extractBilibiliBVID extracts the BVID from a Bilibili URL
+// Similar to extractYouTubeVideoID
+func extractBilibiliBVID(url string) string {
+	// Handle bilibili.com/video/BV...
+	if strings.Contains(url, "bilibili.com/video/") {
+		re := regexp.MustCompile(`bilibili\.com/video/(BV[\w]+)`)
 		matches := re.FindStringSubmatch(url)
 		if len(matches) > 1 {
 			return matches[1]

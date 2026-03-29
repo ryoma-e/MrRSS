@@ -197,8 +197,6 @@ function handleDragEnd() {
 </template>
 
 <style scoped>
-@reference "../../style.css";
-
 .feed-item {
   @apply px-2 sm:px-3 py-1.5 sm:py-2 cursor-pointer rounded-md text-xs sm:text-sm text-text-primary flex items-center gap-1 hover:bg-bg-tertiary transition-colors;
 }

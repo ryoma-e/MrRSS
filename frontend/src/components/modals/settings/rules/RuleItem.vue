@@ -196,8 +196,6 @@ function formatActions(rule: Rule): string {
 </template>
 
 <style scoped>
-@reference "../../../../style.css";
-
 /* Container for drop zone */
 .rule-item-container {
   @apply relative;

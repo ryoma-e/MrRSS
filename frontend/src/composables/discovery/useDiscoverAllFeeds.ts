@@ -13,19 +13,19 @@ export interface DiscoveredFeed {
   }>;
 }
 
-export interface ProgressCounts {
+interface ProgressCounts {
   current: number;
   total: number;
   found: number;
 }
 
-export interface StartResult {
+interface StartResult {
   status: string;
   message?: string;
   total?: number;
 }
 
-export interface ProgressState {
+interface ProgressState {
   is_complete: boolean;
   error?: string;
   feeds?: DiscoveredFeed[];

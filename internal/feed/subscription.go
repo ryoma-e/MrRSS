@@ -24,9 +24,9 @@ import (
 	"golang.org/x/text/language"
 )
 
-// generateTitleFromRoute creates a friendly title from an RSSHub route
+// GenerateTitleFromRoute creates a friendly title from an RSSHub route
 // For example: "nytimes" → "NYTimes", "weibo/user/billieeilish" → "Weibo - billieeilish"
-func generateTitleFromRoute(route string) string {
+func GenerateTitleFromRoute(route string) string {
 	// Split by first slash to get the main route name
 	parts := strings.Split(route, "/")
 	name := parts[0]
@@ -73,7 +73,7 @@ func (f *Fetcher) AddRSSHubSubscription(route string, category string, customTit
 	// Generate title from route
 	title := customTitle
 	if title == "" {
-		title = generateTitleFromRoute(route)
+		title = GenerateTitleFromRoute(route)
 	}
 
 	// Store with rsshub:// protocol (similar to script://)

@@ -141,6 +141,10 @@ func (t *DynamicTranslator) getProviderType() (ProviderType, error) {
 		return ProviderAI, nil
 	case "custom":
 		return ProviderCustom, nil
+	case "microsoft":
+		return ProviderMicrosoft, nil
+	case "tencent":
+		return ProviderTencent, nil
 	default:
 		return ProviderGoogle, nil
 	}

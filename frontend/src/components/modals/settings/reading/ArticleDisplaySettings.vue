@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import { PhArticle, PhImage, PhSquaresFour } from '@phosphor-icons/vue';
+import { PhArticle, PhImage, PhListNumbers, PhSquaresFour } from '@phosphor-icons/vue';
 import { SettingGroup, SettingWithToggle, SettingWithSelect } from '@/components/settings';
 import '@/components/settings/styles.css';
 import type { SettingsData } from '@/types/settings';
@@ -49,6 +49,14 @@ function updateSetting(key: keyof SettingsData, value: any) {
       @update:model-value="updateSetting('show_article_preview_images', $event)"
     />
 
+    <SettingWithToggle
+      :icon="PhListNumbers"
+      :title="t('setting.reading.showFloatingToc')"
+      :description="t('setting.reading.showFloatingTocDesc')"
+      :model-value="settings.show_floating_toc"
+      @update:model-value="updateSetting('show_floating_toc', $event)"
+    />
+
     <SettingWithSelect
       :icon="PhSquaresFour"
       :title="t('setting.typography.layoutMode')"
@@ -65,6 +73,4 @@ function updateSetting(key: keyof SettingsData, value: any) {
   </SettingGroup>
 </template>
 
-<style scoped>
-@reference "../../../../style.css";
-</style>
+<style scoped></style>

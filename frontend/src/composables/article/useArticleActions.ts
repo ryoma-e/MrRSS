@@ -140,6 +140,39 @@ export function useArticleActions(
       );
     }
 
+    // Add export options based on enabled plugins
+    const exportItems = [];
+
+    // Check each export option
+    if (store.settings?.obsidian_enabled) {
+      exportItems.push({
+        label: t('setting.plugins.obsidian.exportTo'),
+        action: 'exportToObsidian',
+        icon: 'obsidian',
+      });
+    }
+
+    if (store.settings?.notion_enabled) {
+      exportItems.push({
+        label: t('setting.plugins.notion.exportTo'),
+        action: 'exportToNotion',
+        icon: 'notion',
+      });
+    }
+
+    if (store.settings?.zotero_enabled) {
+      exportItems.push({
+        label: t('setting.plugins.zotero.exportTo'),
+        action: 'exportToZotero',
+        icon: 'zotero',
+      });
+    }
+
+    // Add separator and export items if any export options are enabled
+    if (exportItems.length > 0) {
+      menuItems.push({ separator: true }, ...exportItems);
+    }
+
     window.dispatchEvent(
       new CustomEvent('open-context-menu', {
         detail: {
@@ -400,6 +433,107 @@ export function useArticleActions(
       }
     } else if (action === 'openBrowser') {
       openInBrowser(article.url);
+    } else if (action === 'exportToObsidian') {
+      await handleExportToObsidian(article);
+    } else if (action === 'exportToNotion') {
+      await handleExportToNotion(article);
+    } else if (action === 'exportToZotero') {
+      await handleExportToZotero(article);
+    }
+  }
+
+  // Export to Obsidian
+  async function handleExportToObsidian(article: Article): Promise<void> {
+    try {
+      window.showToast(t('setting.plugins.obsidian.exporting'), 'info');
+
+      const response = await fetch('/api/articles/export/obsidian', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          article_id: article.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const data = await response.json();
+
+      const message = data.message || t('setting.plugins.obsidian.exported');
+      const filePath = data.file_path ? ` (${data.file_path})` : '';
+      window.showToast(message + filePath, 'success');
+    } catch (error) {
+      console.error('Failed to export to Obsidian:', error);
+      const message =
+        error instanceof Error ? error.message : t('setting.plugins.obsidian.exportFailed');
+      window.showToast(message, 'error');
+    }
+  }
+
+  // Export to Notion
+  async function handleExportToNotion(article: Article): Promise<void> {
+    try {
+      window.showToast(t('setting.plugins.notion.exporting'), 'info');
+
+      const response = await fetch('/api/articles/export/notion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          article_id: article.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const data = await response.json();
+
+      const message = data.message || t('setting.plugins.notion.exported');
+      window.showToast(message, 'success');
+
+      if (data.page_url) {
+        openInBrowser(data.page_url);
+      }
+    } catch (error) {
+      console.error('Failed to export to Notion:', error);
+      const message =
+        error instanceof Error ? error.message : t('setting.plugins.notion.exportFailed');
+      window.showToast(message, 'error');
+    }
+  }
+
+  // Export to Zotero
+  async function handleExportToZotero(article: Article): Promise<void> {
+    try {
+      window.showToast(t('setting.plugins.zotero.exporting'), 'info');
+
+      const response = await fetch('/api/articles/export/zotero', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          article_id: article.id,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const data = await response.json();
+
+      const message = data.message || t('setting.plugins.zotero.exported');
+      window.showToast(message, 'success');
+    } catch (error) {
+      console.error('Failed to export to Zotero:', error);
+      const message =
+        error instanceof Error ? error.message : t('setting.plugins.zotero.exportFailed');
+      window.showToast(message, 'error');
     }
   }
 

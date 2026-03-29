@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { PhCode, PhBookOpen } from '@phosphor-icons/vue';
+import BaseSelect from '@/components/common/BaseSelect.vue';
 import { openInBrowser } from '@/utils/browser';
+import type { SelectOption } from '@/types/select';
 
 interface Props {
   modelValue: string;
@@ -22,6 +25,17 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n();
 
+// Build options for BaseSelect
+const scriptOptions = computed<SelectOption[]>(() => {
+  return [
+    { value: '', label: t('setting.customization.selectScriptPlaceholder') },
+    ...props.availableScripts.map((script) => ({
+      value: script.path,
+      label: `${script.name} (${script.type})`,
+    })),
+  ];
+});
+
 function openScriptsFolder() {
   emit('open-scripts-folder');
 }
@@ -41,16 +55,13 @@ function openDocumentation() {
       <span v-if="props.mode === 'add'" class="text-red-500">*</span></label
     >
     <div v-if="props.availableScripts.length > 0" class="mb-2">
-      <select
-        :value="props.modelValue"
-        :class="['input-field', props.mode === 'add' && props.isInvalid ? 'border-red-500' : '']"
-        @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
-      >
-        <option value="">{{ t('setting.customization.selectScriptPlaceholder') }}</option>
-        <option v-for="script in props.availableScripts" :key="script.path" :value="script.path">
-          {{ script.name }} ({{ script.type }})
-        </option>
-      </select>
+      <BaseSelect
+        :model-value="props.modelValue"
+        :options="scriptOptions"
+        :class="{ 'border-red-500': props.mode === 'add' && props.isInvalid }"
+        :searchable="true"
+        @update:model-value="emit('update:modelValue', String($event))"
+      />
     </div>
     <div
       v-else
@@ -80,9 +91,5 @@ function openDocumentation() {
 </template>
 
 <style scoped>
-@reference "../../../style.css";
-
-.input-field {
-  @apply w-full p-2 sm:p-2.5 border border-border rounded-md bg-bg-tertiary text-text-primary text-xs sm:text-sm focus:border-accent focus:outline-none transition-colors;
-}
+/* Styles are now handled by BaseSelect and select.css */
 </style>

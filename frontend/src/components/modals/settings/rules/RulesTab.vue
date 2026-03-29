@@ -363,8 +363,6 @@ async function onDrop(targetRuleId: number, event: DragEvent) {
 </template>
 
 <style scoped>
-@reference "../../../../style.css";
-
 .empty-state {
   @apply text-center py-8 sm:py-12;
 }

@@ -76,6 +76,9 @@ var AllSettings = []SettingDef{
 	{Key: "media_cache_max_age_days", Encrypted: false},
 	{Key: "media_cache_max_size_mb", Encrypted: false},
 	{Key: "media_proxy_fallback", Encrypted: false},
+	{Key: "microsoft_api_key", Encrypted: true},
+	{Key: "microsoft_endpoint", Encrypted: false},
+	{Key: "microsoft_region", Encrypted: false},
 	{Key: "network_bandwidth_mbps", Encrypted: false},
 	{Key: "network_latency_ms", Encrypted: false},
 	{Key: "network_speed", Encrypted: false},
@@ -100,6 +103,7 @@ var AllSettings = []SettingDef{
 	{Key: "shortcuts", Encrypted: false},
 	{Key: "shortcuts_enabled", Encrypted: false},
 	{Key: "show_article_preview_images", Encrypted: false},
+	{Key: "show_floating_toc", Encrypted: false},
 	{Key: "show_hidden_articles", Encrypted: false},
 	{Key: "startup_on_boot", Encrypted: false},
 	{Key: "summary_enabled", Encrypted: false},
@@ -107,6 +111,9 @@ var AllSettings = []SettingDef{
 	{Key: "summary_provider", Encrypted: false},
 	{Key: "summary_trigger_mode", Encrypted: false},
 	{Key: "target_language", Encrypted: false},
+	{Key: "tencent_region", Encrypted: false},
+	{Key: "tencent_secret_id", Encrypted: false},
+	{Key: "tencent_secret_key", Encrypted: true},
 	{Key: "theme", Encrypted: false},
 	{Key: "translation_enabled", Encrypted: false},
 	{Key: "translation_only_mode", Encrypted: false},
@@ -117,6 +124,9 @@ var AllSettings = []SettingDef{
 	{Key: "window_width", Encrypted: false},
 	{Key: "window_x", Encrypted: false},
 	{Key: "window_y", Encrypted: false},
+	{Key: "zotero_api_key", Encrypted: true},
+	{Key: "zotero_enabled", Encrypted: false},
+	{Key: "zotero_user_id", Encrypted: false},
 }
 
 // GetAllSettings reads all settings from the database and returns them as a map.
